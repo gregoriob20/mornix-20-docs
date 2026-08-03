@@ -1,0 +1,62 @@
+# Criterios de aceptacion
+
+Un modulo pasa a desplegable solo si cumple **todos** los criterios de esta lista.
+`odoo-qa` los verifica uno por uno con evidencia; `odoo-deploy` no despliega nada
+que no tenga el veredicto `APROBADO`.
+
+> Esta lista es la propuesta base del equipo tecnico. **Los criterios de negocio
+> (seccion C) los tiene que confirmar el cliente**, porque son los unicos que
+> definen si la migracion sirve para lo que la usan. Mientras no esten
+> confirmados, un APROBADO solo cubre lo tecnico.
+
+## A. Tecnicos — verificables por comando
+
+| # | Criterio | Como se verifica |
+|---|---|---|
+| A1 | El modulo instala en una base limpia sin error | `odoo -d limpia -i <modulo> --stop-after-init` |
+| A2 | El modulo actualiza sobre una base con datos sin error | `odoo -d con_datos -u <modulo> --stop-after-init` |
+| A3 | Los tests del modulo pasan | `odoo -d prueba -u <modulo> --test-enable --stop-after-init` |
+| A4 | El log de arranque no tiene ERROR ni CRITICAL nuevos | revisar log completo, comparar contra el arranque limpio |
+| A5 | El log no tiene WARNING nuevos sin justificar | cada warning nuevo se explica o se corrige |
+| A6 | Las vistas cargan sin error de validacion | abrir cada vista del modulo en la interfaz |
+| A7 | Los reportes PDF se generan | generar cada reporte con datos reales |
+| A8 | No quedan `attrs`, `states` ni `<tree>` en el XML | `grep -rn "attrs=\|states=\|<tree" addons/<modulo>/` |
+| A9 | El manifest declara `'version': '20.0.x.y.z'` | leer el manifest |
+| A10 | Las dependencias del manifest existen en v20 | instalar en base limpia (lo cubre A1) |
+
+## B. De datos — la parte que de verdad duele
+
+| # | Criterio | Por que |
+|---|---|---|
+| B1 | Los datos existentes siguen accesibles despues de actualizar | Una migracion que instala limpio pero rompe los datos historicos del cliente es peor que no migrar. |
+| B2 | Los campos que cambiaron de tipo o de nombre tienen script de migracion | Sin script, Odoo puede crear la columna nueva vacia y perder el dato viejo sin avisar. |
+| B3 | Los asientos contables cuadran igual que antes de migrar | Comparar totales contra la instancia original. |
+| B4 | Las secuencias fiscales no se reinician ni saltan | En Venezuela un salto de correlativo fiscal es un problema legal, no un bug cosmetico. |
+| B5 | Las tasas de cambio y los montos en doble moneda dan igual | El cliente tiene 6 modulos de doble moneda: es su nucleo. |
+
+## C. De negocio — los confirma el cliente
+
+Estos no los inventa el equipo tecnico. Salen de una conversacion con quien usa
+el sistema todos los dias.
+
+| # | Criterio | Estado |
+|---|---|---|
+| C1 | Los flujos que el cliente usa a diario funcionan igual que antes | por confirmar |
+| C2 | Los reportes legales (libros fiscales, retenciones, ARC) dan identico | por confirmar |
+| C3 | La impresion fiscal funciona con el hardware real del cliente | por confirmar |
+| C4 | El punto de venta opera completo, incluyendo pagos y vuelto | por confirmar |
+| C5 | Los usuarios conservan sus permisos y accesos | por confirmar |
+
+- [ ] Definir con el cliente que flujos entran en C1
+- [ ] Conseguir juegos de datos reales (anonimizados) para probar C2 y B3
+- [ ] Confirmar que impresoras fiscales hay que soportar (C3)
+
+## Lo que un APROBADO no significa
+
+- No significa que el modulo este probado con el volumen de datos real del cliente.
+- No significa que los modulos de terceros que necesita existan ya en v20.
+- No significa que la interfaz se vea igual: OWL cambio el frontend y algunas
+  diferencias visuales son inevitables.
+
+Estas tres cosas se validan aparte, con el cliente, antes de comprometer fecha
+de salida a produccion.
