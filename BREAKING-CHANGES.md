@@ -43,6 +43,27 @@ Cambios de `requirements.txt` entre 18.0 y master:
   `Recommends` de `debian/control`. El `Dockerfile.v20` lo instala aparte.
   - [ ] Confirmar si el cliente usa `auth_ldap`.
 
+## `http_interface` ahora escucha solo en localhost
+
+**Confirmado en codigo, no supuesto.** Default de `--http-interface`:
+
+| version | default |
+|---|---|
+| 16.0 | `''` (todas las interfaces) |
+| 18.0 | `''` (todas las interfaces) |
+| master | `127.0.0.1` |
+
+`odoo/tools/config.py` en master fuerza `127.0.0.1` cuando el valor viene vacio.
+Cualquier despliegue en contenedor o detras de un proxy reverso deja de responder
+al actualizar, sin ningun error en el log: Odoo arranca normal y reporta
+`HTTP service running on 127.0.0.1:8069`.
+
+Solucion aplicada en `docker/odoo.conf.tmpl`: `http_interface = 0.0.0.0`. La
+exposicion real la limita compose, que publica los puertos solo en el localhost
+del host.
+
+- [ ] Revisar la configuracion de produccion del cliente antes de subir a v20.
+
 ## Motor de reportes PDF
 
 master incorpora el addon **`base_report_paper_muncher`** ("Report Engine: Paper

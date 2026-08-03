@@ -15,18 +15,71 @@ acceso a los repos origen.
 
 ## Inventario
 
-| Modulo | Origen | Lineas | Depende de | Estado | Notas |
-|---|---|---|---|---|---|
-| _pendiente de clonar los repos del cliente_ | | | | | |
+Detalle modulo por modulo en [INVENTARIO.md](INVENTARIO.md). Resumen:
+
+**226 modulos, 282.491 lineas** (py + xml + js) en 7 repositorios.
+
+| Origen | Modulos | Lineas | Que implica |
+|---|---:|---:|---|
+| Cliente (Nimetrix / Oasis / Mornix) | 157 | 182.586 | Migracion a mano. Es el trabajo real. |
+| Terceros de pago | 50 | 85.205 | **No se migran**: hay que comprar/pedir la version v20 al vendor. |
+| OCA | 12 | 8.258 | Se toman del upstream cuando exista rama `20.0`. |
+| Sin autor declarado | 7 | 6.442 | Clasificar a mano. |
+
+Repos de origen:
+
+| Version | Repo | Modulos |
+|---|---|---:|
+| v16 | `nimetrix/l10n_ve_odoo_16` (rama `PRE-PROD`) | 119 |
+| v16 | `nimetrix/l10n_ve_sucursales` | 21 |
+| v18 | `nx-desarrollo/nx_tools` | 39 |
+| v18 | `nx-desarrollo/nx_localizacion` | 18 |
+| v18 | `nx-desarrollo/nx_point_of_sale` | 12 |
+| v18 | `nx-desarrollo/nx_dual_currency` | 9 |
+| v18 | `nx-desarrollo/nx_sucursales` | 8 |
+
+**19 modulos existen en v16 y v18 a la vez.** Para esos se parte de la version
+v18, que ya trae dos saltos de version resueltos:
+
+`bi_branch_budget_ent`, `bi_branch_pos`, `bi_branch_scrap_order`,
+`bi_odoo_mrp_multi_branch`, `bi_odoo_multi_branch_hr`, `branch`,
+`branch_analytic_account`, `fiscal_lock_days`, `l10n_ve_dpt`, `l10n_ve_stock`,
+`l10n_ve_stock_account`, `nimetrix_detailed_sale_report`,
+`nimetrix_general_sale_report`, `nimetrix_report_arc`, `nimetrix_restrictions`,
+`nimetrix_standard_report_invoice`, `stock_no_negative`, `unidades_permitidas`,
+`unidades_presentacion`.
+
+## Dependencias externas: el riesgo mayor del proyecto
+
+85.205 lineas (30% del total) son modulos de terceros. **No dependen de nosotros**
+y ninguno tendra version v20 antes de que Odoo libere v20:
+
+| Vendor | Modulos | Lineas |
+|---|---:|---:|
+| INM & LDR Soluciones | 2 | 18.998 |
+| Emipro Technologies | 2 | 16.877 |
+| BrowseInfo | 23 | 15.760 |
+| Terabits Technolab | 2 | 9.367 |
+| Teqstars | 1 | 6.633 |
+| binaural-dev | 2 | 5.352 |
+| TechKhedut | 1 | 3.614 |
+| resto (15 vendors) | 17 | 8.604 |
+
+Lo mismo aplica a los 12 modulos OCA: los repos de OCA no abren rama `20.0`
+hasta despues del release oficial.
+
+- [ ] Decidir por cada vendor: esperar su v20, portarlo nosotros (revisar licencia),
+      o reemplazar la funcionalidad.
 
 ## Orden de trabajo sugerido
 
-1. **Modulos sin dependencias entre si** primero, para calibrar cuanto duele el
-   salto antes de comprometer estimaciones.
-2. **Modulos base del cliente** (los que otros heredan) despues, porque su API
-   condiciona al resto.
-3. **Modulos de reportes y frontend al final**: son los mas afectados por OWL y
-   por el cambio de motor PDF, y conviene atacarlos con el resto ya estable.
+1. **Clasificar los 7 modulos sin autor** y confirmar la lista de terceros.
+2. **Modulos base del cliente** primero (los que otros heredan), porque su API
+   condiciona al resto: la localizacion venezolana es la raiz de casi todo.
+3. **Un modulo piloto de tamano medio** antes de estimar el resto, para medir
+   cuanto duele realmente el salto con codigo de este cliente en la mano.
+4. **Reportes y frontend al final**: son los mas afectados por OWL y por el
+   cambio de motor PDF.
 
 ## Puntos de atencion conocidos v16 -> v20
 
