@@ -49,6 +49,27 @@ v18, que ya trae dos saltos de version resueltos:
 `nimetrix_standard_report_invoice`, `stock_no_negative`, `unidades_permitidas`,
 `unidades_presentacion`.
 
+## Consolidacion: v16 y v18 son del mismo cliente
+
+Los repos `nimetrix/` (v16) y `nx-desarrollo/` (v18) pertenecen a la misma
+empresa (Nimetrix, hoy Mornix). El destino es **una sola base de codigo v20**,
+no dos.
+
+Lo que eso obliga a resolver:
+
+- **La localizacion venezolana existe en dos generaciones**: `l10n_ve_full` (v16,
+  21.580 lineas) y `l10n_ve_nimetrix` (v18, 14.788 lineas). Son la misma
+  funcionalidad reescrita. Se toma la linea v18 como base.
+  - [ ] Verificar que funcionalidad de `l10n_ve_full` **no** quedo en
+        `l10n_ve_nimetrix`. Si algo se perdio en el camino v16 -> v18 y el
+        cliente todavia lo usa, hay que reponerlo, no asumir que sobraba.
+- **Los 19 modulos duplicados** se unifican en uno solo, partiendo de la
+  version v18.
+- **Sucursales tambien esta duplicado**: `l10n_ve_sucursales` (v16, 21 modulos)
+  contra `nx_sucursales` (v18, 8 modulos). La v16 tiene 13 modulos que no
+  existen en v18.
+  - [ ] Definir cuales de esos 13 siguen en uso.
+
 ## Dependencias externas: el riesgo mayor del proyecto
 
 85.205 lineas (30% del total) son modulos de terceros. **No dependen de nosotros**
