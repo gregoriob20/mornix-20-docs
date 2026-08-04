@@ -1,10 +1,15 @@
-# l10n_ve_nimetrix — Localización venezolana
+# l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 88 pruebas sin errores ni advertencias** (4 omitidas por dependencia ausente).
+> 113 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_nimetrix`, versión `1.0.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.0.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.2.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.2.0`).
+>
+> Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
+> **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
+> conservan a propósito: renombrarlos obligaría a migrar datos en las bases de
+> los clientes sin ganar nada funcional.
 
 ## 1. Qué hace
 
@@ -33,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 88 (11 archivos) — 30 heredadas, 58 escritas en la migración |
+| Pruebas | 113 (11 archivos) — 30 heredadas, 83 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -41,9 +46,9 @@ v20, y aquí no aplica.
 
 ## 2.1 Dependencia no declarada — importante
 
-**El libro fiscal no funciona sin `nimetrix_dual_currency`.** El SQL de
+**El libro fiscal no funciona sin `mornix_dual_currency`.** El SQL de
 `_get_data` referencia `account_move.amount_exempt_bs`, campo que define ese
-módulo (repo `nx_dual_currency`), y el manifest de `l10n_ve_nimetrix` **no lo
+módulo (repo `nx_dual_currency`), y el manifest de `l10n_ve_mornix` **no lo
 declara como dependencia**.
 
 Consecuencias:
@@ -61,14 +66,14 @@ Declarar la dependencia **no es una opción**, porque cierra un ciclo y Odoo se
 niega a instalar:
 
 ```
-l10n_ve_nimetrix  →  nimetrix_dual_currency   (la que faltaría declarar)
-                     →  nimetrix_currency_rate
-                        →  l10n_ve_nimetrix   ← vuelve al inicio
+l10n_ve_mornix  →  mornix_dual_currency   (la que faltaría declarar)
+                     →  mornix_currency_rate
+                        →  l10n_ve_mornix   ← vuelve al inicio
 ```
 
-Verificado en los manifests: `nimetrix_currency_rate` declara
-`l10n_ve_nimetrix` entre sus dependencias, y `nimetrix_dual_currency` declara
-`nimetrix_currency_rate`.
+Verificado en los manifests: `mornix_currency_rate` declara
+`l10n_ve_mornix` entre sus dependencias, y `mornix_dual_currency` declara
+`mornix_currency_rate`.
 
 Que hoy funcione en producción se debe justamente a que la dependencia **no**
 está declarada: Odoo no ve el ciclo porque nadie se lo contó.
@@ -77,7 +82,7 @@ Hay tres salidas, y es una decisión de arquitectura, no de migración:
 
 | Salida | Qué implica |
 |---|---|
-| Bajar `amount_exempt_bs` a `l10n_ve_nimetrix` | El campo queda en la capa base, donde ya vive el libro fiscal. Rompe el ciclo de raíz |
+| Bajar `amount_exempt_bs` a `l10n_ve_mornix` | El campo queda en la capa base, donde ya vive el libro fiscal. Rompe el ciclo de raíz |
 | Subir el libro fiscal a un módulo por encima de ambos | Más limpio conceptualmente, pero mueve código y vistas |
 | Que el libro tolere la ausencia del campo | Parche: el libro daría cifras distintas según qué módulos haya instalados |
 
@@ -143,14 +148,14 @@ esta migración.
 | Modelo | Archivo | Líneas | Qué agrega |
 |---|---|---:|---|
 | `account.move` | `models/account_move.py` | 1.318 | Número de control, retenciones asociadas, montos exentos, IGTF |
-| `res.partner` | `models/res_partner.py` | 362 | RIF, tipo de persona, agente de retención, validaciones |
+| `res.partner` | `models/res_partner.py` | 336 | RIF (`vat` y sus dos mitades), tipo de persona, agente de retención, validaciones |
 | `product.pricelist.item` | `models/product_pricelist_item.py` | 248 | Precio con IVA y en divisa |
 | `account.move.reversal` | `models/account_move_reserval.py` | 116 | Nota de crédito con número de control |
-| `res.company` | `models/res_company.py` | 114 | RIF, firma del representante, validaciones configurables |
+| `res.company` | `models/res_company.py` | 122 | RIF (`vat`), firma del representante, validaciones configurables |
 | `product.template` / `product.product` | | 109 / 86 | Precios con IVA y en divisa |
 | `account.payment` | `models/account_payment.py` | 99 | Validaciones de RIF en el pago |
 | `account.tax` | `models/account_tax.py` | 90 | Marcado de impuestos de retención |
-| `sale.order` / `purchase.order` | | 78 / 70 | RIF y tipo de documento en el pedido |
+| `sale.order` / `purchase.order` | | 78 / 70 | RIF del contacto en el pedido |
 
 ## 5. Asistentes y reportes
 
@@ -202,7 +207,7 @@ comparaba el prefijo del vat contra el código de país, no coincidía para
 Venezuela y devolvía el valor intacto.
 
 **En el estado final, esto NO afecta al módulo.** Verificado en la base odoo20:
-el `vat` y el `nx_rif` conservan sus guiones. La razón es que el override de
+el `vat` conserva sus guiones (`'J-98765432-1'` se guarda tal cual). La razón es que el override de
 `_check_vat` exime a Venezuela del chequeo estándar, y es precisamente
 `_check_vat` quien escribe de vuelta el valor normalizado.
 
@@ -217,7 +222,54 @@ lo fija: si alguien quita la exención, o si Odoo mueve la normalización a otro
 punto del ciclo, esos tests fallan antes de que salga un TXT mal formado.
 
 - [ ] Si en la base del cliente quedó algún RIF normalizado de un intento
-      previo, hay que detectarlo: `nx_rif NOT LIKE '%-%'`.
+      previo, hay que detectarlo: `vat NOT LIKE '%-%'`. No bloquea nada —las
+      validaciones toleran ambos formatos— pero conviene saber cuántos son.
+
+### 6.2.2 El identificador se consolidó en `vat` (versión 1.2.0)
+
+v18 guardaba el mismo dato en tres sitios:
+
+| Campo | Qué guardaba |
+|---|---|
+| `vat` | el estándar de Odoo, a menudo vacío |
+| `nx_rif` | copia con formato legible, sincronizada a mano en los dos sentidos |
+| `nx_identification_id` | la cédula, usada como identificador de reserva |
+
+Los reportes al SENIAT elegían entre ellos repitiendo en cada sitio la forma
+`nx_rif or (nx_nationality + nx_identification_id)`.
+
+**Desde 1.2.0 hay un solo campo: `vat`.** El tipo de documento
+(`nx_nationality`) y el número (`nx_document_number`) son sus **dos mitades
+calculadas**: se escriben por separado en el formulario y el modelo las
+concatena; escribir directamente en `vat` las rellena a la inversa.
+
+```
+vat = 'J-98765432-1'   <->   tipo 'J' + número '98765432-1'
+```
+
+Por qué importa, más allá de la limpieza: `same_vat_partner_id`, la detección de
+duplicados, el portal y cualquier módulo de terceros consultan `vat`. Con el
+identificador en un campo propio, ninguno de ellos lo veía.
+
+Efectos colaterales del cambio, todos verificados:
+
+- `same_vat_partner_id` ya **no se redefine**: el cálculo del core sirve tal cual
+  y además cubre casos que la copia local no contemplaba (registros archivados,
+  jerarquía de contactos, multi-compañía).
+- La unicidad del RIF pasó a ser una sola constraint sobre `vat`. Sigue
+  comparando cadenas exactas, así que **el mismo RIF cargado con y sin guiones
+  no se detecta como duplicado** — igual que en v18.
+- `nx_documento_seniat()` centraliza el formato sin separadores que piden los
+  TXT y XML. Antes cada reporte lo resolvía por su cuenta.
+- El formato aceptado se amplió para admitir el identificador derivado de la
+  cédula (`V` + 7 u 8 dígitos), que es lo que la migración compone para los
+  contactos que solo tenían cédula. Sin eso quedarían imposibles de guardar.
+
+- [ ] **Un cambio de comportamiento a confirmar**: en el XML de ISLR,
+      `nx_onchange_partner_id` devolvía `nx_rif[2:]`, que sobre un RIF con
+      guiones dejaba `'12345678-9'`. Sobre el documento normalizado equivale a
+      quitar solo la letra, y ahora devuelve `'123456789'`. Hay que verificar
+      cuál espera el SENIAT.
 
 ### 6.2.1 El dígito verificador del RIF no se valida
 
@@ -280,14 +332,14 @@ Que esos imports rompan en v18 significa que **el código de la rama `main` de
 
 ```bash
 cd docker
-docker compose run --rm odoo20 odoo -d <base> -i l10n_ve_nimetrix \
+docker compose run --rm odoo20 odoo -d <base> -i l10n_ve_mornix \
     --without-demo --stop-after-init
 ```
 
 Pruebas:
 
 ```bash
-docker compose run --rm odoo20 odoo -d <base> -u l10n_ve_nimetrix \
+docker compose run --rm odoo20 odoo -d <base> -u l10n_ve_mornix \
     --test-enable --stop-after-init
 ```
 

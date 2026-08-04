@@ -243,6 +243,50 @@ tributaria, verifíquelo antes.
 Un módulo que exima a su país del chequeo estándar conserva el formato — porque
 la reescritura vive dentro del método que se está salteando.
 
+### Si su módulo guarda el identificador en un campo propio
+
+Es el patrón más común en las localizaciones venezolanas: el identificador vive
+en un campo del módulo (`x_rif`, `cedula`, `nit`…) y `vat` queda vacío o
+desactualizado, sincronizado a mano con onchanges y constraints.
+
+**Conviene aprovechar la migración para consolidarlo en `vat`.** No es cosmético:
+
+- `same_vat_partner_id`, la detección de contactos duplicados, el portal, los
+  documentos electrónicos y cualquier módulo de terceros consultan `vat`. Si el
+  identificador no está ahí, ninguno de ellos lo ve.
+- Con dos campos, uno de los dos siempre termina desactualizado, y cuál de ellos
+  se imprime depende de qué reporte se ejecute.
+
+Si necesita conservar el tipo de documento y el número como campos separados en
+el formulario, decláre­los **calculados a partir de `vat` con `inverse`**, no como
+campos almacenados aparte: así se escriben por separado pero solo se guarda el
+dato una vez.
+
+Dos trampas verificadas al hacerlo:
+
+1. **No le ponga `default` al campo calculado con inverse.** Un valor por defecto
+   entra en el `create` como si lo hubiera escrito el usuario, dispara el inverse
+   antes de que nadie mire el `vat` recibido y, como todavía no hay número, lo
+   deja vacío. El valor inicial póngalo en el propio `compute`.
+
+2. **Al quitar un campo, Odoo elimina su columna** al terminar la actualización
+   (`ir.model.fields.unlink` la suelta). Comprobado: tras el update, las columnas
+   viejas ya no están en `information_schema`. El script de migración que traslada
+   los datos es la única oportunidad de rescatarlos, y el respaldo previo la única
+   red. No hay vuelta atrás después.
+
+Y una tercera al actualizar el módulo:
+
+```
+Field "x_rif" does not exist in model "res.partner"
+```
+
+La vista nueva es correcta; la que la invalida es una **vista hija que todavía
+tiene en la base la versión anterior**, porque Odoo valida contra el arch
+combinado y aún no le tocó el turno de reescribirse. Se resuelve con un script
+`pre-` que borre esos registros de `ir_ui_view`: el propio update los recrea
+desde el XML unas líneas más adelante y recuperan su xmlid.
+
 ---
 
 ## `product` — productos y precios

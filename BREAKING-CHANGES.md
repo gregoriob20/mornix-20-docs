@@ -152,7 +152,7 @@ sin tocar.
 **Consecuencia para las localizaciones que guardan el identificador con
 formato**: los reportes, TXT y XML que tomen el numero de `vat` lo veran sin
 separadores. Un modulo que exima a su pais del chequeo estandar (como hace
-`l10n_ve_nimetrix`) conserva el formato, porque la reescritura vive dentro del
+`l10n_ve_mornix`) conserva el formato, porque la reescritura vive dentro del
 metodo que se esta salteando.
 
 - [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con

@@ -137,8 +137,8 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 
 ## Orden de trabajo sugerido
 
-0. ~~Piloto~~ — hecho: `l10n_ve_nimetrix` migrado, 77 pruebas en verde.
-   Ver [modulos/l10n_ve_nimetrix.md](modulos/l10n_ve_nimetrix.md).
+0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 112 pruebas en verde.
+   Ver [modulos/l10n_ve_mornix.md](modulos/l10n_ve_mornix.md).
 1. **Doble moneda primero.** El analisis de acoplamiento lo puso arriba de la
    lista: `nimetrix_dual_currency`, `nimetrix_currency_rate` y
    `nx_pos_dual_currency` son la base oculta de la que cuelgan 7, 5 y 6 modulos

@@ -1,12 +1,12 @@
-# Plan de pruebas — l10n_ve_nimetrix
+# Plan de pruebas — l10n_ve_mornix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **88 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **113 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
 
-**88 pruebas automatizadas en 11 archivos, todas en verde** (4 omitidas por dependencia ausente, ver abajo).
+**113 pruebas automatizadas en 11 archivos, todas en verde.**
 
 | Archivo | Casos | Qué cubre | Origen |
 |---|---:|---|---|
@@ -15,7 +15,7 @@
 | `test_res_company.py` | 8 | Validación del RIF de la compañía y moneda de referencia | heredado |
 | `test_account_move_invoice_num.py` | 1 | El número de control sobrevive a borrador → publicar → borrador → publicar | heredado |
 | `test_account_ut.py` | 8 | Unidad tributaria: valor vigente por fecha, conversiones y el caso sin UT | **nuevo** |
-| `test_seniat_rif_formato.py` | 7 | Formato del RIF almacenado y el que llega al TXT y al XML | **nuevo** |
+| `test_seniat_rif_formato.py` | 8 | Formato del RIF almacenado y el que llega al TXT y al XML | **nuevo** |
 | `test_wh_iva_txt.py` | 7 | Formato del número de documento en el TXT del SENIAT | **nuevo** |
 | `test_fiscal_book.py` | 11 | Qué documentos entran en cada libro fiscal | **nuevo** |
 | `test_numeracion_control.py` | 8 | Correlativo fiscal y selección de secuencia por tipo de documento | **nuevo** |
@@ -79,7 +79,7 @@ no es "funciona", es "da lo mismo que en v18".
 | IVA-4 | Cancelar y rehacer una retención | El correlativo no se repite ni se salta | **pendiente** |
 | IVA-5 | Factura sin derecho a crédito fiscal | El asistente marca y el libro la excluye | **pendiente** |
 | IVA-6 | TXT del SENIAT: estructura y longitud de campos | Comparar byte a byte con un TXT generado en v18 con los mismos datos | **pendiente** |
-| IVA-7 | TXT: formato del RIF | El TXT toma `nx_rif` sin limpiarlo; se verificó que conserva los guiones | cubierto (`test_seniat_rif_formato.py`) |
+| IVA-7 | TXT: formato del RIF | El TXT normaliza vía `nx_documento_seniat()`; se verificó que `vat` conserva los guiones al guardarse | cubierto (`test_seniat_rif_formato.py`) |
 
 ### 3.2 Retención de ISLR
 
@@ -102,7 +102,7 @@ no es "funciona", es "da lo mismo que en v18".
 | LIB-1 | Libro de ventas de un período | Totales cuadran con la suma de facturas | **pendiente** |
 | LIB-2 | Libro de compras de un período | Idem | **pendiente** |
 | LIB-3 | Exclusión por posición fiscal | El dominio añade `fiscal_position_id not in` | cubierto (`test_fiscal_book.py`) |
-| LIB-4 | Exportación a Excel | Se verifica que el .xlsx sea un zip válido con workbook. **Omitido** sin `nimetrix_dual_currency` | parcial (`test_fiscal_book_xlsx.py`) |
+| LIB-4 | Exportación a Excel | Se verifica que el .xlsx sea un zip válido con workbook. **Omitido** sin `mornix_dual_currency` | parcial (`test_fiscal_book_xlsx.py`) |
 | LIB-5 | Nombre de la hoja de Excel | Se verifica longitud ≤31 y ausencia de caracteres prohibidos, que v20 ya no sanea | cubierto (`test_fiscal_book_xlsx.py`) |
 
 ### 3.4 Numeración de control
@@ -163,17 +163,17 @@ No es una afirmación sobre la contabilidad del cliente.
 cd docker
 
 # suite completa
-docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_nimetrix \
+docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_mornix \
     --test-enable --stop-after-init
 
 # una sola clase
-docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_nimetrix \
-    --test-enable --test-tags /l10n_ve_nimetrix:TestInvoiceWithholdingIvaIslr \
+docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_mornix \
+    --test-enable --test-tags /l10n_ve_mornix:TestInvoiceWithholdingIvaIslr \
     --stop-after-init
 
 # qué modelos no tienen prueba
 python3 .claude/skills/senior-qa/scripts/coverage_analyzer.py \
-    addons/localizacion/l10n_ve_nimetrix
+    addons/localizacion/l10n_ve_mornix
 ```
 
 Instancia viva para validación funcional: **https://odoo20.migracion.mornix.tech**
@@ -198,6 +198,6 @@ código a la vez.
 
 | Bloqueo | Qué destraba |
 |---|---|
-| `nimetrix_dual_currency` sin migrar | LIB-1, LIB-2, LIB-4 y los 4 tests omitidos. El libro fiscal usa `amount_exempt_bs`, que define ese módulo |
+| `mornix_dual_currency` sin migrar | LIB-1, LIB-2, LIB-4 y los 4 tests omitidos. El libro fiscal usa `amount_exempt_bs`, que define ese módulo |
 | Sin volcado real del cliente | Todo el bloque B (DAT-1 a DAT-5), que es el que de verdad prueba una migración |
 | Sin respuesta a la sección 7 | IVA-6 e ISLR-8: no se puede comparar un TXT o un XML contra lo esperado sin saber qué se espera |
