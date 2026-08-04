@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 120 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.8.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.8.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.9.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.9.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -404,7 +404,7 @@ Que esos imports rompan en v18 significa que **el código de la rama `main` de
 
 - [ ] Aclarar con el equipo qué rama refleja producción.
 
-### 6.3 El Libro Resumen de IVA nunca habia funcionado (versión 1.8.0)
+### 6.3 El Libro Resumen de IVA nunca habia funcionado (versión 1.8.0 y 1.9.0)
 
 **No es una rotura de la migración.** Se comprobó el mismo defecto en v16, v18 y
 v20: es el mismo archivo arrastrado entre versiones con el prefijo del módulo
@@ -425,19 +425,37 @@ Ahora genera: **13,8 KB, 60 filas, firma OLE2 válida**. `tests/test_libro_resum
 lo ejerce de punta a punta —pulsa el botón y abre el archivo— porque los cinco
 fallos solo se veían al usarlo.
 
-#### Lo que sigue sin funcionar, y por qué no lo tocamos
+#### Lo que se eliminó
 
-`get_invoice()` produce el **listado detallado factura por factura**. Tampoco ha
-funcionado nunca y **no lo llama nadie**: escribe 28 claves en
-`nimetrix.wh.iva.libro.pdf.resu`, un modelo que no existe —el declarado es
-`…pdf.resumen`— y que además solo tiene un campo, `name`. De las 28 claves,
-**27 no existen en ningún sitio**.
+`get_invoice()` producía el **listado detallado factura por factura**. Tampoco
+había funcionado nunca y **no lo llamaba nadie**: escribía 28 claves en
+`nimetrix.wh.iva.libro.pdf.resu`, un modelo que no existe —el declarado era
+`…pdf.resumen`— y que además solo tenía un campo, `name`. De las 28 claves,
+**27 no existían en ningún sitio**.
 
-Reconstruirlo no es migrar: es definir esos 27 campos y el formato del reporte.
+Se eliminó, junto con lo que solo existía para él:
 
-- [ ] **Decisión del cliente**: ¿hace falta ese listado detallado? Si sí, hay que
-      especificar qué columnas lleva. El código conservado sirve de punto de
-      partida, no de referencia funcional.
+| Eliminado | Por qué |
+|---|---|
+| `get_invoice()` | Sin llamadas. Escribía en un modelo inexistente |
+| Modelo `nimetrix.wh.iva.libro.pdf.resumen` | Solo lo usaba `get_invoice`. Un campo, **0 filas** en la base |
+| `doc_cedula`, `doc_cedula2` | Solo los usaba `get_invoice`. Leían `res.partner.doc_type`, que no existe |
+| `float_format`, `float_format2` | Sin llamadas |
+| Su línea en `ir.access.csv` | El modelo ya no existe |
+| 9 imports | Quedaron sin uso: `api`, `tools`, `UserError`, `io`, `xlsxwriter`, `shutil`, `csv`, `logging`, `DEFAULT_SERVER_DATE_FORMAT` |
+
+`migrations/1.9.0/post-borrar-tabla-pdf-resumen.py` suelta la tabla huérfana que
+Odoo deja al desaparecer un modelo. **Cuenta las filas antes de borrar**: si en
+alguna base del cliente alguien llegó a meter datos, conserva la tabla y avisa
+en el log.
+
+El archivo pasó de 699 a 536 líneas. El Excel sale idéntico —13,8 KB, 60 filas—,
+verificado antes y después de borrar.
+
+- [ ] **Si el cliente necesita ese listado detallado**, hay que especificarlo de
+      cero: qué columnas lleva y de dónde sale cada una. El código eliminado
+      está en el historial de git y en `legacy/`, pero no sirve de referencia
+      funcional: nunca produjo una fila.
 - [ ] Confirmar que el filtro correcto es `state = 'posted'`. Es lo único que
       tiene sentido para un libro fiscal, pero determina qué facturas entran.
 
