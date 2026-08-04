@@ -1,7 +1,7 @@
 # Plan de pruebas — l10n_ve_nimetrix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **30 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **52 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
@@ -128,7 +128,7 @@ limpia, estos módulos casi siempre pasan.
 |---|---|---|
 | DAT-1 | Restaurar un volcado real del cliente y actualizar el módulo | Es la única prueba que vale para el criterio B |
 | DAT-2 | Ningún contacto cambia de tipo de persona tras migrar | v20 recalcula `is_company`. Un cambio aquí altera retenciones |
-| DAT-3 | Los RIF históricos siguen legibles en reportes | v20 los normaliza sin guiones |
+| DAT-3 | Los RIF históricos siguen con su formato | Si algún intento previo los normalizó, quedaron sin guiones: `nx_rif NOT LIKE '%-%'` |
 | DAT-4 | Las secuencias fiscales continúan, no se reinician | Un salto de correlativo es un problema legal |
 | DAT-5 | Los totales de los libros fiscales coinciden con los de v18 | Comparar período cerrado contra período cerrado |
 
@@ -137,7 +137,7 @@ limpia, estos módulos casi siempre pasan.
 
 ## 5. Por qué esto todavía no es un APROBADO
 
-Los 30 tests en verde cubren el criterio **A3**. Faltan:
+Los 52 tests en verde cubren el criterio **A3**. Faltan:
 
 - **A2** — actualizar sobre una base con datos: solo se probó sobre base limpia.
 - **A6** — vistas: no se han abierto una por una en la interfaz.
