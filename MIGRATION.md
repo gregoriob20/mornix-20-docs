@@ -92,13 +92,59 @@ hasta despues del release oficial.
 - [ ] Decidir por cada vendor: esperar su v20, portarlo nosotros (revisar licencia),
       o reemplazar la funcionalidad.
 
+## Acoplamiento que los manifests no declaran
+
+Medido con `scripts/dependencias_no_declaradas.py` sobre los 86 módulos de v18:
+**42 campos usados sin declarar la dependencia, en 9 módulos.**
+
+El caso que lo destapó: `l10n_ve_nimetrix` genera su libro fiscal con SQL que
+referencia `account_move.amount_exempt_bs`, campo que define
+`nimetrix_dual_currency`. El módulo instala limpio y falla recién al generar el
+reporte.
+
+Los módulos de los que más se depende sin declararlo:
+
+| Proveedor oculto | Módulos que lo necesitan |
+|---|---:|
+| `nimetrix_dual_currency` | 7 |
+| `nx_pos_dual_currency` | 6 |
+| `nimetrix_currency_rate` | 5 |
+| `l10n_ve_nimetrix` | 4 |
+| `nimetrix_stock_cost_usd` | 2 |
+| `nimetrix_report_base` | 2 |
+| `nimetrix_cost_usd_property` | 2 |
+| resto (7 módulos) | 1 c/u |
+
+**Consecuencia para el orden de trabajo:** la doble moneda no es un área
+paralela a la localización, es su cimiento. `nimetrix_dual_currency`,
+`nimetrix_currency_rate` y `nx_pos_dual_currency` hay que migrarlos **antes o a
+la par** de lo demás, no después.
+
+Cómo verificarlo en cualquier momento:
+
+```bash
+python3 scripts/dependencias_no_declaradas.py /opt/odoo-client/v18
+python3 scripts/dependencias_no_declaradas.py /opt/odoo-client/v18 --modulo <modulo> --verbose
+```
+
+Límites del análisis, para no leer de más: solo detecta **campos** (no métodos
+ni modelos), y solo los que siguen las convenciones del cliente — prefijo `nx_`
+o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
+
+- [ ] Declarar estas dependencias en los manifests a medida que se migra cada
+      módulo. Un manifest correcto es lo que hace que Odoo instale en el orden
+      correcto solo.
+
 ## Orden de trabajo sugerido
 
-1. **Clasificar los 7 modulos sin autor** y confirmar la lista de terceros.
-2. **Modulos base del cliente** primero (los que otros heredan), porque su API
-   condiciona al resto: la localizacion venezolana es la raiz de casi todo.
-3. **Un modulo piloto de tamano medio** antes de estimar el resto, para medir
-   cuanto duele realmente el salto con codigo de este cliente en la mano.
+0. ~~Piloto~~ — hecho: `l10n_ve_nimetrix` migrado, 77 pruebas en verde.
+   Ver [modulos/l10n_ve_nimetrix.md](modulos/l10n_ve_nimetrix.md).
+1. **Doble moneda primero.** El analisis de acoplamiento lo puso arriba de la
+   lista: `nimetrix_dual_currency`, `nimetrix_currency_rate` y
+   `nx_pos_dual_currency` son la base oculta de la que cuelgan 7, 5 y 6 modulos
+   respectivamente, incluido el piloto ya migrado.
+2. **Clasificar los 7 modulos sin autor** y confirmar la lista de terceros.
+3. **Resto de la localizacion**, que ya tiene su raiz migrada.
 4. **Reportes y frontend al final**: son los mas afectados por OWL y por el
    cambio de motor PDF.
 
