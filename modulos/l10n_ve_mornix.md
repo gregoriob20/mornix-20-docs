@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 113 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.2.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.2.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.3.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.3.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -264,6 +264,28 @@ Efectos colaterales del cambio, todos verificados:
 - El formato aceptado se amplió para admitir el identificador derivado de la
   cédula (`V` + 7 u 8 dígitos), que es lo que la migración compone para los
   contactos que solo tenían cédula. Sin eso quedarían imposibles de guardar.
+
+### 6.2.3 Campo eliminado: "Declaración legal de IVA" (versión 1.3.0)
+
+`nx_vat_subjected` se declaraba y se pintaba en la pestaña de Retenciones, pero
+**ningún cálculo lo leía** — ni este módulo, ni sus reportes, ni los repos v16 y
+v18 del cliente. Su ayuda prometía que se usaría para la declaración del IVA;
+nunca llegó a usarse. Eliminado.
+
+Se auditaron a la vez los otros campos de esa pestaña. Los tres restantes **sí
+se usan**, y uno de ellos es la razón por la que conviene auditar antes de
+borrar:
+
+| Campo | Consumidor |
+|---|---|
+| `nx_islr_withholding_agent` | `account_move.py` decide si aplica la retención; filtra el desplegable del comprobante |
+| `nx_islr_exempt` | `islr_doc_invoices.py` → `apply_income = not vendor.nx_islr_exempt` |
+| `nx_contribuyente_seniat` | **Ningún consumidor en este módulo.** Lo usa `nimetrix_iva_resumen_report` (v18, sin migrar): con `'especial'` el libro resumen calcula el período **quincenal** en vez de mensual |
+
+`nx_contribuyente_seniat` parecía muerto mirando solo este módulo. Es el mismo
+patrón de las 42 dependencias no declaradas: **el módulo no es la unidad de
+análisis correcta.** Antes de eliminar un campo hay que buscarlo en todos los
+repos del cliente, incluidos los que aún no se han migrado.
 
 - [ ] **Un cambio de comportamiento a confirmar**: en el XML de ISLR,
       `nx_onchange_partner_id` devolvía `nx_rif[2:]`, que sobre un RIF con
