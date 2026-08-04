@@ -137,7 +137,7 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 
 ## Orden de trabajo sugerido
 
-0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 112 pruebas en verde.
+0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 113 pruebas en verde.
    Ver [modulos/l10n_ve_mornix.md](modulos/l10n_ve_mornix.md).
 1. **Doble moneda primero.** El analisis de acoplamiento lo puso arriba de la
    lista: `nimetrix_dual_currency`, `nimetrix_currency_rate` y
@@ -147,6 +147,13 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 3. **Resto de la localizacion**, que ya tiene su raiz migrada.
 4. **Reportes y frontend al final**: son los mas afectados por OWL y por el
    cambio de motor PDF.
+
+> **Aviso para quien migre `nimetrix_iva_resumen_report`**: su
+> `prior_period_dates` leia `res.partner.nx_contribuyente_seniat`, campo que se
+> elimino de `l10n_ve_mornix` en la version 1.5.0 por decision del cliente. Con
+> el valor 'especial' ese modulo calcula el periodo QUINCENAL del libro resumen
+> de IVA; sin el, calculara siempre el mensual. Hay que decidir de donde sale el
+> dato antes de darlo por migrado.
 
 ## Puntos de atencion conocidos v16 -> v20
 

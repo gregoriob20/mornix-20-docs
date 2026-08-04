@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 113 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.4.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.4.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.5.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.5.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -148,7 +148,7 @@ esta migración.
 | Modelo | Archivo | Líneas | Qué agrega |
 |---|---|---:|---|
 | `account.move` | `models/account_move.py` | 1.318 | Número de control, retenciones asociadas, montos exentos, IGTF |
-| `res.partner` | `models/res_partner.py` | 325 | RIF (`vat` y sus dos mitades), tipo de persona, contribuyente SENIAT, validaciones |
+| `res.partner` | `models/res_partner.py` | 325 | RIF (`vat` y sus dos mitades), tipo de persona, validaciones |
 | `product.pricelist.item` | `models/product_pricelist_item.py` | 248 | Precio con IVA y en divisa |
 | `account.move.reversal` | `models/account_move_reserval.py` | 116 | Nota de crédito con número de control |
 | `res.company` | `models/res_company.py` | 122 | RIF (`vat`), firma del representante, validaciones configurables |
@@ -287,6 +287,9 @@ patrón de las 42 dependencias no declaradas: **el módulo no es la unidad de
 análisis correcta.** Antes de eliminar un campo hay que buscarlo en todos los
 repos del cliente, incluidos los que aún no se han migrado.
 
+**Se eliminó igualmente en 1.5.0, por decisión del cliente**, sabiendo lo
+anterior. Ver 6.2.5.
+
 ### 6.2.4 Se retiraron las dos excepciones de ISLR (versión 1.4.0)
 
 **Cambio de comportamiento fiscal, decidido por el cliente. No es una limpieza.**
@@ -312,6 +315,31 @@ revisarla antes de emitir retenciones. En la base de pruebas dio cero en ambas.
 Efecto colateral: `_nx_get_partners` devolvía una tupla de tres, y el tercer
 elemento era ese flag. **Ninguno de los tres sitios que la desempaquetaban lo
 usaba** — ya era código muerto antes del cambio. Ahora devuelve dos.
+
+### 6.2.5 Se eliminó el tipo de contribuyente SENIAT (versión 1.5.0)
+
+Decisión del cliente, tomada sabiendo que el campo **sí tiene un consumidor**.
+
+`nx_contribuyente_seniat` (ordinario / especial / formal / gubernamental) no lo
+leía ningún cálculo de este módulo, pero sí lo hace
+**`nimetrix_iva_resumen_report`** (repo `nx_tools`, v18, todavía sin migrar), en
+`prior_period_dates`: con el valor `'especial'` el libro resumen de IVA calcula
+el período **quincenal** en vez de mensual.
+
+> **Al migrar `nimetrix_iva_resumen_report` hay que decidir de dónde sale ese
+> dato.** Si no, su libro resumen calculará siempre el período mensual, que para
+> un contribuyente especial es el equivocado.
+
+`migrations/1.5.0/pre-quitar-contribuyente.py` vuelca el reparto de valores al
+log y lista por nombre los contribuyentes especiales antes de que la columna
+desaparezca. En la base de pruebas: 2 contactos, ambos `ordinario`.
+
+- [ ] **Al migrar la base real, leer ese log** y llevar la lista de especiales a
+      quien vaya a migrar `nimetrix_iva_resumen_report`.
+
+Con esto la pestaña Retenciones queda solo con los dos campos de IVA
+(`nx_wh_iva_agent` y `nx_wh_iva_rate`), que sí alimentan el cálculo de la
+retención y el comprobante.
 
 - [ ] **Un cambio de comportamiento a confirmar**: en el XML de ISLR,
       `nx_onchange_partner_id` devolvía `nx_rif[2:]`, que sobre un RIF con
