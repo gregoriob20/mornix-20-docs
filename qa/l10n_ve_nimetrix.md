@@ -1,12 +1,12 @@
 # Plan de pruebas — l10n_ve_nimetrix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **77 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **88 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
 
-**77 pruebas automatizadas en 10 archivos, todas en verde** (4 omitidas por dependencia ausente, ver abajo).
+**88 pruebas automatizadas en 11 archivos, todas en verde** (4 omitidas por dependencia ausente, ver abajo).
 
 | Archivo | Casos | Qué cubre | Origen |
 |---|---:|---|---|
@@ -20,6 +20,7 @@
 | `test_fiscal_book.py` | 11 | Qué documentos entran en cada libro fiscal | **nuevo** |
 | `test_numeracion_control.py` | 8 | Correlativo fiscal y selección de secuencia por tipo de documento | **nuevo** |
 | `test_fiscal_book_xlsx.py` | 6 | Exportación a Excel: nombre de hoja dentro de los límites y archivo válido | **nuevo** |
+| `test_wh_iva_numero.py` | 11 | Número del comprobante de retención: formato de 14, sustitución del mes contable, correlativo | **nuevo** |
 
 Que los cuatro tipos de persona estén cubiertos es lo más valioso de la suite
 heredada: es exactamente el eje que v20 puso en riesgo al eliminar
@@ -74,7 +75,7 @@ no es "funciona", es "da lo mismo que en v18".
 |---|---|---|---|
 | IVA-1 | Retención sobre factura de proveedor, tasa 75% | Monto retenido = base × 75%, comparado con la instancia v18 | cubierto parcial |
 | IVA-2 | Retención tasa 100% (contribuyente especial) | Idem | **pendiente** |
-| IVA-3 | Comprobante: numeración correlativa sin saltos | Crear 3 retenciones seguidas, verificar correlativo | **pendiente** |
+| IVA-3 | Comprobante: numeración correlativa sin saltos | Correlativo verificado, más la sustitución del mes contable en las posiciones 4:6 | cubierto (`test_wh_iva_numero.py`) |
 | IVA-4 | Cancelar y rehacer una retención | El correlativo no se repite ni se salta | **pendiente** |
 | IVA-5 | Factura sin derecho a crédito fiscal | El asistente marca y el libro la excluye | **pendiente** |
 | IVA-6 | TXT del SENIAT: estructura y longitud de campos | Comparar byte a byte con un TXT generado en v18 con los mismos datos | **pendiente** |
@@ -140,7 +141,7 @@ limpia, estos módulos casi siempre pasan.
 
 ## 5. Por qué esto todavía no es un APROBADO
 
-Los 77 tests en verde cubren el criterio **A3**. Faltan:
+Los 88 tests en verde cubren el criterio **A3**. Faltan:
 
 - **A2** — actualizar sobre una base con datos: solo se probó sobre base limpia.
 - **A6** — vistas: no se han abierto una por una en la interfaz.
@@ -176,3 +177,27 @@ python3 .claude/skills/senior-qa/scripts/coverage_analyzer.py \
 ```
 
 Instancia viva para validación funcional: **https://piloto.migracion.mornix.tech**
+
+## 7. Decisiones pendientes del cliente
+
+Los tests fijan el comportamiento **actual** en cada uno de estos puntos. No se
+cambió ninguno, porque cambiarlos altera lo que ve o presenta el cliente y esa
+no es una decisión técnica. Cuando haya respuesta, se ajusta el test y el
+código a la vez.
+
+| # | Qué hace hoy | Por qué importa |
+|---|---|---|
+| 1 | El número de documento del TXT del SENIAT **lleva las letras** (`FAC00123`, no `00123`) | El código parece querer solo dígitos, pero un `elif` mal puesto acepta las letras. Si el SENIAT espera solo dígitos, el archivo sale mal |
+| 2 | Un RIF con **dígito verificador inválido se acepta** | El módulo exime a Venezuela del chequeo de `base_vat` y solo valida el formato |
+| 3 | Un número de retención de **más de 14 caracteres se trunca en silencio** | `size=14` corta antes de que la validación llegue a mirarlo. Solo se rechazan los cortos |
+| 4 | El mensaje de error del número de retención dice *"no puede tener más de 14"* pero rechaza cualquier largo distinto de 14 | Enganoso con un número corto |
+| 5 | El contexto `default_admin_note` de los recibos **se perdió** | v20 eliminó las acciones de recibo. Solo importa si el cliente usa recibos |
+| 6 | Los 4 `name_get()` muertos **no se tocaron** | Reemplazarlos por `_compute_display_name` exige decidir qué debe mostrar cada modelo |
+
+## 8. Qué bloquea cerrar el resto
+
+| Bloqueo | Qué destraba |
+|---|---|
+| `nimetrix_dual_currency` sin migrar | LIB-1, LIB-2, LIB-4 y los 4 tests omitidos. El libro fiscal usa `amount_exempt_bs`, que define ese módulo |
+| Sin volcado real del cliente | Todo el bloque B (DAT-1 a DAT-5), que es el que de verdad prueba una migración |
+| Sin respuesta a la sección 7 | IVA-6 e ISLR-8: no se puede comparar un TXT o un XML contra lo esperado sin saber qué se espera |
