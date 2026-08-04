@@ -157,6 +157,54 @@ metodo que se esta salteando.
 - [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con
       separadores.
 
+## La API de consultas SQL se rehizo entera
+
+Afecta a cualquier modulo que construya SQL a mano a partir de un dominio —
+tipico en reportes y libros. Todo esto **desaparecio** en v20:
+
+| v18 | v20 |
+|---|---|
+| `check_access_rights('read')` | `check_access('read')` — sobre un recordset vacio comprueba el permiso a nivel de modelo, que es lo que hacia el metodo viejo |
+| `check_access_rule(...)` | absorbido por `check_access` |
+| `_where_calc(domain)` | `_search(domain)`, que ya devuelve un `Query` |
+| `_apply_ir_rules(query)` | lo aplica `_search` por dentro |
+| `sql.code` / `sql.params` | **los objetos `SQL` son opacos**: no exponen el texto ni los parametros |
+
+Antes se concatenaban cadenas; ahora se componen objetos `SQL` y se pasa el
+resultado entero al cursor:
+
+```python
+# v18
+query = am._where_calc(domain)
+am._apply_ir_rules(query)
+cr.execute(f"SELECT ... FROM {query.from_clause.code} WHERE {query.where_clause.code}",
+           query.where_clause.params)
+
+# v20
+from odoo.tools import SQL
+query = am._search(domain)
+cr.execute(SQL("SELECT %s FROM %s WHERE %s",
+               SQL(select_clause, *select_params),
+               query.from_clause,
+               query.where_clause))
+```
+
+En `SQL(code, *args)`, los argumentos que son objetos `SQL` se insertan como
+SQL; el resto viaja como parametro. Es lo que evita la inyeccion.
+
+**Modo de fallo:** el modulo instala perfecto y revienta al generar el reporte.
+Nada en la instalacion toca ese camino.
+
+## `ir.config_parameter.get_param` reemplazado por accesores tipados
+
+| v18 | v20 |
+|---|---|
+| `get_param(key, default)` | `get_str`, `get_bool`, `get_int`, `get_float` |
+| `set_param(key, value)` | `set_str`, `set_bool`, `set_int`, `set_float` |
+
+Mismo modo de fallo silencioso: solo aparece cuando se ejecuta el codigo que lo
+usa.
+
 ## `_uid` ya no existe en los recordsets
 
 En 18.0, `odoo/models.py` definia `_uid = property(lambda self: self.env.uid)`.

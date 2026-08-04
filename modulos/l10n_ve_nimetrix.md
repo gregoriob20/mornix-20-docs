@@ -39,6 +39,28 @@ Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
 v20, y aquí no aplica.
 
+## 2.1 Dependencia no declarada — importante
+
+**El libro fiscal no funciona sin `nimetrix_dual_currency`.** El SQL de
+`_get_data` referencia `account_move.amount_exempt_bs`, campo que define ese
+módulo (repo `nx_dual_currency`), y el manifest de `l10n_ve_nimetrix` **no lo
+declara como dependencia**.
+
+Consecuencias:
+
+- El módulo instala limpio sin él, pero al generar el libro fiscal falla con
+  `column account_move.amount_exempt_bs does not exist`.
+- No es una rotura de la migración: en v18 pasaría igual. Es acoplamiento
+  preexistente que los manifests no reflejan.
+- Los tests de exportación a Excel se **omiten** cuando falta, con mensaje
+  explícito, en vez de pasar en falso.
+
+Esto cambia el orden de migración: `nimetrix_dual_currency` tiene que migrarse
+antes o a la par, no después.
+
+- [ ] Revisar si hay más dependencias no declaradas entre módulos del cliente.
+      El manifest no es fuente confiable de acoplamiento.
+
 ## 3. Dependencias
 
 ```
