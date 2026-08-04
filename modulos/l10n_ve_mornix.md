@@ -580,6 +580,52 @@ migrar el dato.
       tiempo **sin retención de IVA** sin que nadie lo pretendiera.
 
 
+### 6.6 El número de comprobante de ISLR se trunca y sale igual en todos
+
+**Encontrado al validar el flujo completo con `scripts/generar_flujo_demo.py`.**
+
+`nimetrix.wh.islr.doc.name` —"Número de Comprobante"— está declarado con
+`size=14`. La secuencia que lo alimenta produce 19 caracteres:
+
+```
+secuencia  RE/ISLR/%(year)s/ + padding 6  ->  'RE/ISLR/2026/000125'   (19)
+guardado                                  ->  'RE/ISLR/2026/0'        (14)
+```
+
+El correlativo queda cortado y **todos los comprobantes se llaman igual**.
+Medido sobre la base: **16 comprobantes, 1 solo nombre distinto**.
+
+Viene de v16: el prefijo y el tamaño del campo nunca fueron compatibles.
+
+El correlativo fiscal de verdad es otro campo, `nx_number`, y ese **sí funciona**:
+sale `00000100`, `00000101`… correlativo y único. Solo se asigna al cerrar el
+comprobante (`nx_action_done`), no al confirmarlo.
+
+Para comparar, el comprobante de IVA usa el formato del SENIAT —`AAAAMM` + 8
+dígitos = 14 caracteres— y encaja exacto: `20260600000005`.
+
+- [ ] **Decisión del cliente**: qué formato lleva el "Número de Comprobante" de
+      ISLR. Si es el mismo del SENIAT que usa el IVA, la secuencia debe perder
+      el prefijo `RE/ISLR/` y quedar en `AAAAMM` + correlativo. Si el prefijo se
+      quiere conservar, hay que ampliar el campo.
+- [ ] Revisar en la base del cliente cuántos comprobantes de ISLR comparten
+      nombre hoy.
+
+#### Otra cosa que el flujo dejó a la vista
+
+`nx_retencion_seq_get()` hace cirugía posicional sobre la cadena para sustituir
+el mes:
+
+```python
+if not account_month == local_number[4:6]:
+    local_number = local_number[:4] + account_month + local_number[6:]
+```
+
+Eso asume que los caracteres 4 y 5 son el mes, cierto para `AAAAMM…` pero no
+para `RE/ISLR/…`, donde son `SL`. Con el prefijo actual corrompe la cadena en
+vez de corregirla. Se resuelve solo si se adopta el formato del SENIAT.
+
+
 ## 7. Cómo levantarlo
 
 ```bash
