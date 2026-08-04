@@ -64,6 +64,65 @@ del host.
 
 - [ ] Revisar la configuracion de produccion del cliente antes de subir a v20.
 
+## La version del manifest ahora se valida (y decide si el modulo existe)
+
+**El hallazgo mas importante hasta ahora. Afecta a los 226 modulos.**
+
+v20 valida el campo `version` del manifest contra la serie que corre. Si no
+coincide, marca el modulo `installable=False`:
+
+```
+WARNING: The module l10n_ve_nimetrix has an incompatible version,
+         setting installable=False
+```
+
+`odoo/modules/module.py:453`. **No existe en 18.0.**
+
+### Por que duele
+
+El modo de fallo es silencioso. Odoo:
+
+- registra un **WARNING**, no un error;
+- **termina con codigo de salida 0**;
+- simplemente no instala el modulo.
+
+Un `-i mi_modulo` sobre un modulo con la version vieja "funciona": el proceso
+termina bien y no instala nada. Si uno mira solo el codigo de salida, parece
+exito. Nos paso en el primer intento del piloto.
+
+### Que version poner
+
+`check_version()` exige que la version empiece con la serie. Y **la serie de
+master es `19.5`, no `20.0`**:
+
+| Version en el manifest | Resultado |
+|---|---|
+| `18.0.0.11.0` | rechazada, no instala |
+| `20.0.1.0.0` | **rechazada tambien** — la serie es 19.5, no 20.0 |
+| `19.5.1.0.0` | aceptada, pero queda obsoleta cuando salga la rama 20.0 |
+| `1.0.0` | **aceptada**: con 2 o 3 partes, `adapt_version()` le antepone la serie vigente |
+
+**Convencion del proyecto: usar la forma corta `x.y.z`.** Es la unica que
+sobrevive al release de v20 sin tener que tocar 226 manifests otra vez.
+
+Detalle en `adapt_version()`: solo antepone la serie si la version tiene 3
+partes o menos. Con 4 o 5 partes la deja tal cual, y entonces tiene que empezar
+por la serie a mano.
+
+- [ ] Al migrar cada modulo, cambiar `version` a la forma corta.
+
+## `--without-demo=all` ya no acepta valores
+
+Menor, pero rompe los comandos de siempre:
+
+```
+WARNING: option --without-demo: since 19.0, invalid boolean value: 'all',
+         assume True
+```
+
+Desde 19.0 es un booleano. `--without-demo=all` sigue funcionando por
+interpretacion benevola, pero lo correcto es `--without-demo` a secas.
+
 ## `SingleTransactionCase` eliminada
 
 **Confirmado en codigo.** `odoo/tests/common.py`:
