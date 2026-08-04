@@ -251,10 +251,24 @@ Muncher"), el motor de render propio de Odoo (https://odoo.github.io/paper-munch
 No existe en 18.0. `wkhtmltopdf` sigue referenciado en varios addons del core.
 
 - [ ] Definir con que motor se renderizan los reportes del cliente en v20.
-- Nota del entorno: Ubuntu 24.04 empaqueta `wkhtmltopdf 0.12.6-2build2` **sin el
-  Qt parcheado** (upstream no publica build para Noble). Los encabezados y pies
-  de pagina pueden renderizar distinto que en produccion. Si un reporte se ve
-  mal, sospechar de esto antes que del codigo migrado.
+### El wkhtmltopdf de Ubuntu 24.04 exige display y no admite pies de pagina
+
+Ubuntu 24.04 empaqueta `wkhtmltopdf 0.12.6-2build2` **sin el Qt parcheado**
+(upstream no publica build para Noble). **Verificado en ejecucion**, con dos
+consecuencias y ambas silenciosas:
+
+1. **Exige un display.** Sin el falla con `QPainter::begin(): Returned false`,
+   **devuelve codigo de salida 0** y no escribe el archivo. Resuelto en
+   `docker/Dockerfile.v20` con un envoltorio que lo corre bajo `xvfb`.
+2. **No admite encabezados ni pies de pagina.** Con cualquier opcion
+   `--header-*` o `--footer-*` termina sin generar nada, tambien con codigo 0.
+
+Afecta a **todos** los reportes PDF de Odoo, no solo a los del cliente: sin el
+envoltorio el criterio A7 no se puede cumplir, y el fallo no deja rastro en el
+codigo de salida.
+
+- [ ] Si el cliente necesita encabezados o pies en sus reportes, hay que
+      compilar el wkhtmltopdf parcheado o pasar a `base_report_paper_muncher`.
 
 ## Roturas por modulo
 
