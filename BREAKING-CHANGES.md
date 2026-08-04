@@ -441,6 +441,35 @@ accion, no la fila:
       desaparezca del XML: se queda en la base y sigue aplicandose. Hay que
       eliminarlo con un script `pre-`.
 
+## `precompute=True` sobre un campo que depende de un `default`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | **Silencioso** |
+
+No es un cambio de v20, pero se destapo migrando y merece estar aqui por como
+se manifiesta: **no falla nunca, simplemente el numero es otro**.
+
+Un campo calculado y almacenado con `precompute=True` se calcula **antes** del
+INSERT. Si depende de otro campo que recibe su valor por `default=`, puede
+leerlo todavia vacio y guardar el resultado de esa lectura. Y como la
+dependencia solo se dispara al **escribir** el campo del que depende, un
+`default` no la vuelve a activar: el valor mal calculado se queda para siempre.
+
+El caso: `nx_currency_ref_rate = 1 / (nx_rate or 1)`, con `precompute=True`.
+`nx_rate` llega por `default`, asi que el calculo veia 0 y guardaba **1**. Los
+totales en divisa de la factura salian identicos a los de bolivares. Medido
+sobre la base: **36 de 52 facturas**.
+
+Se resuelve quitando el `precompute`: el calculo pasa a correr despues del
+create, con el valor ya puesto.
+
+- [ ] Al migrar cada modulo, revisar los campos `precompute=True` que dependan
+      de campos con `default=`. Un `default` no dispara la dependencia.
+- [ ] Y arreglar lo ya guardado: quitar el precompute no recalcula lo viejo.
+      Hace falta `env.add_to_compute(...)` en una migracion.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
