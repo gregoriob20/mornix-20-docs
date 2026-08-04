@@ -123,6 +123,58 @@ WARNING: option --without-demo: since 19.0, invalid boolean value: 'all',
 Desde 19.0 es un booleano. `--without-demo=all` sigue funcionando por
 interpretacion benevola, pero lo correcto es `--without-demo` a secas.
 
+## La validacion del `vat` cambio de sitio y ahora normaliza
+
+**Doble cambio en `base_vat`.**
+
+### Donde se valida
+
+| version | mecanismo |
+|---|---|
+| 18.0 | `@api.constrains('vat', 'country_id') def check_vat` en `base_vat` |
+| master | inverse del campo: `vat` -> `_inverse_vat` -> `_check_vat` -> `_run_vat_checks` |
+
+Un modulo que sobreescriba `check_vat` y llame a `super().check_vat()` lanza
+`AttributeError: 'super' object has no attribute 'check_vat'`. El override debe
+pasar a `_check_vat(self, validation="error")`.
+
+### Que se guarda
+
+`_check_vat` escribe de vuelta el vat **normalizado**: `_format_vat_number`
+aplica `stdnum` y elimina los separadores, asi que `J-99800001-6` queda
+`J998000016`.
+
+En 18.0 no pasaba para Venezuela: `_fix_vat_number` comparaba el prefijo del vat
+contra el codigo de pais (`j-` contra `ve`), no coincidia, y devolvia el valor
+sin tocar.
+
+**Consecuencia para las localizaciones que guardan el identificador con
+formato**: los reportes, TXT y XML que tomen el numero de `vat` lo veran sin
+separadores. Un modulo que exima a su pais del chequeo estandar (como hace
+`l10n_ve_nimetrix`) conserva el formato, porque la reescritura vive dentro del
+metodo que se esta salteando.
+
+- [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con
+      separadores.
+
+## `_uid` ya no existe en los recordsets
+
+En 18.0, `odoo/models.py` definia `_uid = property(lambda self: self.env.uid)`.
+En master no existe. Rompe sobre todo en valores por defecto:
+
+```python
+# v18
+default=lambda s: s._uid
+# v20
+default=lambda s: s.env.uid
+```
+
+Falla en el momento de calcular el default, no al importar, asi que aparece
+tarde: el modulo instala bien y revienta al abrir el formulario o al crear un
+registro en un test.
+
+- 6 archivos del codigo del cliente lo usan.
+
 ## `SingleTransactionCase` eliminada
 
 **Confirmado en codigo.** `odoo/tests/common.py`:

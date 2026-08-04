@@ -148,20 +148,41 @@ usuario fijó se respeta y la heurística de Odoo queda solo como valor inicial.
       que ningún contacto cambie de tipo. Un proveedor que pase de natural a
       jurídica cambia su retención.
 
-### 6.2 El RIF se guarda sin guiones — riesgo alto
+### 6.2 Normalización del RIF — riesgo controlado, pero frágil
 
-v20 normaliza el campo `vat` con `stdnum`: `J-99800001-6` queda almacenado como
-`J998000016`. En v18 no pasaba, porque `_fix_vat_number` comparaba el prefijo
-del vat contra el código de país, no coincidía para Venezuela y devolvía el
-valor intacto.
+v20 normaliza el campo `vat` con `stdnum` y le quita los separadores:
+`J-99800001-6` → `J998000016`. En v18 no pasaba, porque `_fix_vat_number`
+comparaba el prefijo del vat contra el código de país, no coincidía para
+Venezuela y devolvía el valor intacto.
 
-**Qué se hizo:** las validaciones del módulo (`nx_validate_rif`,
-`nx_validate_rif_er`) normalizan antes de comparar, en vez de exigir los
-guiones. El RIF con formato legible sigue en `nx_rif`.
+**En el estado final, esto NO afecta al módulo.** Verificado en la base piloto:
+el `vat` y el `nx_rif` conservan sus guiones. La razón es que el override de
+`_check_vat` exime a Venezuela del chequeo estándar, y es precisamente
+`_check_vat` quien escribe de vuelta el valor normalizado.
 
-- [ ] **Revisar los reportes y los TXT/XML del SENIAT**: si alguno toma el RIF
-      de `vat` en vez de `nx_rif`, saldrá sin guiones. Es lo primero que hay que
-      comprobar antes de presentar una declaración.
+Sí golpeó **durante** la migración: mientras el override estaba roto (llamaba a
+`super().check_vat()`, que ya no existe), Odoo normalizó los RIF y las
+validaciones del módulo —que exigían los guiones— rechazaban el valor que el
+propio Odoo acababa de escribir. Por eso `nx_validate_rif` y
+`nx_validate_rif_er` ahora normalizan antes de comparar: toleran ambos formatos.
+
+El equilibrio es frágil y depende de un override. `tests/test_seniat_rif_formato.py`
+lo fija: si alguien quita la exención, o si Odoo mueve la normalización a otro
+punto del ciclo, esos tests fallan antes de que salga un TXT mal formado.
+
+- [ ] Si en la base del cliente quedó algún RIF normalizado de un intento
+      previo, hay que detectarlo: `nx_rif NOT LIKE '%-%'`.
+
+### 6.2.1 El dígito verificador del RIF no se valida
+
+Consecuencia de la misma exención: `base_vat` valida el dígito verificador, pero
+Venezuela queda fuera. El módulo solo comprueba el **formato** con su propia
+regex. Un RIF con el dígito mal entra sin protestar — verificado.
+
+No es una rotura de la migración, es cómo estaba diseñado. Queda documentado
+porque no es obvio.
+
+- [ ] Confirmar con el cliente si se espera esa permisividad.
 
 ### 6.3 La validación del vat cambió de sitio
 

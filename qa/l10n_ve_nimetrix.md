@@ -6,21 +6,47 @@
 
 ## 1. Qué está cubierto hoy
 
-30 pruebas automatizadas en 4 archivos, todas en verde:
+**52 pruebas automatizadas en 7 archivos, todas en verde.**
 
-| Archivo | Casos | Qué cubre |
-|---|---:|---|
-| `test_invoice_wh_iva_islr.py` | 4 | Flujo completo de factura de 40 líneas con retención de IVA e ISLR, para los cuatro tipos de persona: **PJDO, PJND, PNRE, PNNR** |
-| `test_product_pricelist.py` | 17 | Precios en divisa, precio fijo, fórmulas, etiquetas y trampas de valores falsy |
-| `test_res_company.py` | 8 | Validación del RIF de la compañía y moneda de referencia |
-| `test_account_move_invoice_num.py` | 1 | El número de control sobrevive a borrador → publicar → borrador → publicar |
+| Archivo | Casos | Qué cubre | Origen |
+|---|---:|---|---|
+| `test_invoice_wh_iva_islr.py` | 4 | Flujo completo de factura de 40 líneas con retención de IVA e ISLR, para los cuatro tipos de persona: **PJDO, PJND, PNRE, PNNR** | heredado |
+| `test_product_pricelist.py` | 17 | Precios en divisa, precio fijo, fórmulas, etiquetas y trampas de valores falsy | heredado |
+| `test_res_company.py` | 8 | Validación del RIF de la compañía y moneda de referencia | heredado |
+| `test_account_move_invoice_num.py` | 1 | El número de control sobrevive a borrador → publicar → borrador → publicar | heredado |
+| `test_account_ut.py` | 8 | Unidad tributaria: valor vigente por fecha, conversiones y el caso sin UT | **nuevo** |
+| `test_seniat_rif_formato.py` | 7 | Formato del RIF almacenado y el que llega al TXT y al XML | **nuevo** |
+| `test_wh_iva_txt.py` | 7 | Formato del número de documento en el TXT del SENIAT | **nuevo** |
 
-Que los cuatro tipos de persona estén cubiertos es lo más valioso de esta suite:
-es exactamente el eje que v20 puso en riesgo al eliminar `company_type`.
+Que los cuatro tipos de persona estén cubiertos es lo más valioso de la suite
+heredada: es exactamente el eje que v20 puso en riesgo al eliminar
+`company_type`.
+
+De los tests nuevos, los de `test_seniat_rif_formato.py` son los que más
+protegen: fijan que el RIF conserve sus guiones, cosa que depende de un override
+frágil. Si alguien lo quita, esos tests fallan antes de que salga un TXT mal
+formado.
+
+### Dos comportamientos que los tests nuevos dejaron a la vista
+
+Ninguno es una rotura de la migración; ambos venían de antes y no eran obvios:
+
+1. **El dígito verificador del RIF no se valida.** El módulo exime a Venezuela
+   del chequeo de `base_vat` y solo comprueba el formato con su regex. Un RIF
+   con el dígito mal entra sin protestar.
+2. **`nx_get_number` ignora su propio parámetro `inv_type`.** El código quiere
+   quedarse solo con dígitos cuando el tipo es `vou_number`, pero usa
+   `elif i.isalnum()`: para una letra la primera condición es falsa y cae al
+   `elif`, que la acepta igual. Ambos tipos dan el mismo resultado.
+
+Los tests fijan el comportamiento **real**, no el aparente. Cambiarlos alteraría
+lo que sale en el TXT, y eso lo decide el cliente.
+
+- [ ] Confirmar ambos puntos con el cliente.
 
 ## 2. Qué NO está cubierto
 
-**36 de los 46 modelos no aparecen en ninguna prueba.** Medido con
+**33 de los 46 modelos no aparecen en ninguna prueba.** Medido con
 `.claude/skills/senior-qa/scripts/coverage_analyzer.py`. Los que importan:
 
 | Modelo sin cubrir | Por qué importa |
@@ -49,7 +75,7 @@ no es "funciona", es "da lo mismo que en v18".
 | IVA-4 | Cancelar y rehacer una retención | El correlativo no se repite ni se salta | **pendiente** |
 | IVA-5 | Factura sin derecho a crédito fiscal | El asistente marca y el libro la excluye | **pendiente** |
 | IVA-6 | TXT del SENIAT: estructura y longitud de campos | Comparar byte a byte con un TXT generado en v18 con los mismos datos | **pendiente** |
-| IVA-7 | TXT: RIF con y sin guiones | **Crítico**: v20 guarda el vat sin guiones. Verificar de qué campo lo toma el TXT | **pendiente** |
+| IVA-7 | TXT: formato del RIF | El TXT toma `nx_rif` sin limpiarlo; se verificó que conserva los guiones | cubierto (`test_seniat_rif_formato.py`) |
 
 ### 3.2 Retención de ISLR
 
@@ -59,7 +85,7 @@ no es "funciona", es "da lo mismo que en v18".
 | ISLR-2 | PJND — jurídica no domiciliada | Idem, y exención de la validación de vat | cubierto |
 | ISLR-3 | PNRE — natural residente | Idem | cubierto |
 | ISLR-4 | PNNR — natural no residente | Idem | cubierto |
-| ISLR-5 | Sustraendo con la unidad tributaria vigente | Cambiar la UT y verificar que el cálculo la sigue | **pendiente** |
+| ISLR-5 | Sustraendo con la unidad tributaria vigente | Cambiar la UT y verificar que el cálculo la sigue | cubierto (`test_account_ut.py`) |
 | ISLR-6 | Proveedor exento (`nx_islr_exempt`) | No se retiene | **pendiente** |
 | ISLR-7 | Varios conceptos en una misma factura | Cada concepto con su tarifa | **pendiente** |
 | ISLR-8 | XML del SENIAT | Comparar con el XML generado en v18 | **pendiente** |
