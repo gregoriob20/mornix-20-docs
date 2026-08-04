@@ -318,6 +318,48 @@ codigo de salida.
 - [ ] Si el cliente necesita encabezados o pies en sus reportes, hay que
       compilar el wkhtmltopdf parcheado o pasar a `base_report_paper_muncher`.
 
+## `res.users.groups_id` pasa a llamarse `group_ids`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+```python
+# v18
+usuario.groups_id
+# v20
+usuario.group_ids          # grupos asignados explicitamente
+usuario.all_group_ids      # incluye los implicados
+```
+
+`odoo/addons/base/models/res_users.py:249`. Cualquier codigo que asigne o
+consulte grupos por el nombre viejo revienta con
+`ValueError: Invalid field 'groups_id' in 'res.users'`.
+
+- [ ] Al migrar cada modulo, buscar `groups_id` en el codigo Python. En las
+      vistas y en los manifests el atributo `groups=` no cambia.
+
+## Un `--` dentro de un comentario XML aborta el arranque
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | **Enmascarado** |
+
+No es un cambio de v20 —el XML nunca lo permitio— pero merece estar aqui por
+como se manifiesta: Odoo no dice que archivo es ni que el problema es el
+comentario. Aborta la carga entera del registro con un traceback de lxml:
+
+```
+lxml.etree.XMLSyntaxError: Double hyphen within comment
+odoo.registry: Failed to load registry
+```
+
+Aparece al redactar explicaciones largas en las vistas, que es justo lo que uno
+hace al migrar. `scripts/verificar_estandar.py` lo detecta antes de intentar la
+actualizacion.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
