@@ -289,6 +289,52 @@ desde el XML unas líneas más adelante y recuperan su xmlid.
 
 ---
 
+## Maquetación de formularios: dos trampas que no dan error
+
+Ninguna de las dos rompe la instalación ni falla en las pruebas. Se ven abriendo
+el navegador, y descolocan campos del **core** que no tienen nada que ver con su
+módulo.
+
+### Para titular una sección dentro de un grupo va `<separator>`, no `<group>`
+
+Dentro de un `<group>`, Odoo empareja cada etiqueta con el elemento siguiente
+como su valor. Un `<group>` hijo ocupa la fila entera, así que al convivir con
+campos sueltos rompe ese emparejamiento.
+
+```xml
+<!-- MAL: descoloca la columna entera -->
+<xpath expr="//field[@name='ref']" position="after">
+    <group string="Información fiscal">
+        <field name="x_numero"/>
+    </group>
+</xpath>
+
+<!-- BIEN -->
+<xpath expr="//field[@name='ref']" position="after">
+    <separator string="Información fiscal" colspan="2"/>
+    <field name="x_numero"/>
+</xpath>
+```
+
+La cabecera del formulario de facturas ya usa dos niveles (`group > group` = las
+dos columnas). Al añadir un tercero, las fechas y el diario —campos del core—
+pasaron a mostrar la etiqueta y el valor en filas distintas.
+
+**No se puede detectar automáticamente sin ruido**: se intentó, y el chequeo
+marcaba 34 vistas, incluida `account.view_move_form` del propio core sin
+modificar. Mezclar grupos y campos sueltos es corriente y casi siempre inocuo.
+Aquí no queda más que mirar la pantalla.
+
+### Una etiqueta y su valor se separan si se inserta algo entre medias
+
+El mismo emparejamiento explica el otro caso. En el formulario de contacto,
+`<span class="o_td_label">Dirección Fiscal</span>` se empareja con el bloque de
+dirección que le sigue. Insertar campos entre ambos hacía que la etiqueta se
+emparejara con el primer campo insertado y el resto quedara descolocado. La
+solución es insertar **antes** de la etiqueta, no entre la etiqueta y su valor.
+
+---
+
 ## `product` — productos y precios
 
 | Cambio | Estado | Cómo falla |
