@@ -1,12 +1,12 @@
 # Plan de pruebas — l10n_ve_mornix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **128 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **130 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
 
-**128 pruebas automatizadas en 13 archivos, todas en verde.**
+**130 pruebas automatizadas en 13 archivos, todas en verde.**
 
 | Archivo | Casos | Qué cubre | Origen |
 |---|---:|---|---|
@@ -20,7 +20,7 @@
 | `test_fiscal_book.py` | 11 | Qué documentos entran en cada libro fiscal | **nuevo** |
 | `test_numeracion_control.py` | 8 | Correlativo fiscal y selección de secuencia por tipo de documento | **nuevo** |
 | `test_fiscal_book_xlsx.py` | 6 | Exportación a Excel: nombre de hoja dentro de los límites y archivo válido | **nuevo** |
-| `test_desglose_iva.py` | 6 | Desglose de IVA por alícuota en la factura | **nuevo** |
+| `test_desglose_iva.py` | 8 | Desglose de IVA por alícuota en la factura | **nuevo** |
 | `test_libro_resumen_iva.py` | 5 | Libro Resumen de IVA: consultas válidas y el Excel se genera | **nuevo** |
 | `test_wh_iva_numero.py` | 11 | Número del comprobante de retención: formato de 14, sustitución del mes contable, correlativo | **nuevo** |
 

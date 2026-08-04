@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 128 pruebas sin errores ni advertencias**.
+> 130 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.12.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.12.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.13.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.13.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 128 (13 archivos) — 30 heredadas, 98 escritas en la migración |
+| Pruebas | 130 (13 archivos) — 30 heredadas, 100 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -481,7 +481,24 @@ nx_base_general      nx_iva_general
 nx_base_reducida     nx_iva_reducida
 nx_base_adicional    nx_iva_adicional
 nx_base_imponible    nx_iva_total
+nx_total_documento
 ```
+
+**Siempre en bolívares**, facture la factura en la moneda que facture. Los libros
+y las retenciones se presentan al SENIAT en la moneda de la compañía: un desglose
+en divisa no sirve para declarar, y obligaba a convertir en cada consumidor —con
+el riesgo de convertir dos veces.
+
+Por eso se calcula sobre `balance` y no sobre `price_subtotal` ni
+`amount_currency`, que están en la moneda de la factura. Comprobado sobre una
+factura de 100 USD a 750 Bs: `amount_currency = -100`, `balance = -75.000`.
+
+Consecuencia directa: **`conv_div_nac` desapareció del Libro Resumen.** Convertía
+los importes del resumen a bolívares; ahora ya vienen así, y aplicarla sería
+convertir dos veces.
+
+`nx_total_documento` es el total a efectos fiscales: bases gravadas + exento +
+IVA. **No es `amount_total`**: deja fuera lo que no es IVA, como el IGTF.
 
 **Los cinco motivos, todos verificados sobre la base:**
 
