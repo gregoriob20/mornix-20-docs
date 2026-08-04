@@ -1,12 +1,12 @@
 # Plan de pruebas — l10n_ve_nimetrix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **52 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **71 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
 
-**52 pruebas automatizadas en 7 archivos, todas en verde.**
+**71 pruebas automatizadas en 9 archivos, todas en verde.**
 
 | Archivo | Casos | Qué cubre | Origen |
 |---|---:|---|---|
@@ -17,6 +17,8 @@
 | `test_account_ut.py` | 8 | Unidad tributaria: valor vigente por fecha, conversiones y el caso sin UT | **nuevo** |
 | `test_seniat_rif_formato.py` | 7 | Formato del RIF almacenado y el que llega al TXT y al XML | **nuevo** |
 | `test_wh_iva_txt.py` | 7 | Formato del número de documento en el TXT del SENIAT | **nuevo** |
+| `test_fiscal_book.py` | 11 | Qué documentos entran en cada libro fiscal | **nuevo** |
+| `test_numeracion_control.py` | 8 | Correlativo fiscal y selección de secuencia por tipo de documento | **nuevo** |
 
 Que los cuatro tipos de persona estén cubiertos es lo más valioso de la suite
 heredada: es exactamente el eje que v20 puso en riesgo al eliminar
@@ -97,7 +99,7 @@ no es "funciona", es "da lo mismo que en v18".
 |---|---|---|---|
 | LIB-1 | Libro de ventas de un período | Totales cuadran con la suma de facturas | **pendiente** |
 | LIB-2 | Libro de compras de un período | Idem | **pendiente** |
-| LIB-3 | Exclusión por posición fiscal | Las facturas excluidas no aparecen | **pendiente** |
+| LIB-3 | Exclusión por posición fiscal | El dominio añade `fiscal_position_id not in` | cubierto (`test_fiscal_book.py`) |
 | LIB-4 | Exportación a Excel | El archivo abre y las columnas cuadran | **pendiente** |
 | LIB-5 | Nombre de la hoja de Excel | v20 perdió el saneamiento de nombres de hoja de v18 | **pendiente** |
 
@@ -106,8 +108,8 @@ no es "funciona", es "da lo mismo que en v18".
 | # | Caso | Verificación | Estado |
 |---|---|---|---|
 | NUM-1 | El número persiste tras republicar | | cubierto |
-| NUM-2 | Nota de crédito hereda el control | | **pendiente** |
-| NUM-3 | Correlativo por diario, sin saltos | Crear 5 facturas y verificar la secuencia | **pendiente** |
+| NUM-2 | Nota de crédito usa su propia secuencia | Y cae en la de factura si no está definida | cubierto (`test_numeracion_control.py`) |
+| NUM-3 | Correlativo por diario, sin saltos | 3 facturas seguidas dan 3 números consecutivos, en factura y en control | cubierto (`test_numeracion_control.py`) |
 | NUM-4 | Asignación manual con el asistente | | **pendiente** |
 
 ### 3.5 Precios y divisa
@@ -137,7 +139,7 @@ limpia, estos módulos casi siempre pasan.
 
 ## 5. Por qué esto todavía no es un APROBADO
 
-Los 52 tests en verde cubren el criterio **A3**. Faltan:
+Los 71 tests en verde cubren el criterio **A3**. Faltan:
 
 - **A2** — actualizar sobre una base con datos: solo se probó sobre base limpia.
 - **A6** — vistas: no se han abierto una por una en la interfaz.
