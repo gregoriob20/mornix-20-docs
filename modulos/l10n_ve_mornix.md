@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 130 pruebas sin errores ni advertencias**.
+> 136 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.13.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.13.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.16.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.16.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 130 (13 archivos) — 30 heredadas, 100 escritas en la migración |
+| Pruebas | 136 (14 archivos) — 30 heredadas, 106 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -604,12 +604,18 @@ comprobante (`nx_action_done`), no al confirmarlo.
 Para comparar, el comprobante de IVA usa el formato del SENIAT —`AAAAMM` + 8
 dígitos = 14 caracteres— y encaja exacto: `20260600000005`.
 
-- [ ] **Decisión del cliente**: qué formato lleva el "Número de Comprobante" de
-      ISLR. Si es el mismo del SENIAT que usa el IVA, la secuencia debe perder
-      el prefijo `RE/ISLR/` y quedar en `AAAAMM` + correlativo. Si el prefijo se
-      quiere conservar, hay que ampliar el campo.
-- [ ] Revisar en la base del cliente cuántos comprobantes de ISLR comparten
-      nombre hoy.
+**Resuelto (1.15.0)**: el cliente confirmó que lleva el mismo formato del
+SENIAT que el IVA. La secuencia pasó a `%(year)s%(month)s` con padding 8 —14
+caracteres exactos— y el mes ya se sustituye con cero a la izquierda. Verificado
+sobre el flujo completo: `20260800000130`, `…131`, `…132`, `…133`, únicos.
+
+`migrations/1.15.0` actualiza la secuencia en las bases existentes (el registro
+vive en un `noupdate="1"`) y **cuenta los comprobantes que hoy comparten
+nombre**, sin renumerarlos: reescribir el número de un documento fiscal ya
+presentado no es cosa de una migración.
+
+- [ ] **Decisión del cliente**: qué se hace con los comprobantes de ISLR ya
+      emitidos que comparten nombre. La migración los lista en el log.
 
 #### Otra cosa que el flujo dejó a la vista
 
