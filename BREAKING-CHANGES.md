@@ -64,6 +64,27 @@ del host.
 
 - [ ] Revisar la configuracion de produccion del cliente antes de subir a v20.
 
+## `SingleTransactionCase` eliminada
+
+**Confirmado en codigo.** `odoo/tests/common.py`:
+
+| version | tiene `SingleTransactionCase` |
+|---|---|
+| 16.0 | si |
+| 18.0 | si |
+| master | **no** |
+
+En v20 quedan `BaseCase`, `TransactionCase` y `HttpCase`.
+
+El reemplazo es `TransactionCase`, pero el aislamiento cambia:
+`SingleTransactionCase` compartia una unica transaccion entre todos los tests de
+la clase, `TransactionCase` da una por test con rollback. Los tests que dependian
+de datos creados por un test anterior van a fallar, y ese fallo es correcto.
+
+El codigo actual del cliente no la usa (verificado con grep sobre
+`/opt/odoo-client/`), asi que hoy no bloquea nada. Queda anotado por si aparece
+en codigo que todavia no hemos revisado.
+
 ## Motor de reportes PDF
 
 master incorpora el addon **`base_report_paper_muncher`** ("Report Engine: Paper
