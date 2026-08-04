@@ -632,6 +632,41 @@ para `RE/ISLR/…`, donde son `SL`. Con el prefijo actual corrompe la cadena en
 vez de corregirla. Se resuelve solo si se adopta el formato del SENIAT.
 
 
+### 6.7 El XML de ISLR limpia unos campos y otros no
+
+Verificado generando el archivo completo (11.623 bytes, 36 detalles):
+
+| Campo | Qué sale | Cómo lo trata el código |
+|---|---|---|
+| `RifRetenido` | `V400000038` | `.replace("-", "")` |
+| `NumeroControl` | `CTRL000007` | `.replace("-", "")` y recorta a 10 |
+| `NumeroFactura` | `F-000007` | **`[-10:]` a secas, conserva el guion** |
+
+Los tres son identificadores del mismo documento y solo dos se normalizan. No es
+una rotura de la migración —viene así de v16— pero el archivo se presenta al
+SENIAT.
+
+- [ ] **Confirmar con el cliente** si el SENIAT acepta el número de factura con
+      separadores. Si no, falta el `.replace("-", "")`, igual que en los otros
+      dos campos.
+
+### 6.8 Números de control ausentes en datos migrados
+
+Al generar el XML sobre los datos de prueba aparecieron **48 líneas sin número
+de control**, procedentes de 12 facturas de proveedor cargadas sin él. El XML
+ahora las lista en vez de reventar (ver 6.6).
+
+Importa para la migración real: **el número de control de una factura de
+proveedor no se puede inventar** —viene impreso en el documento del proveedor—.
+Si la base de origen lo tiene vacío en facturas ya retenidas, hay que
+recuperarlo del sistema anterior antes de poder declarar ese período.
+
+- [ ] Medir en la base del cliente cuántas facturas de proveedor con retención
+      de ISLR no tienen número de control:
+      `SELECT COUNT(*) FROM account_move WHERE move_type IN ('in_invoice','in_refund')
+       AND state='posted' AND COALESCE(nx_nro_ctrl,'')='';`
+
+
 ## 7. Cómo levantarlo
 
 ```bash
