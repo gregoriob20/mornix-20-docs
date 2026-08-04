@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 128 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.11.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.11.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.12.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.12.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -529,6 +529,38 @@ Se añadió además el filtro por compañía, que la versión anterior no tenía
 
 - [ ] Al migrar la base real, comparar el Libro Resumen del último período contra
       el presentado, y explicar la diferencia antes de declarar.
+
+
+### 6.5 `nx_sin_cred` decía una cosa y hacía otra (versión 1.12.0)
+
+El campo se mostraba como **"Excluir este documento del libro fiscal"**. Es
+falso: el libro fiscal no lo mira.
+
+| Dónde | Qué decía |
+|---|---|
+| El formulario de la factura | "Excluir este documento del libro fiscal" |
+| El asistente | "Exento de impuestos" |
+| Su propia ayuda | "si la factura está exenta de IVA" |
+
+Tres nombres distintos, y el visible era el equivocado. **Lo que hace de verdad**
+es que `nx_check_wh_apply()` devuelva `False`, o sea: **que a esa factura no se
+le genere la retención de IVA**.
+
+El filtro que habría justificado la etiqueta está **comentado desde v16** en
+`nimetrix_fiscal_book.py`, y además usaba el nombre viejo del campo (`sin_cred`,
+sin prefijo), así que tampoco habría funcionado. La exclusión del libro se
+configura con `nx_excluded_fiscal_position_ids`.
+
+Se unificó la etiqueta en los tres sitios: **"Excluir de la retención de IVA"**,
+con una ayuda que aclara que no afecta a los libros. **No cambia ningún
+comportamiento**: solo deja de engañar a quien lo marca.
+
+El nombre técnico se conserva (`nx_sin_cred`, de *sin crédito fiscal*) para no
+migrar el dato.
+
+- [ ] Revisar con el cliente qué facturas tienen hoy la casilla marcada. Si
+      alguien la marcó creyendo que excluía del libro fiscal, esa factura lleva
+      tiempo **sin retención de IVA** sin que nadie lo pretendiera.
 
 
 ## 7. Cómo levantarlo
