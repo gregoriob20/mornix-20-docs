@@ -158,6 +158,53 @@ metodo que se esta salteando.
 - [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con
       separadores.
 
+## v20 paso de OWL 2 a OWL 3
+
+**Lo de mayor alcance para los modulos con JavaScript.** Verificado en
+`addons/web/static/lib/owl/` y en `addons/web/static/src/owl2/owl3_compatibility_layer.js`,
+que el manifest de `web` carga por defecto.
+
+### Que dice la propia capa de compatibilidad de Odoo
+
+```
+1. Directivas de plantilla:
+   t-portal -> t-custom-portal
+   t-model  -> t-custom-model
+2. Hooks:
+   useEffect -> useLayoutEffect
+3. defaultProps ya no se respeta: los valores por defecto van en el esquema
+   de props (useProps con t.string().optional(...))
+```
+
+### Hooks que expone OWL 3
+
+`useApp`, `useById`, `useConfig`, `useEffect`, `useListener`, `useOnChange`,
+`usePlugin`, `useProps`, `useScope`.
+
+**`useRef` ya no existe.** Un `import { useRef } from "@odoo/owl"` resuelve a
+`undefined` y falla al ejecutarse con `TypeError: useRef is not a function`.
+
+### Por que es peor que otras roturas
+
+Un componente de la barra de navegacion que falle **deja toda la interfaz en
+blanco**, no solo su widget. Y no lo detecta ninguna prueba de Python: hay que
+abrir el navegador.
+
+Nos paso con el widget de tasa de cambio, dos veces seguidas: primero por pedir
+un servicio inexistente, despues por `useRef`.
+
+- [ ] Inventariar el JavaScript de los 226 modulos. El volumen de JS por modulo
+      es el mejor predictor del costo de migrarlo.
+
+## Servicios de enterprise que no existen en community
+
+`useService("home_menu")` lanza `Service home_menu is not available`: ese
+servicio lo aporta enterprise. Si el componente vive en la barra de navegacion,
+el error deja la interfaz en blanco.
+
+Conviene revisar cada `useService` contra los servicios registrados en el core
+antes de dar por buena una vista.
+
 ## La API de consultas SQL se rehizo entera
 
 Afecta a cualquier modulo que construya SQL a mano a partir de un dominio —

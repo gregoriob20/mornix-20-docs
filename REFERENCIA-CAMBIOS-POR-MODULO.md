@@ -327,6 +327,35 @@ huérfana en silencio; en v20 la vista no pasa la validación.
 
 ---
 
+## JavaScript — OWL 2 pasa a OWL 3
+
+**El cambio de mayor alcance para módulos con interfaz propia.**
+
+| Cambio | Estado | Cómo falla |
+|---|---|---|
+| **`useRef` ya no existe** | VERIFICADO | Ejecución |
+| `useEffect` → `useLayoutEffect` | VERIFICADO | Ejecución |
+| `t-portal` → `t-custom-portal` | VERIFICADO | Ejecución |
+| `t-model` → `t-custom-model` | VERIFICADO | Ejecución |
+| `defaultProps` ya no se respeta; los valores por defecto van en el esquema de props | VERIFICADO | Ejecución |
+| Servicios de enterprise (`home_menu`) no existen en community | VERIFICADO | Ejecución |
+
+Odoo incluye una capa de compatibilidad (`web/static/src/owl2/owl3_compatibility_layer.js`),
+cargada por defecto, que amortigua parte del salto. No lo elimina: los cambios
+de la tabla siguen siendo necesarios.
+
+Hooks que expone OWL 3: `useApp`, `useById`, `useConfig`, `useEffect`,
+`useListener`, `useOnChange`, `usePlugin`, `useProps`, `useScope`.
+
+### Por qué esto merece atención aparte
+
+Un componente que falle **en la barra de navegación deja toda la interfaz en
+blanco**, no solo su widget. Y ninguna prueba de Python lo detecta: hay que
+abrir el navegador.
+
+Por eso, al estimar el costo de migrar un módulo, **el volumen de JavaScript es
+mejor predictor que el de Python**.
+
 ## Pruebas
 
 | Cambio | Estado | Cómo falla |
