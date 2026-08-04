@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 120 pruebas sin errores ni advertencias**.
+> 128 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.9.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.9.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.11.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.11.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 120 (12 archivos) — 30 heredadas, 90 escritas en la migración |
+| Pruebas | 128 (13 archivos) — 30 heredadas, 98 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -468,6 +468,67 @@ producción reescribe el histórico completo del libro fiscal.
 
 - [ ] Acotarlo por compañía y por rango de fechas antes de exponerlo en la
       interfaz.
+
+
+### 6.4 El desglose de IVA pasó a la factura (versión 1.11.0)
+
+`nimetrix.move.line.resumen` guardaba el desglose por alícuota en un modelo
+aparte. Ahora son **campos calculados de `account.move`**:
+
+```
+nx_base_exenta
+nx_base_general      nx_iva_general
+nx_base_reducida     nx_iva_reducida
+nx_base_adicional    nx_iva_adicional
+nx_base_imponible    nx_iva_total
+```
+
+**Los cinco motivos, todos verificados sobre la base:**
+
+| # | Problema de la tabla |
+|---|---|
+| 1 | Era **1:1 disfrazada de 1:N**: el código siempre escribía `alicuota_line_ids[0]` |
+| 2 | Solo se llenaba al pulsar **"Crear Retención"**, no al publicar. Una venta sin retención **no entraba nunca** en el Libro Resumen |
+| 3 | Duplicaba estado, tipo y fechas de la factura; copias que se desincronizaban |
+| 4 | Emparejaba por `tax_group_id`: dos alícuotas con el mismo grupo **mezclaban sus montos** |
+| 5 | Era una foto: editar la factura después no la actualizaba |
+
+De dónde sale cada cifra, comprobado sobre una factura de 4 líneas de 1.000:
+
+- **base** → `price_subtotal` de las líneas de producto, por el `nx_appl_type` de
+  su impuesto de IVA
+- **monto** → `amount_currency` de las líneas de impuesto, por el `nx_appl_type`
+  de su `tax_line_id`
+
+El exento no genera línea de impuesto (0 %), por eso solo aporta base.
+
+#### Se verificó que los números no cambian
+
+Antes de sustituir nada se compararon los nueve valores sobre la misma factura,
+con la tabla vieja poblada:
+
+```
+base exenta 1000=1000 · base gral 1000=1000 · IVA gral 160=160
+base red 1000=1000 · IVA red 80=80 · base adic 1000=1000 · IVA adic 310=310
+base imponible 3000=3000 · IVA total 550=550
+```
+
+`migrations/1.11.0/pre-comparar-y-soltar-resumen.py` repite esa comparación
+**fila a fila sobre la base del cliente** antes de soltar la tabla, y registra en
+el log cualquier factura donde no coincidan. Si aparecen diferencias, la causa
+habitual es el defecto 4 —alícuotas compartiendo grupo— y **el valor bueno es el
+nuevo**.
+
+#### Un cambio de comportamiento que sí altera cifras
+
+El Libro Resumen pasa a incluir **todas las facturas publicadas** del período, no
+solo las que tuvieran retención. Es lo correcto para un libro de IVA —hasta ahora
+declaraba de menos— pero **los débitos y créditos fiscales van a subir**.
+
+Se añadió además el filtro por compañía, que la versión anterior no tenía.
+
+- [ ] Al migrar la base real, comparar el Libro Resumen del último período contra
+      el presentado, y explicar la diferencia antes de declarar.
 
 
 ## 7. Cómo levantarlo
