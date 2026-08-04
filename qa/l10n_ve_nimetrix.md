@@ -163,11 +163,11 @@ No es una afirmación sobre la contabilidad del cliente.
 cd docker
 
 # suite completa
-docker compose run --rm odoo20 odoo -d piloto -u l10n_ve_nimetrix \
+docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_nimetrix \
     --test-enable --stop-after-init
 
 # una sola clase
-docker compose run --rm odoo20 odoo -d piloto -u l10n_ve_nimetrix \
+docker compose run --rm odoo20 odoo -d odoo20 -u l10n_ve_nimetrix \
     --test-enable --test-tags /l10n_ve_nimetrix:TestInvoiceWithholdingIvaIslr \
     --stop-after-init
 
@@ -176,7 +176,7 @@ python3 .claude/skills/senior-qa/scripts/coverage_analyzer.py \
     addons/localizacion/l10n_ve_nimetrix
 ```
 
-Instancia viva para validación funcional: **https://piloto.migracion.mornix.tech**
+Instancia viva para validación funcional: **https://odoo20.migracion.mornix.tech**
 
 ## 7. Decisiones pendientes del cliente
 

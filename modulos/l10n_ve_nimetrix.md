@@ -1,7 +1,7 @@
 # l10n_ve_nimetrix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 30 pruebas sin errores ni advertencias.**
+> 88 pruebas sin errores ni advertencias** (4 omitidas por dependencia ausente).
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_nimetrix`, versión `1.0.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.0.0`).
@@ -33,7 +33,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 30 (4 archivos) |
+| Pruebas | 88 (11 archivos) — 30 heredadas, 58 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -177,7 +177,7 @@ v20 normaliza el campo `vat` con `stdnum` y le quita los separadores:
 comparaba el prefijo del vat contra el código de país, no coincidía para
 Venezuela y devolvía el valor intacto.
 
-**En el estado final, esto NO afecta al módulo.** Verificado en la base piloto:
+**En el estado final, esto NO afecta al módulo.** Verificado en la base odoo20:
 el `vat` y el `nx_rif` conservan sus guiones. La razón es que el override de
 `_check_vat` exime a Venezuela del chequeo estándar, y es precisamente
 `_check_vat` quien escribe de vuelta el valor normalizado.
@@ -267,4 +267,4 @@ docker compose run --rm odoo20 odoo -d <base> -u l10n_ve_nimetrix \
     --test-enable --stop-after-init
 ```
 
-Instancia de prueba viva: **https://piloto.migracion.mornix.tech**
+Instancia de prueba viva: **https://odoo20.migracion.mornix.tech**
