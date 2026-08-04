@@ -55,9 +55,33 @@ Consecuencias:
 - Los tests de exportación a Excel se **omiten** cuando falta, con mensaje
   explícito, en vez de pasar en falso.
 
-Esto cambia el orden de migración: `nimetrix_dual_currency` tiene que migrarse
-antes o a la par, no después.
+### No se arregla declarándola: hay un ciclo
 
+Declarar la dependencia **no es una opción**, porque cierra un ciclo y Odoo se
+niega a instalar:
+
+```
+l10n_ve_nimetrix  →  nimetrix_dual_currency   (la que faltaría declarar)
+                     →  nimetrix_currency_rate
+                        →  l10n_ve_nimetrix   ← vuelve al inicio
+```
+
+Verificado en los manifests: `nimetrix_currency_rate` declara
+`l10n_ve_nimetrix` entre sus dependencias, y `nimetrix_dual_currency` declara
+`nimetrix_currency_rate`.
+
+Que hoy funcione en producción se debe justamente a que la dependencia **no**
+está declarada: Odoo no ve el ciclo porque nadie se lo contó.
+
+Hay tres salidas, y es una decisión de arquitectura, no de migración:
+
+| Salida | Qué implica |
+|---|---|
+| Bajar `amount_exempt_bs` a `l10n_ve_nimetrix` | El campo queda en la capa base, donde ya vive el libro fiscal. Rompe el ciclo de raíz |
+| Subir el libro fiscal a un módulo por encima de ambos | Más limpio conceptualmente, pero mueve código y vistas |
+| Que el libro tolere la ausencia del campo | Parche: el libro daría cifras distintas según qué módulos haya instalados |
+
+- [ ] Decidir cuál. La primera es la más simple y la que menos código mueve.
 - [ ] Revisar si hay más dependencias no declaradas entre módulos del cliente.
       El manifest no es fuente confiable de acoplamiento.
 
