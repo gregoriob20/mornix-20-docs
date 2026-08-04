@@ -407,6 +407,40 @@ datos = registro.campo.content
 - [ ] Al migrar cada modulo, revisar todo `write` sobre un campo Binary y toda
       lectura que asuma base64.
 
+## Las listas de facturas por tipo ahora heredan de la generica
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | **Silencioso** |
+
+En v18, `account.view_out_invoice_tree`, `view_in_invoice_tree` y sus hermanas
+eran vistas **independientes**: extender `account.view_invoice_tree` no llegaba
+a ellas, asi que un modulo que quisiera una columna en todas las listas tenia
+que extender cada una por separado.
+
+En v20 **heredan** de la generica (`inherit_id = account.view_invoice_tree`,
+modo `primary`). Comprobado sobre la base.
+
+Consecuencia: el modulo que siga extendiendolas una por una vera sus columnas
+**por duplicado** -- dos "N° Control", dos "N° Factura" --. No da error: solo
+salen columnas repetidas.
+
+La forma correcta en v20 es extender solo la generica. Para que una columna
+aparezca unicamente donde tiene sentido, el propio core usa el contexto de la
+accion, no la fila:
+
+```xml
+<field name="x_numero_cliente"
+       column_invisible="context.get('default_move_type') in ('in_invoice', 'in_refund')"/>
+```
+
+- [ ] Al migrar cada modulo, buscar extensiones de las vistas de lista por tipo
+      y quedarse solo con la de `account.view_invoice_tree`.
+- [ ] Recordar que Odoo **no borra** un `ir.ui.view` porque su registro
+      desaparezca del XML: se queda en la base y sigue aplicandose. Hay que
+      eliminarlo con un script `pre-`.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
