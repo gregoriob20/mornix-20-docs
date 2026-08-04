@@ -21,7 +21,7 @@ que no tenga el veredicto `APROBADO`.
 | A6 | Las vistas cargan sin error de validacion | abrir cada vista del modulo en la interfaz |
 | A7 | Los reportes PDF se generan | generar cada reporte con datos reales |
 | A8 | No quedan `attrs`, `states` ni `<tree>` en el XML | `grep -rn "attrs=\|states=\|<tree" addons/<modulo>/` |
-| A9 | El manifest declara `'version': '20.0.x.y.z'` | leer el manifest |
+| A9 | El manifest declara la version en **forma corta** (`x.y.z`), y se subio respecto al origen | `python3 scripts/verificar_estandar.py <modulo>` |
 | A10 | Las dependencias del manifest existen en v20 | instalar en base limpia (lo cubre A1) |
 
 ## B. De datos — la parte que de verdad duele

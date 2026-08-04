@@ -20,7 +20,8 @@ todavia no existe en `odoo/odoo` (solo hay `16.0`, `17.0`, `18.0`, `19.0` y
 Consecuencias a re-verificar cuando Odoo publique la rama `20.0`:
 
 - [ ] Codigo del cliente que compare contra `odoo.release.version_info` vera `19.5`.
-- [ ] El campo `version` de los manifests (`20.0.x.y.z`) no coincide con la serie.
+- [x] El campo `version` de los manifests: resuelto usando la forma corta, que
+      Odoo prefija con la serie vigente. Ver mas abajo.
 - [ ] APIs de master pueden cambiar antes del release: revisar todo lo marcado
       como `RIESGO-MASTER` en este archivo.
 
