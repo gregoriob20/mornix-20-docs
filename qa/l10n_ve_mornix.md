@@ -90,7 +90,7 @@ no es "funciona", es "da lo mismo que en v18".
 | ISLR-3 | PNRE — natural residente | Idem | cubierto |
 | ISLR-4 | PNNR — natural no residente | Idem | cubierto |
 | ISLR-5 | Sustraendo con la unidad tributaria vigente | Cambiar la UT y verificar que el cálculo la sigue | cubierto (`test_account_ut.py`) |
-| ISLR-6 | Proveedor exento (`nx_islr_exempt`) | No se retiene | **pendiente** |
+| ISLR-6 | ~~Proveedor exento~~ | El campo se eliminó en 1.4.0 por decisión del cliente: ya no hay proveedores exentos | **no aplica** |
 | ISLR-7 | Varios conceptos en una misma factura | Cada concepto con su tarifa | **pendiente** |
 | ISLR-8 | XML del SENIAT | Comparar con el XML generado en v18 | **pendiente** |
 | ISLR-9 | ARC: carga masiva desde CSV | Importar el CSV de plantilla y verificar totales | **pendiente** |

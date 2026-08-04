@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 113 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.3.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.3.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.4.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.4.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -148,7 +148,7 @@ esta migración.
 | Modelo | Archivo | Líneas | Qué agrega |
 |---|---|---:|---|
 | `account.move` | `models/account_move.py` | 1.318 | Número de control, retenciones asociadas, montos exentos, IGTF |
-| `res.partner` | `models/res_partner.py` | 336 | RIF (`vat` y sus dos mitades), tipo de persona, agente de retención, validaciones |
+| `res.partner` | `models/res_partner.py` | 325 | RIF (`vat` y sus dos mitades), tipo de persona, contribuyente SENIAT, validaciones |
 | `product.pricelist.item` | `models/product_pricelist_item.py` | 248 | Precio con IVA y en divisa |
 | `account.move.reversal` | `models/account_move_reserval.py` | 116 | Nota de crédito con número de control |
 | `res.company` | `models/res_company.py` | 122 | RIF (`vat`), firma del representante, validaciones configurables |
@@ -286,6 +286,32 @@ borrar:
 patrón de las 42 dependencias no declaradas: **el módulo no es la unidad de
 análisis correcta.** Antes de eliminar un campo hay que buscarlo en todos los
 repos del cliente, incluidos los que aún no se han migrado.
+
+### 6.2.4 Se retiraron las dos excepciones de ISLR (versión 1.4.0)
+
+**Cambio de comportamiento fiscal, decidido por el cliente. No es una limpieza.**
+
+Se eliminaron `nx_islr_withholding_agent` y `nx_islr_exempt`, que eran las dos
+únicas formas de **no** retener ISLR:
+
+| Campo | Qué permitía | Qué pasa ahora |
+|---|---|---|
+| `nx_islr_withholding_agent` | Que una compañía no actuara como agente de retención | La compañía **siempre** retiene; queda solo la condición del tipo de documento |
+| `nx_islr_exempt` | Que un proveedor concreto quedara exento | **Ningún proveedor está exento**; `apply_income` arranca en `True` |
+
+Un proveedor que hoy figure como exento pasará a que se le retenga.
+
+`migrations/1.4.0/pre-quitar-flags-islr.py` **lista por nombre** los contactos
+exentos y cuenta las compañías que no eran agentes, antes de que Odoo elimine
+las columnas. Si esa cuenta no es cero al migrar la base del cliente, hay que
+revisarla antes de emitir retenciones. En la base de pruebas dio cero en ambas.
+
+- [ ] **Al migrar la base real, leer ese log.** Es la única oportunidad: después
+      del update las columnas ya no existen.
+
+Efecto colateral: `_nx_get_partners` devolvía una tupla de tres, y el tercer
+elemento era ese flag. **Ninguno de los tres sitios que la desempaquetaban lo
+usaba** — ya era código muerto antes del cambio. Ahora devuelve dos.
 
 - [ ] **Un cambio de comportamiento a confirmar**: en el XML de ISLR,
       `nx_onchange_partner_id` devolvía `nx_rif[2:]`, que sobre un RIF con
