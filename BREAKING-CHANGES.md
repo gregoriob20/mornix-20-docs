@@ -360,6 +360,53 @@ Aparece al redactar explicaciones largas en las vistas, que es justo lo que uno
 hace al migrar. `scripts/verificar_estandar.py` lo detecta antes de intentar la
 actualizacion.
 
+## Python 3.12 elimino `base64.encodestring`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+```python
+# v16/v18 sobre Python <3.9
+out = base64.encodestring(fp.getvalue())
+# v20 (Python 3.12)
+out = base64.b64encode(fp.getvalue()).decode()
+```
+
+Se renombro a `encodebytes` en Python 3.1 y se elimino en 3.9. v20 exige 3.12,
+asi que el nombre viejo lanza `AttributeError`. Aparece en el codigo que genera
+adjuntos y reportes, que suele ser el mas viejo del modulo.
+
+## Un campo Binary rechaza `bytes`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+```
+TypeError: <campo>: use BinaryValue instead of bytes
+```
+
+`odoo/orm/fields_binary.py:98`. En v20 un campo Binary acepta una **cadena**
+base64, que decodifica sola, o un `BinaryValue`. El unico campo al que se le
+pueden pasar bytes crudos es `raw` (el de `ir.attachment`), porque ahi Odoo sabe
+que no vienen codificados.
+
+Al **leer** pasa lo simetrico: el campo devuelve un `BinaryValue`, no base64.
+El contenido esta en `.content`:
+
+```python
+# v18
+datos = base64.b64decode(registro.campo)
+# v20
+datos = registro.campo.content
+```
+
+- [ ] Al migrar cada modulo, revisar todo `write` sobre un campo Binary y toda
+      lectura que asuma base64.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_

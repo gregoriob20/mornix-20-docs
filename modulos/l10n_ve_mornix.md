@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 113 pruebas sin errores ni advertencias**.
+> 120 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.5.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.5.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.8.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.8.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 113 (11 archivos) — 30 heredadas, 83 escritas en la migración |
+| Pruebas | 120 (12 archivos) — 30 heredadas, 90 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -403,6 +403,54 @@ Que esos imports rompan en v18 significa que **el código de la rama `main` de
 `nx_localizacion` no es el que corre en producción**.
 
 - [ ] Aclarar con el equipo qué rama refleja producción.
+
+### 6.3 El Libro Resumen de IVA nunca habia funcionado (versión 1.8.0)
+
+**No es una rotura de la migración.** Se comprobó el mismo defecto en v16, v18 y
+v20: es el mismo archivo arrastrado entre versiones con el prefijo del módulo
+cambiado. El botón se detenía en el primero de **cinco** problemas, y ninguno
+daba error al instalar:
+
+| # | Qué pasaba | Dónde |
+|---|---|---|
+| 1 | Las consultas pedían los campos del resumen **sin el prefijo `nx_`** (`fecha_fact`, `type`, `state`…). 81 referencias | v16, v18, v20 |
+| 2 | Filtraba por `state == 'confirmed'`, estado que `account.move` **nunca ha tenido**: devolvía vacío y el libro salía en cero | v16, v18, v20 |
+| 3 | Llamaba a `self.line.formato_fecha2(…)`, y `line` era un campo **comentado** | v16, v18, v20 |
+| 4 | Componía el RIF con `res.partner.doc_type`, que no existe en este módulo | v16, v18, v20 |
+| 5 | `base64.encodestring` (eliminado en Python 3.9) y escribía `bytes` en un campo Binary, que v20 rechaza | solo v20 |
+
+Los cuatro primeros venían de antes; solo el quinto lo introdujo v20.
+
+Ahora genera: **13,8 KB, 60 filas, firma OLE2 válida**. `tests/test_libro_resumen_iva.py`
+lo ejerce de punta a punta —pulsa el botón y abre el archivo— porque los cinco
+fallos solo se veían al usarlo.
+
+#### Lo que sigue sin funcionar, y por qué no lo tocamos
+
+`get_invoice()` produce el **listado detallado factura por factura**. Tampoco ha
+funcionado nunca y **no lo llama nadie**: escribe 28 claves en
+`nimetrix.wh.iva.libro.pdf.resu`, un modelo que no existe —el declarado es
+`…pdf.resumen`— y que además solo tiene un campo, `name`. De las 28 claves,
+**27 no existen en ningún sitio**.
+
+Reconstruirlo no es migrar: es definir esos 27 campos y el formato del reporte.
+
+- [ ] **Decisión del cliente**: ¿hace falta ese listado detallado? Si sí, hay que
+      especificar qué columnas lleva. El código conservado sirve de punto de
+      partida, no de referencia funcional.
+- [ ] Confirmar que el filtro correcto es `state = 'posted'`. Es lo único que
+      tiene sentido para un libro fiscal, pero determina qué facturas entran.
+
+#### `nx_llenar` es peligroso
+
+Es el método que puebla el resumen. No lo llama nada, y empieza con
+`search([])` → `unlink()`: **borra el resumen de todas las facturas de todas las
+compañías** y lo reconstruye recorriendo cada asiento publicado. Ejecutarlo en
+producción reescribe el histórico completo del libro fiscal.
+
+- [ ] Acotarlo por compañía y por rango de fechas antes de exponerlo en la
+      interfaz.
+
 
 ## 7. Cómo levantarlo
 
