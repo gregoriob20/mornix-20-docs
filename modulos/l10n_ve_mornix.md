@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 136 pruebas sin errores ni advertencias**.
+> 149 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.16.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.16.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.20.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.20.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 136 (14 archivos) — 30 heredadas, 106 escritas en la migración |
+| Pruebas | 149 (15 archivos) — 30 heredadas, 119 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -665,6 +665,55 @@ recuperarlo del sistema anterior antes de poder declarar ese período.
       de ISLR no tienen número de control:
       `SELECT COUNT(*) FROM account_move WHERE move_type IN ('in_invoice','in_refund')
        AND state='posted' AND COALESCE(nx_nro_ctrl,'')='';`
+
+
+### 6.9 Bloqueo de lo ya declarado al SENIAT (versión 1.20.0)
+
+Un documento que entró en un archivo o libro presentado **no se toca**: ni se
+anula, ni se devuelve a borrador, ni se le cambian importes o fechas.
+
+| Documento presentado | Bloquea |
+|---|---|
+| TXT de retención de IVA | los comprobantes de retención de IVA que lista |
+| XML de retención de ISLR | los comprobantes de ISLR que lista |
+| Libro fiscal de compras | las facturas de proveedor que incluyó |
+| Libro fiscal de ventas | las facturas de cliente que incluyó |
+
+La lógica común vive en el mixin `nimetrix.bloqueo.fiscal`. Cada modelo aporta
+solo un método: dónde buscar al declarante.
+
+Además del bloqueo hay un **aviso visible** en el formulario, para que el
+usuario lo sepa al abrir y no al recibir un error:
+
+> 🔒 **Bloqueado por declaración.** Este documento ya está incluido en
+> «Libro compras junio» y no puede modificarse.
+
+#### Por inclusión, no por rango de fechas
+
+La primera versión buscaba al declarante por fechas: «¿hay un libro confirmado
+que cubra la fecha de esta factura?». **Las pruebas la tumbaron**, y con razón:
+un comprobante creado después de presentar el archivo de su período nacía
+bloqueado, sin poder ni confirmarse.
+
+Ahora se pregunta si el documento **estuvo realmente** en la declaración:
+
+- TXT y XML ya guardaban sus líneas; se consulta ese vínculo.
+- El libro fiscal no guardaba nada —es un reporte SQL—, así que se le añadió
+  `nx_declared_move_ids`, que se llena al confirmarlo y se vacía al devolverlo
+  a borrador o cancelarlo.
+
+Una factura cargada más tarde en un período ya declarado **no queda bloqueada**:
+no estuvo en el libro, y decir lo contrario sería mentir sobre lo presentado.
+
+#### Lo que deliberadamente NO bloquea
+
+`account.move` limita el bloqueo a los campos que salen impresos en el libro.
+**`line_ids` queda fuera a propósito**: registrar un pago escribe ahí, y cobrar
+una factura ya declarada tiene que seguir siendo posible — no altera lo
+declarado. Tampoco se bloquea el chatter.
+
+Un bloqueo que impida cobrar sería peor que no tenerlo: la gente pediría
+desactivarlo.
 
 
 ## 7. Cómo levantarlo
