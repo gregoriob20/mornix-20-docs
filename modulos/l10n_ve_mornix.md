@@ -931,6 +931,96 @@ en el manifiesto.
       magnitud según la ordenanza de cada alcaldía.
 
 
+### 6.14 Restricciones varias (versión 1.30.0)
+
+Viene de `nx_localizacion/nimetrix_restrictions` (v18). Tres barreras: no borrar
+asientos publicados, no cancelar facturas de otro período, y no instalar Studio
+ni tocar vistas del sistema desde la interfaz.
+
+| Qué pasaba en v18 | Consecuencia |
+|---|---|
+| `views/account_move_view.xml` **no estaba en el manifiesto** | El botón «Cancelar» de documentos con hash inalterable no se cargó nunca |
+| Copiaba dentro veinte líneas del decorador `assert_log_admin_access` del núcleo | Arrastraba la dependencia del paquete `decorator` para volver a aplicar lo que el propio método ya aplica |
+| `action_cancel_hash` leía `self.move_type` sin `ensure_one()` | «Expected singleton» con más de un registro |
+| Ambos métodos leían `rec.date.month` sin comprobar que hubiera fecha | |
+
+> El bloqueo de `ir.ui.view` es deliberadamente duro: **solo el superusuario**
+> crea, modifica o borra vistas. La instalación de módulos corre como
+> superusuario, así que no la estorba, pero un administrador normal no podrá
+> editar vistas desde la interfaz. Es lo que el cliente quiere para que la
+> localización no se altere sin pasar por el repositorio.
+
+### 6.15 Reporte ARC (versión 1.30.0)
+
+Viene de `nx_localizacion/nimetrix_report_arc` (v18): el comprobante anual de
+retenciones de ISLR que se entrega al proveedor.
+
+**La rotura de v20:** `company.mobile`. El campo `mobile` salió de
+`res.partner`, que es de donde `res.company` lo tomaba.
+
+La columna «DÍA» se quitaba con un archivo aparte, `fix_report_arc.xml`, hecho
+de xpath posicionales sobre la plantilla
+(`//div[2]/div/table[2]/thead/tr[2]/th`). Se aplicó en la plantilla y el parche
+desapareció — y con él **un `KeyError`**: la clave `dia` solo se escribía para
+el primer y el último mes del rango, así que un rango de tres meses o más
+reventaba al pintar el mes intermedio. El parche lo tapaba sin arreglarlo.
+
+También: `cod_concepto` se leía fuera del bucle que lo define, así que un
+concepto sin tasas configuradas heredaba el código del concepto anterior.
+
+### 6.16 Guías de despacho y facturación desde inventario (versión 1.31.0)
+
+Viene de `nx_localizacion/l10n_ve_stock_account` (v18), 3.233 líneas: guías de
+despacho numeradas, motivos de traslado (venta, donación, consignación,
+exportación, autoconsumo), creación de facturas y notas de crédito desde el
+albarán, notificaciones de cierre fiscal y una tarea programada de facturación.
+
+Es de `binaural-dev` bajo LGPL-3, con aportes del equipo del cliente.
+
+#### Roturas de v20
+
+| Qué | Sustituto |
+|---|---|
+| `odoo.osv` | El paquete ya no existe. Los dos imports no se usaban |
+| **`stock.return.picking` eliminado** | La devolución se hace copiando el albarán y el core deja la traza en `return_id`: `is_return` se calcula de ahí y el archivo entero sobra |
+| `ir.model.access` | `ir.access`, con los cuatro booleanos en una cadena `crud` |
+| `move_ids_without_package` | `move_ids` |
+| `stock.move.name` | Eliminado |
+| `stock.move.product_uom` | `uom_id` |
+| `sale.order.line.tax_id` | `tax_ids` (y v18 leía `.amount` del many2many: con dos impuestos tomaba solo el primero) |
+| `res.users.groups_id` | `group_ids` |
+| `product.type = 'product'` | `consu` + `is_storable` |
+| `ir.actions.report.report_file` | Eliminado |
+| `@constrains('picking_type_code')` | No es escribible: se depende de `picking_type_id` |
+
+#### Dos defectos que las pruebas destaparon
+
+`_check_is_donation` comparaba `order.is_donation` con
+`order._origin.is_donation` dentro de un `@api.constrains`. En un registro ya
+guardado **`_origin` es el propio registro**: los dos valores son siempre
+iguales y la restricción no saltó nunca. `_origin` solo guarda el valor
+anterior en los registros virtuales de los onchange. Pasa a `write`, comparando
+contra el valor en base.
+
+`print_dispatch_guide` devolvía `self.env.ref(...).read()[0]` — el diccionario
+de campos del `ir.actions.report`, con `create_uid` y `write_date` dentro—, no
+una acción ejecutable: **el informe no se imprimía**.
+
+#### Lo que no se trajo
+
+El `post_init_hook` de v18 traducía a mano el nombre y la descripción del
+módulo en `ir_module_module` con SQL crudo, porque las traducciones del
+manifiesto no se cargan solas para módulos de terceros. Al fusionarse dentro de
+`l10n_ve_mornix`, que ya tiene su propio nombre, el parche sobra.
+
+- [ ] La tarea programada de facturación automática (`ir_cron`) queda instalada
+      y **activa**. Confirmar con el cliente el día y la hora antes de pasar a
+      producción.
+- [ ] `auto_install: True` del módulo original desaparece al fusionarse. Nada
+      que hacer, pero conviene saberlo si alguien busca por qué ya no aparece
+      solo en la lista de módulos.
+
+
 ## 7. Cómo levantarlo
 
 ```bash

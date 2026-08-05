@@ -137,18 +137,21 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 
 ## Orden de trabajo sugerido
 
-0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 161 pruebas en verde.
+0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 189 pruebas en verde.
    Ver [modulos/l10n_ve_mornix.md](modulos/l10n_ve_mornix.md).
 
-   Cuatro modulos sueltos quedaron **absorbidos** dentro de el, porque no eran
+   Siete modulos sueltos quedaron **absorbidos** dentro de el, porque no eran
    funcionalidad aparte sino piezas de la misma localizacion:
 
    | Modulo origen | Repo | Version | Que aporto |
    |---|---|---|---|
-   | `nimetrix_iva_resumen_report` | `nx_tools` | 1.28.0 | Resumen de Ventas y Compras completo |
-   | `nimetrix_stock_account_report` | `nx_localizacion` | 1.27.0 | Libro de inventario |
-   | `nimetrix_retencion_municipal` | `nx_localizacion` | 1.29.0 | Retencion municipal |
    | `mornix_dual_currency` (parcial) | `nx_dual_currency` | 1.26.0 | Saldos por cobrar/pagar en divisa |
+   | `nimetrix_stock_account_report` | `nx_localizacion` | 1.27.0 | Libro de inventario |
+   | `nimetrix_iva_resumen_report` | `nx_tools` | 1.28.0 | Resumen de Ventas y Compras completo |
+   | `nimetrix_retencion_municipal` | `nx_localizacion` | 1.29.0 | Retencion municipal |
+   | `nimetrix_restrictions` | `nx_localizacion` | 1.30.0 | Restricciones de borrado, cancelacion y Studio |
+   | `nimetrix_report_arc` | `nx_localizacion` | 1.30.0 | Comprobante anual de retenciones ISLR |
+   | `l10n_ve_stock_account` | `nx_localizacion` | 1.31.0 | Guias de despacho y facturacion desde inventario |
 
    Ninguno se instala ya por separado. Al absorberlos se rompio ademas la
    dependencia circular `l10n_ve_mornix -> mornix_dual_currency ->
