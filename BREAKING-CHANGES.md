@@ -521,6 +521,35 @@ similar tiene que hacer lo mismo.
 - [ ] Al migrar cada modulo, buscar `exchange_move_id` sobre full.reconcile y
       lecturas de `wizard.batches`.
 
+## `stock` — la valoracion salio de `stock.valuation.layer`
+
+| Cambio | Estado | Como falla |
+|---|---|---|
+| **`stock.valuation.layer` eliminado** | VERIFICADO | Instalacion |
+| La valoracion vive ahora en `stock.move`: `value`, `quantity`, `is_in`, `is_out` | VERIFICADO | — |
+| **`stock.move.name` eliminado** (en 18.0 era obligatorio) | VERIFICADO | Ejecucion |
+| `stock.move.is_valued` es calculado **sin almacenar**: no se puede usar en un dominio | VERIFICADO | Ejecucion |
+
+Cuidado con **`product.value`**, que por el nombre parece el sustituto y no lo
+es: su propio docstring dice que guarda las revaluaciones **manuales**, no cada
+movimiento. Quien migre por ahi obtendra un reporte casi vacio, sin error.
+
+| v18 | v20 |
+|---|---|
+| `stock.valuation.layer.value` | `stock.move.value` |
+| `stock.valuation.layer.quantity` | `stock.move.quantity` |
+| signo de `value` para saber si entra o sale | `is_in` / `is_out`, explicitos |
+
+Buscar por `is_valued` lanza:
+
+```
+ValueError: Field has no SQL representation because it is not stored
+```
+
+Sirve `('value', '!=', 0)`, que es lo mismo y si esta almacenado.
+
+- [ ] Al migrar cada modulo, buscar `stock.valuation.layer` y `stock.move.name`.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_

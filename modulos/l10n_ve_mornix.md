@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 157 pruebas sin errores ni advertencias**.
+> 167 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.26.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.26.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.27.2` (Odoo la
+> prefija con la serie vigente → `19.5.1.27.2`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 157 (16 archivos) — 30 heredadas, 127 escritas en la migración |
+| Pruebas | 167 (17 archivos) — 30 heredadas, 137 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -750,6 +750,34 @@ compañía activa. Hay una prueba que lo vigila.
 
 Los botones parten de los **mismos apuntes** que calculan la cifra, así que la
 lista y el número no pueden discrepar.
+
+
+### 6.11 Libro de inventario integrado (versión 1.27.0)
+
+Viene de `nx_localizacion/nimetrix_stock_account_report` (v18), ahora dentro de
+este módulo. Asistente con filtro por producto o categoría, y PDF con existencia
+inicial, entradas, salidas y existencia final valoradas.
+
+**La rotura:** todo el reporte se apoyaba en `stock.valuation.layer`, modelo que
+v20 eliminó. La valoración vive ahora en el propio `stock.move`.
+
+Cuidado con `product.value`: por el nombre parece el sustituto y **no lo es** —
+guarda las revaluaciones manuales, no cada movimiento. Migrar por ahí daría un
+reporte casi vacío, sin error.
+
+#### Tres defectos que venían de v18
+
+| Qué pasaba | Consecuencia |
+|---|---|
+| La existencia final se buscaba con `create_date >= to_date` | Eran los movimientos **posteriores** al período. Y el resultado ni se usaba |
+| Se filtraba por `create_date`, no por la fecha del movimiento | Un asiento cargado con retraso caía en el período equivocado |
+| Ocho `print()` en el flujo del reporte | Ruido en el log de producción |
+
+El módulo añade la dependencia `stock_account`, que antes no hacía falta.
+
+- [ ] El asistente solo lista productos con movimientos en el período. Confirmar
+      con el cliente si el libro debe incluir también los que no se movieron
+      pero tienen existencia.
 
 
 ## 7. Cómo levantarlo

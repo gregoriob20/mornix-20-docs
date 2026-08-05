@@ -1,12 +1,12 @@
 # Plan de pruebas — l10n_ve_mornix
 
 > Módulo piloto de la migración a v20.
-> Estado técnico: instala, actualiza y pasa sus **157 pruebas** sin errores ni
+> Estado técnico: instala, actualiza y pasa sus **167 pruebas** sin errores ni
 > advertencias. **Eso no significa que esté aprobado**: ver la sección 5.
 
 ## 1. Qué está cubierto hoy
 
-**157 pruebas automatizadas en 16 archivos, todas en verde.**
+**167 pruebas automatizadas en 17 archivos, todas en verde.**
 
 | Archivo | Casos | Qué cubre | Origen |
 |---|---:|---|---|
