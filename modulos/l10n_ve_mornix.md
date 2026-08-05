@@ -1092,6 +1092,16 @@ distintos, y renombrarlos obligaría a migrar columnas.
 Las reglas están tanto en el dominio del controlador como en `ir.access`, para
 que no dependa de por dónde se entre.
 
+#### El botón «Vista previa»
+
+En el formulario del comprobante, junto a «Imprimir comprobante», con el mismo
+sentido que el de una cotización: abre la vista previa del portal con el enlace
+que lleva el `access_token`, o sea exactamente lo que verá el proveedor. Solo
+aparece con el comprobante ya publicado.
+
+Está en los tres formularios: los dos de retención de IVA (cliente y
+proveedor), los dos de ISLR y el de municipal.
+
 #### Dos cosas que costaron encontrar
 
 **Las tarjetas de «Mi cuenta» ya no se declaran en la plantilla.** v20 las

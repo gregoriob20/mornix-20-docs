@@ -59,3 +59,6 @@ practica no aparecen ahí: ese comprobante lo emite él, no nosotros.
 
 También se le puede enviar el enlace directo, que lleva su propio token y abre
 sin necesidad de iniciar sesión.
+
+En el comprobante, el botón **Vista previa** abre exactamente lo que el
+proveedor ve en su portal. Aparece con el comprobante ya confirmado.
