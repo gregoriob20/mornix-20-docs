@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 149 pruebas sin errores ni advertencias**.
+> 153 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.20.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.20.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.24.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.24.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,57 +38,56 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 149 (15 archivos) — 30 heredadas, 119 escritas en la migración |
+| Pruebas | 153 (15 archivos) — 30 heredadas, 123 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
 v20, y aquí no aplica.
 
-## 2.1 Dependencia no declarada — importante
+## 2.1 ~~Dependencia no declarada~~ — RESUELTA en 1.24.0
 
-**El libro fiscal no funciona sin `mornix_dual_currency`.** El SQL de
-`_get_data` referencia `account_move.amount_exempt_bs`, campo que define ese
-módulo (repo `nx_dual_currency`), y el manifest de `l10n_ve_mornix` **no lo
-declara como dependencia**.
-
-Consecuencias:
-
-- El módulo instala limpio sin él, pero al generar el libro fiscal falla con
-  `column account_move.amount_exempt_bs does not exist`.
-- No es una rotura de la migración: en v18 pasaría igual. Es acoplamiento
-  preexistente que los manifests no reflejan.
-- Los tests de exportación a Excel se **omiten** cuando falta, con mensaje
-  explícito, en vez de pasar en falso.
-
-### No se arregla declarándola: hay un ciclo
-
-Declarar la dependencia **no es una opción**, porque cierra un ciclo y Odoo se
-niega a instalar:
+**El ciclo desapareció.** Durante casi toda la migración, el libro fiscal
+dependía de `mornix_dual_currency` sin declararlo, y no se podía declarar:
 
 ```
-l10n_ve_mornix  →  mornix_dual_currency   (la que faltaría declarar)
-                     →  mornix_currency_rate
-                        →  l10n_ve_mornix   ← vuelve al inicio
+l10n_ve_mornix  →  mornix_dual_currency  →  mornix_currency_rate
+                                                   →  l10n_ve_mornix
 ```
 
-Verificado en los manifests: `mornix_currency_rate` declara
-`l10n_ve_mornix` entre sus dependencias, y `mornix_dual_currency` declara
-`mornix_currency_rate`.
+Odoo se habría negado a instalar. El vínculo era **una sola línea**: el SQL del
+libro leía `account_move.amount_exempt_bs`, campo de ese módulo, para la columna
+de ventas exentas.
 
-Que hoy funcione en producción se debe justamente a que la dependencia **no**
-está declarada: Odoo no ve el ciclo porque nadie se lo contó.
+Desde que el desglose de IVA vive en la propia factura (§6.4), el libro usa su
+campo `nx_base_exenta` y no necesita nada de fuera.
 
-Hay tres salidas, y es una decisión de arquitectura, no de migración:
+**Verificado instalando `l10n_ve_mornix` solo en una base limpia**: los otros dos
+módulos quedan `uninstalled`, `amount_exempt_bs` no existe, y el libro fiscal
+funciona. Y el libro produce **exactamente las mismas cifras** que antes del
+cambio, comparadas fila a fila sobre 53 facturas.
 
-| Salida | Qué implica |
-|---|---|
-| Bajar `amount_exempt_bs` a `l10n_ve_mornix` | El campo queda en la capa base, donde ya vive el libro fiscal. Rompe el ciclo de raíz |
-| Subir el libro fiscal a un módulo por encima de ambos | Más limpio conceptualmente, pero mueve código y vistas |
-| Que el libro tolere la ausencia del campo | Parche: el libro daría cifras distintas según qué módulos haya instalados |
+Las demás referencias de este módulo a campos de `dual_currency` (`nx_rate`,
+`nx_currency_ref_rate_fixed`) ya estaban protegidas con `'campo' in _fields`, así
+que funcionan con o sin el módulo instalado.
 
-- [ ] Decidir cuál. La primera es la más simple y la que menos código mueve.
-- [ ] Revisar si hay más dependencias no declaradas entre módulos del cliente.
-      El manifest no es fuente confiable de acoplamiento.
+- [x] ~~Decidir cómo romper el ciclo~~ — hecho: bajar el dato a este módulo, que
+      era la salida recomendada.
+
+### Un riesgo que apareció al hacerlo
+
+El desglose solo cuenta impuestos marcados como IVA (`nx_type_tax`) **y** con
+tipo de alícuota (`nx_appl_type`). Un impuesto sin clasificar **aporta cero al
+libro, sin avisar**: la factura sale listada con las columnas vacías.
+
+Detectado sobre datos reales: una factura con el impuesto «22 %» del plan
+genérico, sin clasificar, salía en cero.
+
+`action_confirm_check()` lo comprueba antes de confirmar el libro y lista las
+facturas afectadas. `nx_facturas_sin_clasificar()` las devuelve.
+
+- [ ] **Al migrar la base del cliente**, clasificar todos los impuestos de IVA
+      antes de generar el primer libro:
+      `SELECT id, name FROM account_tax WHERE nx_appl_type IS NULL;`
 
 ## 3. Dependencias
 
