@@ -1096,11 +1096,21 @@ que no dependa de por dónde se entre.
 
 En el formulario del comprobante, junto a «Imprimir comprobante», con el mismo
 sentido que el de una cotización: abre la vista previa del portal con el enlace
-que lleva el `access_token`, o sea exactamente lo que verá el proveedor. Solo
-aparece con el comprobante ya publicado.
+que lleva el `access_token`, o sea exactamente lo que verá el proveedor.
 
-Está en los tres formularios: los dos de retención de IVA (cliente y
-proveedor), los dos de ISLR y el de municipal.
+**Solo en las retenciones a proveedores.** Las que nos practica un cliente las
+documenta él: no existe comprobante nuestro —el informe aborta con «se genera
+solo para los Proveedores»— y no tienen nada que hacer en su portal. Por eso el
+botón no está en los formularios de cliente, y el método lo comprueba además por
+su cuenta: ocultar un botón no impide llamar al método.
+
+| Formulario | Botón |
+|---|---|
+| Retención de IVA, proveedor | Sí, con el comprobante publicado |
+| Retención de IVA, cliente | No |
+| Retención de ISLR, proveedores | Sí, con el comprobante publicado |
+| Retención de ISLR, clientes | No |
+| Retención municipal | Solo si es `in_tax`, la que practicamos nosotros |
 
 #### Dos cosas que costaron encontrar
 

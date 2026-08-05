@@ -61,4 +61,6 @@ También se le puede enviar el enlace directo, que lleva su propio token y abre
 sin necesidad de iniciar sesión.
 
 En el comprobante, el botón **Vista previa** abre exactamente lo que el
-proveedor ve en su portal. Aparece con el comprobante ya confirmado.
+proveedor ve en su portal. Aparece con el comprobante ya confirmado, y **solo en
+las retenciones a proveedores**: las que nos practica un cliente las documenta
+él, así que ni tienen comprobante nuestro ni salen en su portal.
