@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 153 pruebas sin errores ni advertencias**.
+> 157 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.24.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.24.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.26.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.26.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 153 (15 archivos) — 30 heredadas, 123 escritas en la migración |
+| Pruebas | 157 (16 archivos) — 30 heredadas, 127 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -713,6 +713,43 @@ declarado. Tampoco se bloquea el chatter.
 
 Un bloqueo que impida cobrar sería peor que no tenerlo: la gente pediría
 desactivarlo.
+
+
+### 6.10 Saldos por cobrar y por pagar en divisa (versión 1.26.0)
+
+Dos botones en el contacto, junto a Ventas y Facturado, con el saldo en la
+moneda referencial. Al pulsarlos abren los documentos que lo componen.
+
+#### De dónde sale la cifra
+
+De los **apuntes contables**, no de las facturas: `amount_residual` vive ahí, y
+así entran también los asientos manuales sobre las cuentas por cobrar y por
+pagar, que una suma de facturas dejaría fuera.
+
+Hay dos campos y según el caso aplica uno:
+
+| Caso | Campo |
+|---|---|
+| El apunte ya está en la moneda referencial | `amount_residual_currency` — se suma **tal cual** |
+| Está en otra moneda | `amount_residual` (moneda de la compañía), convertido a la tasa de la fecha del apunte |
+
+Lo que ya está en divisa no se convierte: la cifra es exacta y convertirla solo
+metería error de redondeo. Verificado sobre datos reales — `INV/2026/00017` está
+en USD y aporta sus **122,00** directos, aunque su residual en bolívares sea
+91.755,50.
+
+#### Dos cosas que costaron
+
+**No usa `nx_amount_residual_usd`** de `mornix_dual_currency`, que habría sido lo
+inmediato: eso volvería a cerrar el ciclo roto en 1.24.0 (§2.1).
+
+**`nx_currency_ref_id` no es un `related` a `company_id`.** Un contacto
+normalmente **no tiene compañía** —se comparte entre todas—, así que el related
+devolvía vacío y los saldos salían sin convertir. Se calcula cayendo a la
+compañía activa. Hay una prueba que lo vigila.
+
+Los botones parten de los **mismos apuntes** que calculan la cifra, así que la
+lista y el número no pueden discrepar.
 
 
 ## 7. Cómo levantarlo
