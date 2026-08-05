@@ -158,6 +158,36 @@ metodo que se esta salteando.
 - [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con
       separadores.
 
+## `t-esc` desaparecio de QWeb — y no avisa
+
+**El peor de los encontrados hasta ahora**, porque no da error: el nodo se
+renderiza **vacio**.
+
+```
+<span t-esc="valor"/>  ->  <span></span>
+<span t-out="valor"/>  ->  <span>HOLA</span>
+```
+
+Comprobado renderizando las dos directivas con el mismo valor en la instancia.
+`t-esc` quedo obsoleto en v17 en favor de `t-out`, y en v20 el compilador de
+QWeb ya no lo trata: `_compile_directive_esc` no existe. Como QWeb ignora los
+atributos que no conoce, la plantilla se procesa sin queja y el PDF sale.
+
+Consecuencia en este proyecto: **280 usos en `l10n_ve_mornix`**, repartidos por
+los nueve reportes. Los comprobantes de retencion de IVA e ISLR, el ARC, la guia
+de despacho, el libro de inventario y los libros fiscales salian con los campos
+en blanco. Se detecto por casualidad, al ver que la pestaña del navegador de la
+documentacion no tenia titulo.
+
+Se sustituyeron los 310 usos (los 280 mas los de `mornix_docs`) por `t-out`, que
+escapa igual. `t-raw`, eliminado antes, tambien se sustituye por `t-out`.
+
+`scripts/verificar_estandar.py` lo comprueba desde ahora.
+
+- [ ] **Cualquier modulo que se migre a partir de aqui**: barrer `t-esc` antes
+      de dar por bueno un reporte. Que salga el PDF no significa que lleve
+      datos.
+
 ## v20 paso de OWL 2 a OWL 3
 
 **Lo de mayor alcance para los modulos con JavaScript.** Verificado en
