@@ -470,6 +470,57 @@ create, con el valor ya puesto.
 - [ ] Y arreglar lo ya guardado: quitar el precompute no recalcula lo viejo.
       Hace falta `env.add_to_compute(...)` en una migracion.
 
+## El asistente de pagos guarda los lotes como ids, no como recordsets
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+```python
+# v18
+liquidity_lines = wizard.batches[0]['lines']      # recordset
+# v20
+liquidity_lines = wizard._get_batches()[0]['lines']
+```
+
+`account/wizard/account_payment_register.py:406` guarda ahora
+`batch['lines'] = batch['lines'].ids` para preparar el prefetch, y el core anade
+`_get_batches()` para volver a leerlas. La linea no existe en 18.0.
+
+Quien siga leyendo el atributo directo recibe una **lista de enteros** y revienta
+al pulsar "Registrar pago":
+
+```
+AttributeError: 'list' object has no attribute 'mapped'
+```
+
+## `exchange_move_id` se movio de la conciliacion completa a la parcial
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+| | v18 | v20 |
+|---|---|---|
+| `account.full.reconcile.exchange_move_id` | existe | **eliminado** |
+| `account.partial.reconcile.exchange_move_id` | — | existe |
+
+Crear la conciliacion completa con esa clave lanza:
+
+```
+ValueError: Invalid field 'exchange_move_id' in 'account.full.reconcile'
+```
+
+El enlace se deriva ahora de las parciales, via
+`account.move.line.exchange_move_ids`. El core simplemente **omite la clave** al
+crear la conciliacion completa; un modulo que sobreescriba `_reconcile_plan` o
+similar tiene que hacer lo mismo.
+
+- [ ] Al migrar cada modulo, buscar `exchange_move_id` sobre full.reconcile y
+      lecturas de `wizard.batches`.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
