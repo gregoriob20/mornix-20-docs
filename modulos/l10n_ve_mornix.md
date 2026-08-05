@@ -1013,6 +1013,43 @@ módulo en `ir_module_module` con SQL crudo, porque las traducciones del
 manifiesto no se cargan solas para módulos de terceros. Al fusionarse dentro de
 `l10n_ve_mornix`, que ya tiene su propio nombre, el parche sobra.
 
+#### La guía se numera al confirmar el pedido (1.31.0)
+
+v18 la numeraba solo al **validar el albarán** (`_action_done`). Entre
+confirmar el pedido y despachar la mercancía, la guía no existía —que es justo
+cuando el cliente la necesita—. Ahora `sale.order.action_confirm` numera los
+albaranes del pedido; `_action_done` sigue numerando los que no vienen de un
+pedido, y `_set_guide_number` es idempotente, así que nadie consume dos
+números.
+
+El campo `guide_number` se ataba a `dispatch_guide_controls`, que exige el
+albarán validado: desde que se numera al confirmar, eso lo dejaba oculto justo
+cuando hace falta. Ahora se ve en cuanto existe.
+
+Dos defectos más que salieron por el camino:
+
+- `_set_guide_number` no filtraba por paso de entrega. En un almacén de dos o
+  tres pasos, PICK y PACK llevan el mismo pedido y el mismo documento, así que
+  **cada uno se llevaba su propio número** y la secuencia avanzaba de tres en
+  tres. Corregido: solo el albarán que sale del almacén.
+- `_compute_show_print_button_when_is_dispatch_guide` calculaba un campo que
+  nunca se declaró. Odoo no lo llamaba y leerlo daba `AttributeError`.
+
+> El botón de imprimir la guía **sigue apareciendo solo con el albarán
+> validado** (`dispatch_guide_controls`). Si la guía debe poder imprimirse
+> desde que se confirma el pedido, para que acompañe la mercancía, hay que
+> cambiar esa condición — no se tocó porque no se pidió.
+
+- [ ] **Almacén de dos o tres pasos: el pedido no se puede confirmar.** PICK y
+      PACK son albaranes de tipo `internal`, y `_check_transfer_reason_required`
+      es un `@api.constrains` que corre en el `create`, cuando esos albaranes
+      todavía no tienen su enlace al pedido. Resultado: `ValidationError`
+      («The 'Transfer Reason' field is mandatory») al confirmar **cualquier**
+      pedido de venta. Con entrega en un solo paso, que es como está hoy la
+      instalación, no se nota. La salida es mover la comprobación a la
+      validación del albarán, pero eso cambia cuándo se le exige el motivo al
+      usuario: hay que confirmarlo con el cliente antes.
+
 - [ ] La tarea programada de facturación automática (`ir_cron`) queda instalada
       y **activa**. Confirmar con el cliente el día y la hora antes de pasar a
       producción.
