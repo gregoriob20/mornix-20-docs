@@ -1,10 +1,10 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 167 pruebas sin errores ni advertencias**.
+> 173 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.27.2` (Odoo la
-> prefija con la serie vigente → `19.5.1.27.2`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.28.1` (Odoo la
+> prefija con la serie vigente → `19.5.1.28.1`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -38,7 +38,7 @@ lo demás del cliente.
 | Modelos propios | 24 |
 | Modelos que extiende | 12 |
 | Reglas de acceso | 27 |
-| Pruebas | 167 (17 archivos) — 30 heredadas, 137 escritas en la migración |
+| Pruebas | 173 (17 archivos) — 30 heredadas, 143 escritas en la migración |
 
 Que no tenga JavaScript es la razón por la que este módulo, siendo el más
 grande, no fue el más difícil de migrar: OWL es lo que más rompe entre v16 y
@@ -778,6 +778,46 @@ El módulo añade la dependencia `stock_account`, que antes no hacía falta.
 - [ ] El asistente solo lista productos con movimientos en el período. Confirmar
       con el cliente si el libro debe incluir también los que no se movieron
       pero tienen existencia.
+
+
+### 6.12 Resumen de Ventas y Compras, versión completa (1.28.0)
+
+Viene de `nx_tools/nimetrix_iva_resumen_report`, un módulo aparte que **extendía
+este mismo modelo** con un reporte más completo. Integrado aquí.
+
+No eran dos reportes: eran **dos generaciones del mismo**. El que ya vivía en
+`l10n_ve_mornix` era el borrador —su título decía literalmente
+`Ventas Internas Gravadas por Alicuota General ---2`—. El del módulo suelto es
+el terminado, y añade:
+
+- Ventas internas por alícuota reducida (8 %)
+- Ajustes a los débitos fiscales de períodos anteriores
+- Certificados de débitos fiscales exonerados
+- **Sección completa de créditos fiscales**, con compras de importación
+- Crédito deducible por prorrateo
+- Cuota tributaria del período y excedente para el mes siguiente
+
+Pasa de 60 filas casi vacías a **42 con contenido real**.
+
+#### Nunca había funcionado
+
+`generate_xls_report` llamaba a `update_resume()`, `prior_period_dates()` y
+`float_format2()`, todas definidas en `account.wizard.libro.resumen` —un modelo
+**sin relación de herencia** con el que las invocaba—. Reventaba con
+`AttributeError` en la primera línea. Es el mismo patrón del Libro Resumen (§6.6).
+
+#### Cuatro adaptaciones
+
+| Qué | Por qué |
+|---|---|
+| `prior_period_dates` se deduce del **rango pedido** | Antes lo sacaba de `nx_contribuyente_seniat`, campo eliminado. Un rango de ≤16 días es quincena; el resto, mes |
+| `update_resume` queda vacío | Repoblaba `nimetrix.move.line.resumen`, tabla eliminada en 1.11.0 — y hacía un `cr.commit()` a media operación. El desglose ahora se calcula solo |
+| `self.line.formato_fecha2()` → `self.formato_fecha2()` | `line` era un campo comentado desde v16 |
+| `base64.b64encode(...)` → `.decode()`, y `nx_rif` → `vat` | Roturas de v20 y de la consolidación del identificador |
+
+- [ ] **Antes de presentar**: comparar el resumen del último período contra el
+      que se venga entregando. Las secciones nuevas hacen que aparezcan cifras
+      que hasta ahora no salían.
 
 
 ## 7. Cómo levantarlo
