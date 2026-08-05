@@ -820,6 +820,91 @@ Pasa de 60 filas casi vacías a **42 con contenido real**.
       que hasta ahora no salían.
 
 
+### 6.13 Retención municipal integrada (versión 1.29.0)
+
+Viene de `nx_localizacion/nimetrix_retencion_municipal` (v18): la retención del
+impuesto sobre actividades económicas que practican (o nos practican) los
+municipios. Nueve modelos, doce vistas, un reporte y un asistente, ahora dentro
+de este módulo.
+
+**Sin dependencia de `mornix_dual_currency`.** El módulo original la traía por
+tres usos, todos sustituidos: `nx_currency_ref_id` ya es un campo de este
+módulo, `amount_total_bs` pasa a `nx_total_documento`, y la conversión de la
+base imponible usa el conversor estándar (`currency._convert`) en vez de leer
+`nx_rate` a mano.
+
+#### Qué hace el flujo
+
+1. Se marca el concepto municipal en la línea de la factura
+   (`account.move.line.concept_municipal_id`), con su alícuota y su alcaldía.
+2. Al publicar la factura, si el contacto está sujeto a retención municipal,
+   nace el comprobante (`retention.municipal`) con una línea por concepto.
+3. El comprobante toma número de la secuencia del diario, genera su asiento y
+   **se concilia contra la cuenta por cobrar o por pagar de la factura**.
+4. Devolver la factura a borrador deshace comprobante y asiento.
+5. El asistente saca el PDF del período, separando clientes de proveedores.
+
+#### Ocho defectos que venían de v18
+
+Ninguno es de v20: son fallos que el módulo arrastraba y que el flujo completo
+saca a la luz.
+
+| Qué pasaba | Consecuencia |
+|---|---|
+| `action_post` no escribía `state` en la rama del comprobante nuevo | La retención generaba su asiento y **se quedaba en «Borrador» para siempre**. Es la rama que corre siempre |
+| El asiento no se conciliaba con la factura | El residual del cliente no bajaba: el importe quedaba abierto por los dos lados |
+| Las líneas del asiento llevaban `move_id` **de la factura** | Apuntes colgados del documento equivocado |
+| La base imponible era `abs(amount_untaxed)`, repetido en cada línea | Con dos conceptos municipales, **se retenía dos veces sobre el total de la factura** |
+| Esa misma base no se convertía a moneda de compañía | Una factura de 100 USD declaraba 100 «bolívares» de base |
+| `button_draft` borraba el asiento con `DELETE FROM account_move` en SQL crudo | Se saltaba el ORM, dejaba apuntes conciliados apuntando a un asiento inexistente, y sin retención componía `WHERE id = False` y reventaba |
+| Nada iteraba: `action_post`, `post_retention_municipal`, `action_retention_municipal` | «Expected singleton» al validar varias facturas desde la lista, que es el uso normal |
+| `action_cancel` marcaba la retención y dejaba el asiento **publicado** | El importe seguía contabilizado después de anular |
+
+Y cuatro más de menor calado: el asistente del reporte era un `models.Model`
+(cada apertura dejaba una fila permanente en la base), dos defaults se evaluaban
+al importar el módulo (`datetime.now()` — todas las retenciones nacían con la
+fecha de arranque del servidor), `_compute_all_amount` acumulaba fuera del bucle
+y `_compute_rt_amount` hacía `+=` sobre su propio campo calculado.
+
+#### La fecha de abono del reporte nunca salió
+
+Buscaba los pagos con `account.payment.move_id == factura.id`. Pero `move_id`
+es el asiento **del pago**, no la factura: la condición no se cumple nunca y la
+columna salía siempre en blanco. Odoo relaciona ambos por conciliación, en
+`account.move.matched_payment_ids`. Es el cuarto caso en este módulo de una
+función que no funcionó en ninguna versión.
+
+#### Un defecto propio, encontrado por las pruebas
+
+El comprobante de retención lleva `municipal_id` como traza inversa, igual que
+la factura. El hook de `button_draft` no los distinguía, así que poner el
+comprobante en borrador —algo que hace la propia cancelación— **destruía la
+retención de la que colgaba**. Se filtran los asientos de tipo `entry`.
+
+#### Cambios de interfaz
+
+- La pestaña «Retención municipal» de la factura, que solo mostraba un campo de
+  solo lectura, pasa a **botón inteligente** junto a los de IVA e ISLR.
+- La cabecera del comprobante comparaba el nombre con `'/'`, valor que este
+  modelo nunca usa: el rótulo «Borrador» no aparecía jamás.
+- Tres campos usaban `readonly="state == 'done'"`, y `done` no es un estado de
+  este modelo: quedaban editables con la retención ya publicada.
+
+#### Corregido de paso
+
+El menú del **libro de inventario** (§6.11) cuelga de
+`nimetrix_menu_venezuela_reporting`, pero su XML se cargaba antes que
+`views/menu_items.xml`. La **instalación fresca** moría con «External ID not
+found»; en una actualización no se notaba porque el menú ya existía. Reordenado
+en el manifiesto.
+
+- [ ] Los conceptos municipales y las alcaldías son datos maestros del cliente:
+      hay que cargarlos antes de usar el módulo. No vienen en `data/`.
+- [ ] Confirmar con el cliente si la base municipal debe calcularse sobre el
+      subtotal de las líneas con concepto (lo que hace ahora) o sobre otra
+      magnitud según la ordenanza de cada alcaldía.
+
+
 ## 7. Cómo levantarlo
 
 ```bash

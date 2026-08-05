@@ -137,8 +137,22 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 
 ## Orden de trabajo sugerido
 
-0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 113 pruebas en verde.
+0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 160 pruebas en verde.
    Ver [modulos/l10n_ve_mornix.md](modulos/l10n_ve_mornix.md).
+
+   Cuatro modulos sueltos quedaron **absorbidos** dentro de el, porque no eran
+   funcionalidad aparte sino piezas de la misma localizacion:
+
+   | Modulo origen | Repo | Version | Que aporto |
+   |---|---|---|---|
+   | `nimetrix_iva_resumen_report` | `nx_tools` | 1.28.0 | Resumen de Ventas y Compras completo |
+   | `nimetrix_stock_account_report` | `nx_localizacion` | 1.27.0 | Libro de inventario |
+   | `nimetrix_retencion_municipal` | `nx_localizacion` | 1.29.0 | Retencion municipal |
+   | `mornix_dual_currency` (parcial) | `nx_dual_currency` | 1.26.0 | Saldos por cobrar/pagar en divisa |
+
+   Ninguno se instala ya por separado. Al absorberlos se rompio ademas la
+   dependencia circular `l10n_ve_mornix -> mornix_dual_currency ->
+   mornix_currency_rate -> l10n_ve_mornix`.
 1. **Doble moneda primero.** El analisis de acoplamiento lo puso arriba de la
    lista: `nimetrix_dual_currency`, `nimetrix_currency_rate` y
    `nx_pos_dual_currency` son la base oculta de la que cuelgan 7, 5 y 6 modulos
