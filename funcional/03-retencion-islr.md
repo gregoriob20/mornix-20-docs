@@ -44,3 +44,8 @@ Igual que con el TXT de IVA, **lo que entra en el XML queda bloqueado**.
 El comprobante anual de retenciones, que se entrega a cada proveedor. Está en
 **Informes de Venezuela → Listado de ARC Proveedores**: se elige el proveedor,
 el rango de fechas y los conceptos, y sale el PDF con el detalle mes a mes.
+
+## El proveedor lo ve en su portal
+
+Igual que con el IVA: **Mi cuenta → Retenciones de ISLR**, con el listado y la
+vista previa del comprobante.

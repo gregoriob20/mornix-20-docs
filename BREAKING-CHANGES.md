@@ -158,6 +158,45 @@ metodo que se esta salteando.
 - [ ] Al migrar cada modulo, revisar si compara `vat` contra un patron con
       separadores.
 
+## «Mi cuenta» del portal se rehizo: las tarjetas son registros
+
+Hasta v19, una tarjeta en `/my/home` se añadia heredando la plantilla:
+
+```xml
+<template inherit_id="portal.portal_my_home">
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="title">Mis cosas</t>
+            <t t-set="url" t-value="'/my/cosas'"/>
+        </t>
+    </xpath>
+</template>
+```
+
+En v20 esa herencia **se procesa sin error y la tarjeta no sale**.
+`portal.portal_docs_entry` ya no lee variables sueltas: recorre `portal_cards`,
+una lista de registros del modelo nuevo `portal.entry`, y lee de cada uno
+`entry.url`, `entry.name`, `entry.image` y `entry.should_show_portal_card()`.
+
+La forma correcta es declarar un registro:
+
+```xml
+<record id="mi_entrada" model="portal.entry">
+    <field name="name">Mis cosas</field>
+    <field name="description">Lo que sea</field>
+    <field name="url">/my/cosas</field>
+    <field name="placeholder_count">mi_contador</field>
+    <field name="category">vendor_category</field>
+    <field name="sequence" eval="130"/>
+</record>
+```
+
+El contador sigue viniendo de `_prepare_home_portal_values`, igual que antes.
+`category` reparte la tarjeta entre los bloques de cliente y de proveedor.
+
+- [ ] Cualquier modulo del cliente que añada apartados al portal hay que
+      revisarlo por esto: no da error, solo desaparece la tarjeta.
+
 ## `t-esc` desaparecio de QWeb — y no avisa
 
 **El peor de los encontrados hasta ahora**, porque no da error: el nodo se

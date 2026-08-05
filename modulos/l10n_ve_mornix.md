@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 173 pruebas sin errores ni advertencias**.
+> 213 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.28.1` (Odoo la
 > prefija con la serie vigente → `19.5.1.28.1`).
@@ -1056,6 +1056,58 @@ Dos defectos más que salieron por el camino:
 - [ ] `auto_install: True` del módulo original desaparece al fusionarse. Nada
       que hacer, pero conviene saberlo si alguien busca por qué ya no aparece
       solo en la lista de módulos.
+
+
+### 6.17 Las retenciones en el portal del cliente (versión 1.32.0)
+
+Un proveedor al que se le retiene necesita su comprobante, y hasta ahora tenía
+que pedirlo por correo. Ahora lo ve y se lo descarga desde el mismo portal donde
+consulta sus pedidos y facturas.
+
+Tres apartados en «Mi cuenta», uno por tipo, cada uno con su contador, su
+listado paginado y su **vista previa con el informe incrustado**, igual que una
+cotización, con el mismo enlace con `access_token`:
+
+```
+/my/retenciones-iva/<id>?access_token=…
+/my/retenciones-islr/<id>?access_token=…
+/my/retenciones-municipales/<id>?access_token=…
+```
+
+Los tres modelos heredan `portal.mixin` a través de un mixin propio,
+`nx.portal.retencion.mixin`, que centraliza lo común. Cada tipo solo declara
+dónde tiene el contacto, cuál es su estado publicable y qué informe usa: los
+nombres de campo no son uniformes porque los modelos vienen de módulos
+distintos, y renombrarlos obligaría a migrar columnas.
+
+#### Qué se ve y qué no
+
+| Regla | Por qué |
+|---|---|
+| Solo los comprobantes del contacto y sus hijos | Una sucursal ve los de su casa matriz, igual que con las facturas |
+| Solo los confirmados | Un borrador todavía puede cambiar de importe |
+| Solo los que **emite la compañía** | El comprobante de una retención que nos practica un cliente lo emite él: no existe PDF nuestro, y el informe aborta con «se genera solo para los Proveedores» |
+| Solo lectura | El portal no escribe |
+
+Las reglas están tanto en el dominio del controlador como en `ir.access`, para
+que no dependa de por dónde se entre.
+
+#### Dos cosas que costaron encontrar
+
+**Las tarjetas de «Mi cuenta» ya no se declaran en la plantilla.** v20 las
+convirtió en registros de `portal.entry`; la herencia de
+`portal.portal_my_home` se procesa sin error y la tarjeta simplemente no
+aparece. Detalle en `docs/BREAKING-CHANGES.md`.
+
+**Un `t-set` dentro de un `t-call` no llega a la cabecera de la plantilla
+llamada**: se evalúa al desplegar el cuerpo, que ocurre después. Por eso el
+título del listado salía vacío. Va en el cuerpo, o se pasa desde el
+controlador. Es el mismo motivo por el que el `<title>` de la documentación
+salía sin texto.
+
+- [ ] El portal muestra el comprobante en PDF. Confirmar con el cliente si
+      además debe poder descargarse el XML o el TXT, que hoy solo existen
+      agregados por período, no por comprobante.
 
 
 ## 7. Cómo levantarlo

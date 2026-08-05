@@ -47,3 +47,15 @@ En **Contabilidad → Informes de Venezuela → Generar TXT IVA**:
 | «El diario no tiene cuenta de IVA por defecto» | Falta configurar la cuenta en el diario de retención |
 | El comprobante no toma número | Está en borrador: el número se asigna al confirmar |
 | El importe retenido no cuadra | Revisar el porcentaje del contacto y la clasificación de los impuestos |
+
+## El proveedor lo ve en su portal
+
+Un proveedor con acceso al portal encuentra sus comprobantes en **Mi cuenta →
+Retenciones de IVA**: el listado con fecha e importe, y al pulsar uno, la vista
+previa del comprobante con botones para descargarlo o imprimirlo.
+
+Solo ve los suyos, y solo los confirmados. Las retenciones que **él** nos
+practica no aparecen ahí: ese comprobante lo emite él, no nosotros.
+
+También se le puede enviar el enlace directo, que lleva su propio token y abre
+sin necesidad de iniciar sesión.

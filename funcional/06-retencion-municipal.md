@@ -42,3 +42,8 @@ publicarla se genera uno nuevo, con número nuevo.
 
 En **Informes de Venezuela → Reporte de Retenciones Municipales**: se elige el
 rango de fechas y si se quieren las de clientes, las de proveedores o ambas.
+
+## El proveedor lo ve en su portal
+
+En **Mi cuenta → Retenciones municipales**. Solo aparecen las que le hemos
+practicado nosotros.
