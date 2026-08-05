@@ -137,7 +137,7 @@ o sufijo `_bs`/`_usd`. El acoplamiento real puede ser mayor.
 
 ## Orden de trabajo sugerido
 
-0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 160 pruebas en verde.
+0. ~~Piloto~~ — hecho: `l10n_ve_mornix` migrado, 161 pruebas en verde.
    Ver [modulos/l10n_ve_mornix.md](modulos/l10n_ve_mornix.md).
 
    Cuatro modulos sueltos quedaron **absorbidos** dentro de el, porque no eran

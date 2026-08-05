@@ -874,12 +874,38 @@ columna salía siempre en blanco. Odoo relaciona ambos por conciliación, en
 `account.move.matched_payment_ids`. Es el cuarto caso en este módulo de una
 función que no funcionó en ninguna versión.
 
-#### Un defecto propio, encontrado por las pruebas
+#### Dos defectos propios, encontrados al probar
 
 El comprobante de retención lleva `municipal_id` como traza inversa, igual que
 la factura. El hook de `button_draft` no los distinguía, así que poner el
 comprobante en borrador —algo que hace la propia cancelación— **destruía la
 retención de la que colgaba**. Se filtran los asientos de tipo `entry`.
+Lo encontraron las pruebas automáticas.
+
+El segundo solo salió al correr el flujo **sobre datos reales**: la base se
+calculaba convirtiendo el subtotal con la tasa del día, mientras el asiento de
+la factura estaba hecho a la tasa de la factura. Cuando no coinciden, el
+asiento de retención **no concilia**: en la prueba, 100 conciliados de 1500 y
+un residual de −1400 que no se corresponde con nada. Ahora la base sale del
+`balance` de las líneas, que ya viene en moneda de compañía a la tasa correcta
+—el mismo criterio del desglose de IVA (§6.4)—.
+
+> Las pruebas automáticas no lo veían porque montan la tasa que van a usar. Un
+> generador que trabaje sobre la base real vale para esto: encuentra lo que un
+> fixture, por construcción, deja fuera.
+
+#### Cómo verlo funcionando
+
+```bash
+cd docker
+docker compose run --rm -T odoo20 odoo shell -d <base> --no-http \
+    < scripts/generar_flujo_municipal.py
+```
+
+Monta alcaldía, conceptos, diario y contactos; genera cuatro facturas (un
+concepto, dos conceptos, compra y divisa) y comprueba 24 cosas sobre los datos
+ya puestos en la base, incluida la vuelta a borrador. Deja todo confirmado para
+poder abrirlo en la interfaz.
 
 #### Cambios de interfaz
 
