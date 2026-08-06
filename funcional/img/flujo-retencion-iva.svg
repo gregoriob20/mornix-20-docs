@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 190" width="860" height="190" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="f" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#714B67"/>
+    </marker>
+  </defs>
+  <g font-size="13">
+    <rect x="8"   y="52" width="150" height="58" rx="8" fill="#f3eef2" stroke="#714B67"/>
+    <text x="83"  y="76" text-anchor="middle" font-weight="600">1 · Factura</text>
+    <text x="83"  y="95" text-anchor="middle" fill="#52606d">publicada</text>
+
+    <rect x="186" y="52" width="150" height="58" rx="8" fill="#f3eef2" stroke="#714B67"/>
+    <text x="261" y="76" text-anchor="middle" font-weight="600">2 · Retención</text>
+    <text x="261" y="95" text-anchor="middle" fill="#52606d">en borrador</text>
+
+    <rect x="364" y="52" width="150" height="58" rx="8" fill="#f3eef2" stroke="#714B67"/>
+    <text x="439" y="76" text-anchor="middle" font-weight="600">3 · Confirmada</text>
+    <text x="439" y="95" text-anchor="middle" fill="#52606d">toma número</text>
+
+    <rect x="542" y="52" width="150" height="58" rx="8" fill="#f3eef2" stroke="#714B67"/>
+    <text x="617" y="76" text-anchor="middle" font-weight="600">4 · Asiento</text>
+    <text x="617" y="95" text-anchor="middle" fill="#52606d">y conciliación</text>
+
+    <rect x="720" y="52" width="132" height="58" rx="8" fill="#fff5af" stroke="#8a7500"/>
+    <text x="786" y="76" text-anchor="middle" font-weight="600">5 · TXT</text>
+    <text x="786" y="95" text-anchor="middle" fill="#52606d">y bloqueo</text>
+
+    <line x1="160" y1="81" x2="182" y2="81" stroke="#714B67" stroke-width="1.6" marker-end="url(#f)"/>
+    <line x1="338" y1="81" x2="360" y2="81" stroke="#714B67" stroke-width="1.6" marker-end="url(#f)"/>
+    <line x1="516" y1="81" x2="538" y2="81" stroke="#714B67" stroke-width="1.6" marker-end="url(#f)"/>
+    <line x1="694" y1="81" x2="716" y2="81" stroke="#714B67" stroke-width="1.6" marker-end="url(#f)"/>
+
+    <text x="430" y="26" text-anchor="middle" font-size="14" font-weight="600">Flujo de la retención de IVA</text>
+    <text x="430" y="160" text-anchor="middle" font-size="12" fill="#52606d">El número de comprobante se asigna en el paso 3, no antes. Desde el paso 5 la factura queda bloqueada.</text>
+  </g>
+</svg>

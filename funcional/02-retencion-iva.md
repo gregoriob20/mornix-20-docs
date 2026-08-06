@@ -9,6 +9,8 @@ lo está. El porcentaje sale del contacto: 75 % o 100 % del IVA facturado.
 
 ## El flujo, paso a paso
 
+![Los cinco pasos, desde la factura publicada hasta la declaración](img/flujo-retencion-iva.svg)
+
 1. **Publicar la factura.** El comprobante no se puede generar sobre un
    borrador.
 2. **Generar la retención** desde el botón de la factura. Se crea un
