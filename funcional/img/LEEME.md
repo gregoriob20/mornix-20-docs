@@ -1,5 +1,23 @@
 # Capturas de la documentación
 
+## Regenerarlas automáticamente
+
+Las capturas del sistema NO se toman a mano: las genera Playwright recorriendo
+las pantallas con el usuario `capturas.docs` (interfaz en español, permisos de
+contable, no de administrador):
+
+```bash
+cd docker
+docker compose --profile capturas run --rm capturas
+```
+
+Las pantallas que recorre están en `scripts/capturar_pantallas.py`. Para añadir
+una, se añade una línea a `PANTALLAS` (backend) o a `PORTAL` (portal) con el
+nombre del archivo, la ruta y el selector que debe existir antes de disparar.
+
+Cuando la interfaz cambie, se regeneran todas con ese comando y se vuelve a
+publicar. A mano solo van las que necesiten estados difíciles de montar.
+
 Las imágenes que se ven en `/documentacion` se guardan **aquí**, junto al
 Markdown que las usa, y se publican desde el módulo al generar.
 

@@ -22,6 +22,8 @@ lo está. El porcentaje sale del contacto: 75 % o 100 % del IVA facturado.
 
 Desde la factura, el botón **Retención IVA** lleva al comprobante.
 
+![El listado de retenciones de IVA a proveedores, con su estado y su número de comprobante](img/retenciones-iva-listado.png)
+
 ## El número de comprobante
 
 Tiene un formato fijo que exige el SENIAT: año, mes y un correlativo de ocho

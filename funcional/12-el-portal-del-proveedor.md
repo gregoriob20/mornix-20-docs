@@ -11,9 +11,13 @@ En **Mi cuenta** aparecen tres apartados, cada uno con su contador:
 - **Retenciones de ISLR**
 - **Retenciones municipales**
 
+![«Mi cuenta» del proveedor, con los apartados de retenciones](img/portal-mi-cuenta.png)
+
 Cada uno lista sus comprobantes con fecha, importe retenido y estado. Al pulsar
 uno se abre la vista previa, con el comprobante tal como sale impreso y botones
 para descargarlo o imprimirlo.
+
+![El listado de retenciones de IVA como lo ve el proveedor](img/portal-retenciones-iva.png)
 
 ## Qué NO ve
 

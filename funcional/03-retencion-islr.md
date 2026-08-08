@@ -32,6 +32,8 @@ concepto «no aplica». Si el producto no tiene concepto, esa línea no retiene.
 
 Desde la factura, el botón **Retención ISLR** lleva al comprobante.
 
+![El listado de retenciones de ISLR a proveedores](img/retenciones-islr-listado.png)
+
 ## El XML para el SENIAT
 
 En **Contabilidad → Informes de Venezuela**, el asistente de XML de ISLR genera
