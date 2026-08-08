@@ -15,6 +15,8 @@ Para cancelar un documento ya sellado con hash inalterable hay un botón
 **Cancelar** propio, que pide confirmación. Solo aparece dentro del período en
 curso.
 
+![Así se ve un documento declarado: aviso arriba y cinta en la esquina. Los campos no se pueden editar](img/comprobante-iva-bloqueado.png)
+
 ## Configuración
 
 | No se puede | Motivo |

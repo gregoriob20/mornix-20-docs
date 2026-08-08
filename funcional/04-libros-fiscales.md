@@ -11,6 +11,8 @@ En **Contabilidad → Informes de Venezuela → Libros fiscales**:
    publicadas del período.
 3. Se descarga en Excel.
 
+![Un libro de ventas confirmado: el estado arriba a la derecha y el botón XLSX para descargarlo](img/libro-fiscal-form.png)
+
 ## Antes de confirmar: facturas sin clasificar
 
 El libro reparte cada factura por alícuota de IVA: exenta, reducida, general y

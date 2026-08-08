@@ -38,6 +38,8 @@ Cada cliente y cada proveedor necesita, como mínimo:
 En la pestaña **Retenciones** se indica si el contacto es agente de retención de
 IVA y su porcentaje.
 
+![La ficha del contacto: tipo de persona, tipo de documento e identificación, y arriba los saldos por cobrar y por pagar en divisa](img/contacto-proveedor-form.png)
+
 ## Diarios
 
 La localización necesita diarios propios, además de los de ventas y compras:
