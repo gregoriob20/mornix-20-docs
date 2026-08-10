@@ -1147,6 +1147,17 @@ La lección quedó en la regla de trabajo: **que el PDF salga no significa que
 lleve datos, y que el módulo cargue no significa que los reportes rendericen.**
 Después de migrar un módulo con reportes, hay que generar cada uno.
 
+Mirar el PDF generado destapó dos más en el ARC, invisibles sin ojos encima:
+
+- **Las filas salían corridas una columna.** Al retirar la columna «DÍA» quedó
+  una celda vacía huérfana en la rama de los meses sin datos: 10 celdas para 9
+  columnas, y los acumulados desbordaban fuera de la tabla.
+- **«Total cantidad pagada» traía el impuesto**, no el monto de la operación
+  — desde v16. Con una base de 372 millones y una retención de 18,6, la
+  columna decía que se pagaron 18,6. Ahora lleva la base, y el impuesto queda
+  solo en su columna.
+
+
 También se corrigió el fixture de `mornix_dual_currency`, que usaba el RIF
 `J-12345678-9`: tan genérico que un contacto real de la base lo tenía puesto y
 la constraint de unicidad tumbaba todos los `setUpClass`. Ahora usa el rango
