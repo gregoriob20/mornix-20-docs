@@ -1130,6 +1130,28 @@ salía sin texto.
       agregados por período, no por comprobante.
 
 
+### 6.18 Los catorce reportes, generados de punta a punta (1.32.x)
+
+Se generó un ejemplar real de cada reporte de la localización —los nueve PDF,
+los tres Excel, el TXT del SENIAT y el XML de ISLR— con los datos de
+demostración. El ejercicio destapó tres fallos que la carga del módulo no ve,
+porque solo aparecen al **renderizar**:
+
+| Reporte | Fallo | Causa |
+|---|---|---|
+| Guía de despacho (PDF) | No se generaba | La plantilla leía `partner.mobile` (eliminado en v20) y `move_ids_without_package` (ídem) |
+| ARC (PDF) | No se generaba | La plantilla leía `company.nx_rif` y `supplier.nx_rif`, eliminados en la consolidación del identificador (1.2.0) |
+| ARC (acción de informe) | Cosmético | Declaraba `model: account.wh.islr.list`, un modelo que no existe. Funcionaba porque todo viaja por `data` |
+
+La lección quedó en la regla de trabajo: **que el PDF salga no significa que
+lleve datos, y que el módulo cargue no significa que los reportes rendericen.**
+Después de migrar un módulo con reportes, hay que generar cada uno.
+
+También se corrigió el fixture de `mornix_dual_currency`, que usaba el RIF
+`J-12345678-9`: tan genérico que un contacto real de la base lo tenía puesto y
+la constraint de unicidad tumbaba todos los `setUpClass`. Ahora usa el rango
+reservado a pruebas (`J-998xxxxx`).
+
 ## 7. Cómo levantarlo
 
 ```bash
