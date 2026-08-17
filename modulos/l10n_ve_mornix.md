@@ -1183,6 +1183,32 @@ estándar (también el `placeholder` y el foco inicial, repuestos de paso).
 Queda `tests/test_vista_factura.py` fijando que el `readonly` del contacto no
 vuelva a perderse, y que el ORM sigue siendo la barrera definitiva.
 
+### 6.20 Diferencial cambiario en la moneda secundaria (mornix_dual_currency)
+
+Observación de Leonardo, reproducida con números: una factura de 5.000 Bs
+emitida a una tasa y cobrada a otra queda saldada en Bs, pero la cuenta por
+cobrar quedaba **abierta en USD** (los apuntes llevan su valor en divisa a la
+tasa de su fecha). El balance comparado en la moneda secundaria no cuadraba.
+
+Dos defectos encadenados y su arreglo, en `mornix_dual_currency`:
+
+1. **Los cobros llevaban el ref en bolívares.** El cálculo dividía entre
+   `nx_rate or 1`, y los asientos de pago tienen `nx_rate = 1`: el «valor en
+   divisa» del cobro era el monto en Bs. Ahora, sin tasa propia, se usa la
+   misma fuente que las facturas (la tasa BCV del día exacto) y el conversor
+   estándar como último recurso. **Misma fuente a ambos lados**: si cada lado
+   convirtiera con una distinta, un cobro del mismo día ya no cuadraría.
+2. **No existía el diferencial en divisa.** Al completarse una conciliación,
+   si queda residuo en la moneda secundaria se genera un asiento que vale
+   **cero en Bs** (no toca la contabilidad legal) y lleva el ajuste en divisa
+   contra las cuentas de ganancia/pérdida cambiaria. Es idempotente por
+   conciliación (`nx_full_reconcile_ref_id`) y el diferencial en Bs de Odoo
+   pasa a valer cero en divisa, por la razón espejo.
+
+Verificado sobre la instancia: los dos escenarios (factura en USD con
+diferencial Bs, y factura en Bs cobrada a otra tasa) cierran en ambas monedas.
+Cinco pruebas nuevas en `mornix_dual_currency/tests/test_diferencial_ref.py`.
+
 ## 7. Cómo levantarlo
 
 ```bash
