@@ -1163,6 +1163,26 @@ También se corrigió el fixture de `mornix_dual_currency`, que usaba el RIF
 la constraint de unicidad tumbaba todos los `setUpClass`. Ahora usa el rango
 reservado a pruebas (`J-998xxxxx`).
 
+### 6.19 El cliente era editable con la factura publicada (1.32.x)
+
+Observación de Leonardo, verificada sobre el sistema: el campo de cliente se
+dejaba editar en una factura publicada. El ORM rechazaba el cambio al guardar
+(«You cannot modify the following readonly fields on a posted move»), así que
+no había riesgo de datos — pero el usuario editaba, intentaba guardar, y se
+llevaba el error al final.
+
+**La causa es una trampa general de las vistas heredadas**: nuestro
+`position="replace"` sobre `partner_id` descarta **todos** los atributos del
+nodo original, y con ellos se fue el `readonly="state != 'draft'"` del
+estándar (también el `placeholder` y el foco inicial, repuestos de paso).
+
+> Regla al hacer un `replace`: copiar los atributos del nodo original y
+> quitar conscientemente los que se quieran quitar. Un atributo olvidado no
+> falla en la carga ni en el auditor — degrada la vista en silencio.
+
+Queda `tests/test_vista_factura.py` fijando que el `readonly` del contacto no
+vuelva a perderse, y que el ORM sigue siendo la barrera definitiva.
+
 ## 7. Cómo levantarlo
 
 ```bash
