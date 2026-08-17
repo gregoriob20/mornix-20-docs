@@ -1209,6 +1209,35 @@ Verificado sobre la instancia: los dos escenarios (factura en USD con
 diferencial Bs, y factura en Bs cobrada a otra tasa) cierran en ambas monedas.
 Cinco pruebas nuevas en `mornix_dual_currency/tests/test_diferencial_ref.py`.
 
+### 6.21 Migración retroactiva del diferencial en divisa (mornix_dual_currency 1.8.0)
+
+El arreglo de 6.20 actúa solo en las conciliaciones nuevas. La migración
+`1.8.0/post-diferencial-ref-retroactivo.py` arregla el histórico, y correrla
+dos veces no duplica nada:
+
+1. **Recalcula** el valor en divisa de los asientos sin tasa propia (los pagos,
+   que llevaban el ref en bolívares) — con compute directo: `add_to_compute`
+   considera vigente el valor almacenado y no reevalúa.
+2. **Genera el ajuste** de cada conciliación completa con residuo en divisa,
+   con la misma rutina idempotente del flujo normal.
+3. **Verifica** que ningún asiento publicado quede descuadrado en divisa, y
+   hace una segunda pasada dirigida sobre los que el filtro por tasa no atrapó.
+
+La verificación destapó dos reglas nuevas del cálculo, que van más allá de la
+migración:
+
+- **La tasa implícita del asiento manda.** Si un asiento tiene una línea
+  denominada en la divisa (la CxP de un comprobante de retención, a la tasa de
+  la factura), esa línea implica la tasa de todo el asiento. Convertir las
+  demás piernas con otra fuente lo descuadraba por céntimos — y la validación
+  del cuadre en divisa habría **bloqueado el siguiente write** sobre él.
+- **`debit_ref`/`credit_ref` derivan del balance.** Ese compute tenía su propia
+  lógica duplicada que volvía a dividir por `nx_rate`; con tasa implícita ahora
+  deriva del `balance_ref`, la única fuente.
+
+Resultado sobre la instancia: **cero asientos publicados descuadrados en
+divisa** en toda la base.
+
 ## 7. Cómo levantarlo
 
 ```bash
