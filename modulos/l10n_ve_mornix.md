@@ -1238,6 +1238,31 @@ migración:
 Resultado sobre la instancia: **cero asientos publicados descuadrados en
 divisa** en toda la base.
 
+### 6.22 Los seis formatos de retención, rediseñados (1.33.0)
+
+Trabajo de **Jose Plaja** (rama `formatos-retenciones`), integrado tras el QA
+completo: los seis PDF de retención —comprobantes de IVA, ISLR y municipal, y
+los tres listados— con cabecera partida (agente / sujeto retenido), referencia
+a la providencia administrativa, bloques de firma y cifras en convención
+venezolana (`4.550,00`).
+
+Piezas nuevas:
+
+- `report/nx_report_styles.xml` — estilos compartidos por los seis formatos.
+- `models/nx_report_format.py` — el helper `nx.report.format`: los parsers
+  devuelven **números y fechas**, y el formato lo pone la plantilla. Antes
+  viajaba texto ya formateado y alguna plantilla le aplicaba `float()` encima,
+  deshaciendo el formato.
+
+Ese cambio de contrato rompió dos pruebas que fijaban el formato viejo; se
+actualizaron al nuevo en el mismo QA. Verificado renderizando los seis y
+revisándolos visualmente: totales cuadrando, y el sustraendo del ISLR bien
+aplicado (4.000 × 3% − 107,50 = 12,50).
+
+- [ ] «Total factura» del reporte municipal sale 0,00 con las facturas demo:
+      lee `nx_total_documento`, igual que el parser viejo. Revisar ese compute
+      con datos reales antes de presentar.
+
 ## 7. Cómo levantarlo
 
 ```bash
