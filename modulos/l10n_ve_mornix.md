@@ -1457,6 +1457,31 @@ de doble moneda sobre `account.move.line`.
 mentirosa cuando había varias a la vista; si algún usuario reportó conteos
 raros ahí en v18, era esto.
 
+### 6.27 El asistente de retenciones de empleados, reescrito (1.34.1)
+
+La auditoría de propiedad del código (ver
+[`PROPIEDAD-Y-LICENCIAS.md`](../PROPIEDAD-Y-LICENCIAS.md)) encontró que el
+asistente de importación de retenciones ISLR de empleados descendía de
+`l10n_ve_full` (Tecvemar C.A., 2012, **GPL-2**) — licencia incompatible con
+la LGPL-3 del módulo y autoría de un tercero. Se sustituyó por una
+reimplementación independiente: misma función (el CSV de la nómina entra a la
+declaración XML del SENIAT), código nuevo.
+
+Lo que cambia para el usuario, a mejor:
+
+- Los errores del archivo se reportan **todos juntos y con número de fila**;
+  antes reventaba en el primero y había que iterar a ciegas.
+- Con cualquier error **no se importa nada** (antes también, pero ahora es
+  explícito en el mensaje).
+- Reimportar reemplaza las líneas de empleados sin duplicar y sin tocar las
+  líneas de facturas.
+
+**Consecuencia práctica**: la versión heredada estaba rota en v20 de todos
+modos — hacía `b64decode` de un campo Binary que ahora entrega los bytes
+crudos, así que cualquier importación fallaba con «no es texto UTF-8». Si la
+nómina reporta ese error en otras pantallas con carga de archivos, es el
+mismo patrón. Cubierto por 4 pruebas (`test_importar_empleados_islr.py`).
+
 ## 7. Cómo levantarlo
 
 ```bash
