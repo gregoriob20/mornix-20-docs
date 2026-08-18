@@ -13,11 +13,19 @@ En **Mi cuenta** aparecen tres apartados, cada uno con su contador:
 
 ![«Mi cuenta» del proveedor, con los apartados de retenciones](img/portal-mi-cuenta.png)
 
-Cada uno lista sus comprobantes con fecha, importe retenido y estado. Al pulsar
-uno se abre la vista previa, con el comprobante tal como sale impreso y botones
-para descargarlo o imprimirlo.
+Cada uno lista sus comprobantes con **la factura afectada, su número de
+control**, la fecha, el importe retenido y el estado. Arriba hay ordenación
+—por fecha, comprobante o importe— y un buscador que encuentra por número de
+comprobante, de factura o de control.
+
+Al pulsar uno se abre la vista previa: el comprobante tal como sale impreso,
+con los datos y los botones de descarga a un lado, migas para volver al
+listado, flechas para pasar al siguiente y el historial de comunicación al
+pie. La misma página que ya conoce de sus facturas.
 
 ![El listado de retenciones de IVA como lo ve el proveedor](img/portal-retenciones-iva.png)
+
+![La vista previa del comprobante, con sus datos al lado y el informe incrustado](img/portal-retencion-detalle.png)
 
 ![Recorrido: el proveedor entra, abre sus retenciones y ve un comprobante](media/recorrido-portal-proveedor.webm)
 

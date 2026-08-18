@@ -1136,6 +1136,28 @@ pastel y trazo. Como las entradas de `portal.entry` se declaran con
 `noupdate="1"`, cargarlos en una base existente necesitó migración (1.35.0): el
 XML solo alcanza a las instalaciones nuevas.
 
+#### La página del comprobante hereda `portal.portal_sidebar`
+
+Que es lo que aporta migas de pan, flechas de anterior/siguiente y el hilo de
+mensajes: la misma página que el proveedor ya conoce de sus facturas. La
+primera versión era una plantilla suelta y le faltaba todo eso.
+
+De paso, dos detalles:
+
+- **El giro de carga no lo oculta ningún JavaScript.** El `iframe` se pinta
+  encima gracias a `position-relative` en el contenedor y en el propio marco.
+  Sin eso —que es lo que tenía— el indicador se quedaba girando para siempre
+  sobre el comprobante ya cargado.
+- **`retention.municipal` no tenía chatter**, a diferencia de sus dos
+  hermanas: sin él no hay trazabilidad de quién la confirmó ni hilo de
+  mensajes en el portal. Se le añadió `mail.thread`.
+
+El listado enseña la factura afectada y su número de control, y se puede
+buscar por los tres números. Se leen con `sudo` acotado: el usuario de portal
+no tiene permiso sobre las **líneas** del comprobante, así que la columna salía
+vacía; darle lectura sobre esos modelos completos abriría mucho más de lo
+necesario para enseñar un número que ya está en su propia factura.
+
 #### Dos cosas que costaron encontrar
 
 **Las tarjetas de «Mi cuenta» ya no se declaran en la plantilla.** v20 las
