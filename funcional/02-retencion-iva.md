@@ -24,6 +24,8 @@ Desde la factura, el botón **Retención IVA** lleva al comprobante.
 
 ![El listado de retenciones de IVA a proveedores, con su estado y su número de comprobante](img/retenciones-iva-listado.png)
 
+![Recorrido: del listado al comprobante, con sus líneas y su asiento](media/recorrido-retenciones-iva.webm)
+
 ## El número de comprobante
 
 Tiene un formato fijo que exige el SENIAT: año, mes y un correlativo de ocho

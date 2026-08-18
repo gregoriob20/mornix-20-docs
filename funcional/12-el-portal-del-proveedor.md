@@ -19,6 +19,8 @@ para descargarlo o imprimirlo.
 
 ![El listado de retenciones de IVA como lo ve el proveedor](img/portal-retenciones-iva.png)
 
+![Recorrido: el proveedor entra, abre sus retenciones y ve un comprobante](media/recorrido-portal-proveedor.webm)
+
 ## Qué NO ve
 
 | Regla | Por qué |
