@@ -1263,6 +1263,24 @@ aplicado (4.000 × 3% − 107,50 = 12,50).
       lee `nx_total_documento`, igual que el parser viejo. Revisar ese compute
       con datos reales antes de presentar.
 
+### 6.23 Los huecos del análisis de cobertura, cerrados
+
+El analizador de la skill `senior-qa` encontró seis modelos con lógica propia
+y cero pruebas. Los seis quedaron cubiertos con pruebas reales (no esqueletos):
+
+| Modelo | Qué se fijó |
+|---|---|
+| `nimetrix.wh.islr.xml` | Los totales del XML del SENIAT suman sus líneas, siguen a las altas/bajas, y el archivo generado lleva el RIF y la estructura |
+| `sale.order.line` | Precio negativo se rechaza; precio cero pasa en borrador pero no confirma; con el candado apagado se permite |
+| `product.template` | Precio USD negativo se rechaza; el onchange convierte a Bs con la tasa inversa |
+| `ir.ui.view` | El candado de vistas: un administrador no crea/modifica/borra, el superusuario sí |
+| `purchase.order` | Un proveedor sin RIF no puede comprar |
+| `nimetrix.wh.iva.line` | `_amount_all` suma las líneas de impuesto (ojo: `nx_move_id` apunta a la factura, no al apunte — el nombre engaña) |
+
+Con esto, **ningún modelo del módulo con lógica propia queda sin prueba**
+(la advertencia del analizador sigue vigente: es búsqueda de texto, no
+cobertura real — sirve para encontrar huecos, no para declararse cubierto).
+
 ## 7. Cómo levantarlo
 
 ```bash
