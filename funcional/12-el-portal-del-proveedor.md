@@ -21,6 +21,11 @@ para descargarlo o imprimirlo.
 
 ![Recorrido: el proveedor entra, abre sus retenciones y ve un comprobante](media/recorrido-portal-proveedor.webm)
 
+> Un usuario **interno** con permisos de contabilidad ve todos los
+> comprobantes desde su portal, igual que ve todas las facturas. Los apartados
+> solo aparecen cuando hay algo que enseñar: si el contador está en cero, la
+> tarjeta se oculta —comportamiento del portal de Odoo, no de la localización—.
+
 ## Qué NO ve
 
 | Regla | Por qué |

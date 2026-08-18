@@ -1112,6 +1112,30 @@ su cuenta: ocultar un botón no impide llamar al método.
 | Retención de ISLR, clientes | No |
 | Retención municipal | Solo si es `in_tax`, la que practicamos nosotros |
 
+#### El dominio NO filtra por contacto
+
+Es el patrón de `/my/invoices`: el dominio del controlador solo filtra estado y
+tipo, y **de limitar por contacto se encargan las reglas de acceso**. Un usuario
+de portal ve los suyos porque su regla en `ir.access` lo limita; un usuario
+interno con permisos de contabilidad los ve todos.
+
+Filtrarlo en los dos sitios dejaba el portal del **usuario interno vacío** —su
+ficha no es la de ningún proveedor— y por eso las tarjetas no aparecían en «Mi
+cuenta» al entrar como administrador: el portal oculta las que tienen contador
+en cero.
+
+| Quién entra | Ve |
+|---|---|
+| Portal (proveedor) | Los suyos y los de sus sucursales |
+| Interno con contabilidad | Todos |
+| Interno sin contabilidad | Ninguno: `has_access` devuelve falso |
+
+Las tres tarjetas llevan icono propio (`static/src/img/retencion_*.svg`), en el
+mismo lenguaje visual que las del estándar: ilustración plana de 64×64, relleno
+pastel y trazo. Como las entradas de `portal.entry` se declaran con
+`noupdate="1"`, cargarlos en una base existente necesitó migración (1.35.0): el
+XML solo alcanza a las instalaciones nuevas.
+
 #### Dos cosas que costaron encontrar
 
 **Las tarjetas de «Mi cuenta» ya no se declaran en la plantilla.** v20 las
