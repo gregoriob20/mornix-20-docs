@@ -1297,6 +1297,42 @@ Mismo análisis que 6.23, sobre los otros dos módulos:
   «sin mención», y se quedan así a propósito: cero métodos, solo campos —
   una prueba ahí sería mencionar por mencionar.
 
+### 6.25 QA de cobertura en guías de despacho y portal
+
+Mismo análisis, sobre las dos áreas que faltaban de este módulo. Doce pruebas
+nuevas (`test_nx_stock_wizards.py` y `TestMixinPortal` en
+`test_portal_retenciones.py`) que cubren el asistente de facturación masiva,
+el asistente de autoconsumo, el paso de entrega del tipo de operación, el
+generador del cron de facturación y los diez métodos del mixin del portal.
+`transfer.reason` y `nimetrix.fiscal.notification` quedan sin mención a
+propósito: cero métodos.
+
+Las pruebas destaparon **dos defectos reales de la migración**, ya corregidos:
+
+- **Facturar una guía nacida de un pedido de venta estaba roto**:
+  `_get_invoice_lines_for_invoice` leía `sale_line_id.tax_id`, que v20
+  renombró a `tax_ids`. El mismo rename ya se había corregido en
+  `nx_stock_stock_move.py`, pero esta aparición se escapó del barrido — y las
+  pruebas viejas no la pisaban porque facturaban traslados sin pedido.
+- **El cron de facturación moría entero**: su dominio de búsqueda incluía
+  `("invoice_count", "=", 0)`, y `invoice_count` es un compute sin almacenar
+  — v20 lo rechaza con `ValueError` («no SQL representation»). Ahora se
+  filtra en Python tras el search.
+
+Dos matices que dejaron las pruebas y conviene saber:
+
+- En v20 un producto puede **no tener categoría** (`categ_id` ya no trae la
+  categoría «All» por defecto). La cadena de respaldo de la cuenta de
+  ingresos (producto → categoría) puede acabar en `False` y la factura
+  revienta contra `check_accountable_required_fields`: el producto de una
+  guía debe tener cuenta de ingresos propia o categoría con cuenta.
+- `_compute_invoice_count` no declara `depends` (cuenta con un `search`):
+  dentro de una misma transacción el valor queda cacheado. En la interfaz no
+  se nota porque cada request trae un env fresco; en pruebas se invalida a
+  mano con `env.invalidate_all()`.
+
+Suite completa de los tres módulos tras el cierre: **347 pruebas, 0 fallos**.
+
 ## 7. Cómo levantarlo
 
 ```bash
