@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 213 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.28.1` (Odoo la
-> prefija con la serie vigente → `19.5.1.28.1`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.34.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.34.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -1237,6 +1237,127 @@ migración:
 
 Resultado sobre la instancia: **cero asientos publicados descuadrados en
 divisa** en toda la base.
+
+### 6.22 Los seis formatos de retención: corrección (1.33.0) y rediseño (1.34.0)
+
+Dos entregas seguidas sobre los mismos seis archivos: los **tres comprobantes**
+(IVA, ISLR y municipal) y los **tres reportes detallados**. Conviene leerlas
+juntas porque la segunda se apoya en la primera.
+
+#### 1.33.0 — lo que estaba roto
+
+Corrigió defectos de salida, no de estética: tres convenciones numéricas
+conviviendo en la misma fila (`5220.0`, `5,220.00` y `4.500,00`), RIF partidos
+en tres líneas, cabeceras de columna rotas a media palabra, una página en
+blanco al final de cada comprobante, formatos de papel declarados
+`default="True"` —que los convertía en el formato por omisión de **toda** la
+base— y Bootstrap cargado desde un CDN que wkhtmltopdf nunca alcanza porque
+corre sin salida a internet. Introdujo `models/nx_report_format.py` y la hoja
+de estilos compartida `report/nx_report_styles.xml`.
+
+#### 1.34.0 — cómo se ven
+
+Rediseño estético sobre esa base. **9 archivos modificados, ninguno nuevo,
+ningún cambio de esquema, ninguna consulta nueva.** Los proveedores de datos
+quedaron correctos en 1.33.0 y no se tocaron; el único `.py` que cambia es
+`models/nx_report_format.py`, que gana el ayudante de paleta.
+
+| Antes | Ahora |
+|---|---|
+| Rejilla completa: cada celda en su recuadro | Banda oscura de cabecera, filete horizontal y alternancia de filas. La división vertical queda en un tono casi invisible |
+| Bloques de identificación como tabla con bordes | Tarjetas con esquina curva y franja de título — **oscura** el agente de retención, **clara** el sujeto retenido |
+| Tira de celdas donde el nº de comprobante pesaba lo mismo que su etiqueta | Cinta de fondo sólido con el número en 11,5 pt |
+| El comprobante terminaba a media página | Fila de fichas de totales, con el impuesto retenido destacado en oscuro |
+| Línea de firma suelta, con la imagen encima por margen negativo | Recuadro punteado curvo con la firma **dentro**, centrada |
+| Color de banda escrito a mano en la hoja de estilos | Sale de **Ajustes → Diseño del documento**, con el contraste del texto calculado |
+
+Las fichas no son relleno: el impuesto retenido es la cifra por la que se lee
+el comprobante y estaba enterrada en la decimocuarta columna de la tabla.
+
+#### El color sale de Ajustes, no del código
+
+La banda —cabeceras de tabla, cinta y ficha destacada— toma
+`res.company.primary_color`, y la barra de acento bajo el encabezado toma
+`secondary_color`. Son los dos campos de **Ajustes → Diseño del documento**,
+que es donde el cliente configura su identidad y donde espera cambiarla. Sin
+ajuste se usa el azul pizarra de partida.
+
+El esqueleto (grises de filete, cebra y texto de tabla) **se queda neutro a
+propósito**: si la marca tiñe también los separadores, un color saturado
+convierte el comprobante en un cartel.
+
+**El texto sobre la banda se calcula, no se fija.** `nx.report.format.get_theme`
+mide la luminancia del color elegido según WCAG 2.1 y conmuta a tinta oscura en
+cuanto pasa de medio tono. Con un amarillo corporativo —caso nada raro— el
+texto blanco de siempre habría desaparecido. Los tintes claros de las tarjetas
+y el color de marca para texto sobre fondo claro se derivan del mismo color
+mezclando con blanco y oscureciendo hasta que la luminancia baja del umbral.
+
+**Consecuencia práctica:** el color se interpola en el CSS al renderizar, no con
+variables CSS. El Qt WebKit de wkhtmltopdf no soporta `var()` — descarta la
+declaración entera y el color se pierde sin avisar. Por eso la hoja de estilos
+necesita que quien la invoca deje puesta la compañía del documento:
+
+```xml
+<t t-set="nx_company" t-value="d.company_id"/>
+<t t-call="l10n_ve_mornix.nx_report_styles"/>
+```
+
+Como el `t-call` va en el `<head>`, fuera del `t-foreach`, la compañía se toma
+del primer registro del lote (`data[:1].company_id`). Imprimir de golpe
+comprobantes de dos compañías distintas saldría con el color de la primera; el
+caso no se da porque los asistentes filtran por compañía, y la alternativa
+—repetir la hoja de estilos entera por documento— sale mucho más cara.
+
+#### Lo que obliga el motor de PDF
+
+Curvar las esquinas de una tabla tiene una consecuencia que no es obvia:
+**`border-collapse: collapse` ignora `border-radius`**. No es cosa de
+wkhtmltopdf, pasa en todos los navegadores — al colapsar los bordes el motor
+descarta el radio. Por eso las tablas de detalle pasaron a
+`border-collapse: separate` con `border-spacing: 0`, y el radio se declara en
+las celdas de las esquinas.
+
+**Consecuencia práctica agradable:** al cortar página la cabecera se repite ya
+curvada, y el pie de totales cierra la caja donde de verdad termina.
+
+Lo demás se verificó renderizando una página de prueba contra el **mismo
+binario** que usa Odoo, no contra un navegador:
+
+| | |
+|---|---|
+| `border-radius` | Sí, con y sin prefijo |
+| `linear-gradient` | **No se pinta.** El fondo queda transparente y un bloque con texto blanco encima desaparece entero |
+| `box-shadow` | Sí, pero descartado: en láser una sombra gris ensucia |
+| Flexbox | No fiable. Los centrados verticales van con `vertical-align: middle` sobre celda de tabla |
+| Borde en `inline-block` dentro de celda | **No se pinta**; el fondo y el radio sí. Por eso las píldoras van con relleno |
+| Filetes de `.5pt` | Se pierden al rasterizar a 110 dpi. `.6pt` es el mínimo que sobrevive; los marcos van a `.7pt` |
+
+Las dos últimas costaron una vuelta de render cada una y quedan anotadas en la
+propia hoja de estilos.
+
+#### Lo que quedó abierto
+
+- [ ] **El ARC no se rediseñó a propósito.** Reproduce un formulario prescrito
+      por el SENIAT —campos numerados, rejilla de tipo de agente, casillas
+      SI/NO— y esa maqueta no es libre de cambiar. Sí tiene un defecto real:
+      su formato de papel declara `margin_top: 30` con `header_spacing: 50` y
+      **el logo sale cortado por arriba**. Arreglo de dos líneas, pero sobre un
+      formato legal: se decide con el equipo.
+- [ ] **Sigue sin haber campo de sello.** Los comprobantes estampan solo
+      `nx_firma_representante`. Añadirlo es un cambio de esquema en capa B. El
+      recuadro de firma ya está dimensionado para alojar firma y sello juntos:
+      sería un `fields.Binary` más un `<img class="nx-firma"/>` por
+      comprobante, sin tocar la hoja de estilos.
+- [ ] **El diseño está validado contra wkhtmltopdf.** Si v20 pasa a
+      `base_report_paper_muncher` (decisión abierta en
+      `docs/BREAKING-CHANGES.md`) hay que volver a mirar los seis: las tres
+      soluciones de arriba son rodeos a limitaciones de Qt WebKit que Paper
+      Muncher no tiene, así que no deberían romper nada — pero no está
+      comprobado.
+- [ ] **Los PDF de muestra se generaron sobre Odoo 18**, en el banco de pruebas
+      con datos reales (71 retenciones de IVA, 47 de ISLR, 31 municipales).
+      Falta regenerarlos sobre v20 para confirmar que el render es idéntico.
 
 ## 7. Cómo levantarlo
 
