@@ -1281,6 +1281,22 @@ Con esto, **ningún modelo del módulo con lógica propia queda sin prueba**
 (la advertencia del analizador sigue vigente: es búsqueda de texto, no
 cobertura real — sirve para encontrar huecos, no para declararse cubierto).
 
+### 6.24 QA de cobertura en mornix_dual_currency y mornix_docs
+
+Mismo análisis que 6.23, sobre los otros dos módulos:
+
+- **mornix_docs**: limpio de entrada — sus dos modelos con lógica ya estaban
+  cubiertos por las 15 pruebas del módulo.
+- **mornix_dual_currency**: un hueco real en `product.pricelist.item` — pero
+  con matiz: `_compute_fixed_price` ya lo cubrían las pruebas de
+  `l10n_ve_mornix`, y el analizador solo mira las pruebas del propio módulo.
+  Lo genuinamente sin probar eran la etiqueta de precio en sus ramas de
+  porcentaje y fórmula, y el tooltip de la regla — cubierto con 4 pruebas
+  nuevas, sin duplicar lo que ya existía.
+- `res.company` y `res.config.settings` de dual_currency siguen marcados
+  «sin mención», y se quedan así a propósito: cero métodos, solo campos —
+  una prueba ahí sería mencionar por mencionar.
+
 ## 7. Cómo levantarlo
 
 ```bash
