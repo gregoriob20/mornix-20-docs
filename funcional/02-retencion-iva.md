@@ -26,6 +26,8 @@ Desde la factura, el botón **Retención IVA** lleva al comprobante.
 
 ![Recorrido: del listado al comprobante, con sus líneas y su asiento](media/recorrido-retenciones-iva.webm)
 
+![El comprobante impreso: agente y sujeto retenido, líneas por alícuota y total retenido](img/formato-comprobante-iva.png)
+
 ## El número de comprobante
 
 Tiene un formato fijo que exige el SENIAT: año, mes y un correlativo de ocho

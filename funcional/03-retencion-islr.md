@@ -34,6 +34,8 @@ Desde la factura, el botón **Retención ISLR** lleva al comprobante.
 
 ![El listado de retenciones de ISLR a proveedores](img/retenciones-islr-listado.png)
 
+![El comprobante de ISLR impreso](img/formato-comprobante-islr.png)
+
 ## El XML para el SENIAT
 
 En **Contabilidad → Informes de Venezuela**, el asistente de XML de ISLR genera

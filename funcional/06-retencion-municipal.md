@@ -26,6 +26,8 @@ Desde la factura, el botón **Retención Municipal** lleva al comprobante.
 
 ![El comprobante de retención municipal, con una línea por concepto y su base, alícuota e importe](img/retencion-municipal-form.png)
 
+![El comprobante municipal impreso, con su línea por concepto](img/formato-comprobante-municipal.png)
+
 ## La base imponible
 
 Cada concepto retiene **sobre la base de sus propias líneas**, no sobre el total
