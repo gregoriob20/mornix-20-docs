@@ -361,6 +361,35 @@ El codigo actual del cliente no la usa (verificado con grep sobre
 `/opt/odoo-client/`), asi que hoy no bloquea nada. Queda anotado por si aparece
 en codigo que todavia no hemos revisado.
 
+## `base_vat` no existe como modulo en v20
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al actualizar el modulo |
+
+`l10n_ve_mornix` declara `base_vat` en `depends`. En v20 la actualizacion aborta:
+
+```
+odoo.exceptions.UserError: You try to upgrade the module l10n_ve_mornix that
+depends on the module: base_vat.
+```
+
+**El directorio sigue estando, y eso despista.** `/opt/odoo/addons/base_vat/`
+existe en el arbol de master, pero dentro solo queda la carpeta `i18n`: no hay
+`__manifest__.py` ni modelos. Odoo no lo registra como modulo — `update_list()`
+deja el conteo igual (674 antes, 674 despues) y `base_vat` no aparece. O sea:
+comprobar que la carpeta existe **no basta** para dar la dependencia por buena.
+
+La validacion de RIF/VAT que aportaba hay que buscarla en `base`, o asumirla en
+la propia localizacion.
+
+- [ ] Quitar `base_vat` de `depends` y verificar que la validacion del
+      identificador venezolano sigue en pie sin el. Hay un apaño local en el
+      arbol de trabajo (`__manifest__.py` y `views/res_partner.xml`, rotulado
+      «DESACTIVADO SOLO EN LOCAL PARA LA PRUEBA») que **no esta confirmado**:
+      sirve para levantar el entorno, no como solucion.
+
 ## Motor de reportes PDF
 
 master incorpora el addon **`base_report_paper_muncher`** ("Report Engine: Paper
@@ -368,6 +397,16 @@ Muncher"), el motor de render propio de Odoo (https://odoo.github.io/paper-munch
 No existe en 18.0. `wkhtmltopdf` sigue referenciado en varios addons del core.
 
 - [ ] Definir con que motor se renderizan los reportes del cliente en v20.
+
+**La decision ya tiene consecuencias concretas.** Los seis formatos de retencion
+(1.34.0) estan disenados y verificados contra `wkhtmltopdf`, y tres detalles de
+su hoja de estilos son rodeos a limitaciones del Qt WebKit que lleva dentro:
+nada de `linear-gradient` (no lo pinta), pildoras con relleno en vez de borde
+(no pinta el borde de un `inline-block` dentro de una celda) y filetes de `.6pt`
+como minimo (a `.5pt` desaparecen al rasterizar a 110 dpi). Paper Muncher no
+tiene ninguna de las tres limitaciones, asi que en principio los rodeos siguen
+funcionando — pero **hay que regenerar los seis y mirarlos** antes de dar el
+cambio por bueno. Detalle en `docs/modulos/l10n_ve_mornix.md`, seccion 6.22.
 ### El wkhtmltopdf de Ubuntu 24.04 exige display y no admite pies de pagina
 
 Ubuntu 24.04 empaqueta `wkhtmltopdf 0.12.6-2build2` **sin el Qt parcheado**
