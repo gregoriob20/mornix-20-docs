@@ -1333,6 +1333,34 @@ Dos matices que dejaron las pruebas y conviene saber:
 
 Suite completa de los tres módulos tras el cierre: **347 pruebas, 0 fallos**.
 
+### 6.26 Rendimiento: los computes de la lista de guías, en lote (1.33.2)
+
+El QA incorporó criterios de rendimiento (sección D de
+`docs/CRITERIOS-ACEPTACION.md`): el coste en consultas no debe crecer con el
+número de registros. El estreno fue sobre los dos N+1 conocidos de este
+módulo, en `stock.picking`:
+
+- `_compute_invoice_count` hacía **un search por albarán** — una lista de 80
+  guías eran 80 consultas, y el cron de facturación lo disparaba sobre todo
+  el histórico despachado. Además asignaba sobre `self` entero en cada
+  vuelta del bucle, así que una lista con varios albaranes prefetcheados
+  mostraba en **todos** el conteo del último — bug funcional, no solo de
+  velocidad, que venía de v18.
+- `_compute_invoice_state` tenía el mismo search por registro.
+
+Ambos quedan en **una consulta agrupada por lote** (`_read_group`). Tres
+pruebas nuevas en `tests/test_rendimiento.py` fijan el presupuesto con
+`assertQueryCount` (12 albaranes ≤ 2 consultas; con el N+1 eran 12+) y
+verifican que cada albarán muestra su propio conteo. La guía de cómo escribir
+estas pruebas está en la skill de QA
+(`references/rendimiento.md`), con los puntos calientes que siguen
+pendientes de medir: libros fiscales, listados de retención y los computes
+de doble moneda sobre `account.move.line`.
+
+**Consecuencia práctica**: la columna «Facturas» de la lista de guías era
+mentirosa cuando había varias a la vista; si algún usuario reportó conteos
+raros ahí en v18, era esto.
+
 ## 7. Cómo levantarlo
 
 ```bash

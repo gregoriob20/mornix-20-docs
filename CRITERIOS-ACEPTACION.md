@@ -51,9 +51,29 @@ el sistema todos los dias.
 - [ ] Conseguir juegos de datos reales (anonimizados) para probar C2 y B3
 - [ ] Confirmar que impresoras fiscales hay que soportar (C3)
 
+## D. De rendimiento — que no se degrade con volumen
+
+El enemigo en Odoo casi nunca es el CPU: son las consultas que crecen con el
+numero de registros (N+1). Codigo que funciona perfecto con los 5 registros de
+un test y se arrastra con 50.000. Detalle y herramientas en
+`.claude/skills/senior-qa/references/rendimiento.md`.
+
+| # | Criterio | Como se verifica |
+|---|---|---|
+| D1 | Los computes y flujos criticos tienen presupuesto de consultas fijado en tests | `assertQueryCount` en la suite: el coste NO crece con el tamano del lote |
+| D2 | Ningun compute hace `search`/`browse` dentro del bucle `for record in self` | revision de codigo (checklist en la referencia) |
+| D3 | Los campos usados en dominios de busqueda frecuentes llevan `index=True` | revision de codigo + `EXPLAIN` sobre la consulta real |
+| D4 | Los reportes por periodo (libros fiscales, TXT, XML) se midieron con datos masivos | `odoo populate` + cronometro; el umbral se anota en la doc del modulo |
+| D5 | Los crons acotan su lote (limite o ventana), no barren la tabla entera | revision del dominio del cron |
+
+D1 es el unico que previene regresiones en cada commit: los demas se auditan
+al migrar cada modulo y cuando aparece lentitud real.
+
 ## Lo que un APROBADO no significa
 
-- No significa que el modulo este probado con el volumen de datos real del cliente.
+- No significa que el modulo este probado con el volumen de datos real del
+  cliente (D cubre que el coste no *crezca* con el volumen, no que se haya
+  medido con el volumen exacto de produccion).
 - No significa que los modulos de terceros que necesita existan ya en v20.
 - No significa que la interfaz se vea igual: OWL cambio el frontend y algunas
   diferencias visuales son inevitables.
