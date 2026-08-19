@@ -361,6 +361,108 @@ El codigo actual del cliente no la usa (verificado con grep sobre
 `/opt/odoo-client/`), asi que hoy no bloquea nada. Queda anotado por si aparece
 en codigo que todavia no hemos revisado.
 
+## El wkhtmltopdf del entorno no admite cabeceras ni pies
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Silenciosamente, al imprimir |
+
+Ya estaba anotado mas abajo que Ubuntu 24.04 empaqueta wkhtmltopdf sin el Qt
+parcheado. Lo que faltaba es **el alcance**: afecta a todo informe que use
+`div.header` o `div.footer`.
+
+Odoo no dibuja esos bloques dentro del documento: los recorta del HTML y se los
+pasa a wkhtmltopdf como archivos aparte. El binario sin parchear los descarta y
+**avisa por consola**, aviso que Odoo se traga:
+
+```
+The switch --header-html, is not support using unpatched qt, and will be ignored.
+```
+
+Comprobado en el contenedor de v20 con una cabecera de prueba: el texto no
+aparece en el PDF. El de la instancia de 18 sí la pinta, porque es
+`0.12.6.1 (with patched qt)`.
+
+**Consecuencia practica:** no basta con revisar que el informe "sale". Si el
+titulo, el logo o los datos de identificacion viven en `div.header`, el PDF sale
+**sin ellos y sin error**. En la guia de despacho eso dejaba fuera el titulo, el
+numero de guia, el destinatario y las cuatro casillas de firma; en el libro
+fiscal, el logo, el RIF y el titulo del libro.
+
+En 1.35.0 esos bloques se movieron al cuerpo. Se pierde la repeticion por
+pagina, que es lo que se recupera cuando el entorno tenga wkhtmltopdf parcheado
+o Paper Muncher.
+
+- [ ] Al arreglar el motor, devolver a `div.header` la identificacion del libro
+      fiscal y del ARC, y a `div.footer` las firmas de la guia.
+
+## `web.minimal_layout` es quien aporta el `meta charset`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Acentos rotos en el PDF |
+
+Un informe cuyo contenido NO va dentro de `div.article` no pasa por
+`web.minimal_layout`, y el HTML llega a wkhtmltopdf sin declaracion de
+codificacion. El motor asume Latin-1 y los acentos salen mal: «GuÃ­a de
+Despacho», «CÃ³DIGO».
+
+`div.article` no es decoracion: es lo que dispara ese envoltorio.
+
+## `noupdate="1"` se guarda en la base, no en el archivo
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | El cambio no llega |
+
+El indicador vive en `ir_model_data.noupdate`. Cambiar `noupdate` en el XML
+**no** desbloquea un registro ya creado: Odoo consulta el valor almacenado y se
+salta la actualizacion, en silencio.
+
+Aparecio con `dispatch_guide_paperformat`, que reservaba 130 mm de margen
+superior para una cabecera que no se pinta. Corregido el XML, la guia seguia
+saliendo a media pagina en cualquier base ya instalada.
+
+- [ ] Para que los margenes corregidos lleguen a las bases existentes hace falta
+      un script de migracion que ponga `noupdate = false` en ese registro. El
+      arreglo del XML solo sirve para instalaciones nuevas.
+
+## Renombres en `stock.move`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+| v18 | v20 |
+|---|---|
+| `stock.move.product_uom` | **`uom_id`** |
+| `stock.move.name` | **eliminado** |
+
+La plantilla de la guia de despacho leia `line.product_uom.name` y reventaba al
+imprimirse. Corregido en 1.35.0.
+
+## Los campos Binary ya no aceptan `bytes`
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion |
+
+```python
+# v18
+company.logo = base64.b64encode(datos)
+# v20
+from odoo.tools.binary import BinaryBytes
+company.logo = BinaryBytes(datos)      # bytes CRUDOS, no base64
+```
+
+Con lo de antes: `TypeError: res.company.logo: use BinaryValue instead of bytes`.
+Afecta a cualquier script que cargue imagenes (logos, firmas, sellos).
+
 ## `base_vat` no existe como modulo en v20
 
 | | |
