@@ -1467,6 +1467,23 @@ Sin `calc()` a propósito: el Qt de wkhtmltopdf no lo resuelve de forma fiable.
       wkhtmltopdf las incrusta como trazos. Es también la razón de que pesen
       entre 400 KB y 1,4 MB frente a los 130 KB del libro de inventario.
 
+#### La corrección del formato no llegaba a las bases existentes (1.36.0)
+
+Bajar el margen superior de 130 mm a 8 arregla la guía **solo en instalaciones
+nuevas**. El registro se creó con `noupdate="1"`, y esa marca queda guardada en
+`ir.model.data`: cambiar el XML a `noupdate="0"` no la borra, así que el
+formato nunca se refresca. En una base ya montada la guía seguía arrancando a
+media página.
+
+Verificado sobre la instancia: tras actualizar el módulo, el formato conservaba
+`margin_top = 130`, `header_spacing = 110` y `default = True`. La migración
+1.36.0 lo corrige, levanta la marca —para que futuras correcciones sí lleguen
+solas— y quita el `default`, que convertía este formato en el de papel por
+omisión de **toda la base**, no solo de la guía.
+
+> Es el mismo patrón que con los iconos del portal. Regla práctica: **un
+> registro `noupdate="1"` no se arregla editando el XML**; hace falta migración.
+
 ### 6.24 Los huecos del análisis de cobertura, cerrados
 
 El analizador de la skill `senior-qa` encontró seis modelos con lógica propia
