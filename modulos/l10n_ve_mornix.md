@@ -3,8 +3,8 @@
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
 > 213 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
-> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.34.0` (Odoo la
-> prefija con la serie vigente → `19.5.1.34.0`).
+> Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
+> prefija con la serie vigente → `19.5.1.35.0`).
 >
 > Los nombres **de módulo** pasaron de `nimetrix` a `mornix`. Los nombres
 > **técnicos de los modelos** (`nimetrix.fiscal.book`, `nimetrix.wh.iva`…) se
@@ -1405,7 +1405,69 @@ propia hoja de estilos.
       con datos reales (71 retenciones de IVA, 47 de ISLR, 31 municipales).
       Falta regenerarlos sobre v20 para confirmar que el render es idéntico.
 
-### 6.23 Los huecos del análisis de cobertura, cerrados
+### 6.23 Los otros cuatro formatos, y la alineación de los comprobantes (1.35.0)
+
+Dos cosas en la misma versión: un defecto de alineación en los comprobantes que
+1.34.0 dejó suelto, y la línea gráfica extendida a los cuatro formatos que
+faltaban.
+
+#### El borde derecho no cuadraba
+
+Las tarjetas, las fichas de totales y los recuadros de firma terminaban antes
+que la cinta y la tabla. La izquierda sí cuadraba, y esa asimetría es la pista.
+
+Con `border-collapse: separate`, el `border-spacing` se aplica **también en los
+bordes exteriores** de la tabla. Estaba compensado con un margen negativo, que
+desplaza la caja pero **no la ensancha**, porque el `width: 100%` es explícito:
+la izquierda salía a cero (−3 mm + 3 mm) y la derecha se quedaba corta el doble
+del espaciado. Seis milímetros en las tarjetas, cuatro en las fichas, ocho en
+las firmas.
+
+El hueco entre columnas pasa a ser relleno de celda, con los extremos a cero.
+Sin `calc()` a propósito: el Qt de wkhtmltopdf no lo resuelve de forma fiable.
+
+#### ARC, guía de despacho, libro fiscal y libro de inventario
+
+| Formato | Qué se hizo |
+|---|---|
+| Libro de inventario | Reescrito. Cabecera agrupada en dos filas (inicial / entradas / salidas / final), fichas de totales, estado vacío |
+| Libro fiscal | Reescrito. El detalle respeta las columnas que declara el modelo; el resumen pasa a fichas más tabla |
+| Guía de despacho | Reescrita en un solo flujo: identificación, tabla y firmas |
+| ARC | **La maqueta de campos NO se toca.** Reproduce un formulario prescrito por el SENIAT: rejilla de veinte columnas con sus `colspan` y `rowspan`. Solo cambian bordes, tipografía y el marco exterior |
+
+#### Lo que apareció al hacerlo
+
+- **El libro fiscal estaba comentado en el manifiesto** desde el commit de
+  renombrado, sin explicación. El informe no existía en v20. Reactivado; la
+  causa más probable era el `default="True"` duplicado, que ahora no está.
+- **`stock.move.product_uom` se llama `uom_id` en v20.** La guía de despacho
+  reventaba al imprimirse. Detalle en `docs/BREAKING-CHANGES.md`.
+- **`default="True"` en tres formatos de papel** (los dos libros y la guía):
+  convertía cada uno en el formato por omisión de **toda** la base de datos.
+- **La guía reservaba 130 mm de margen superior** para una cabecera que el
+  entorno no pinta: la tabla arrancaba a media página.
+- **`<tfooter>`** en el libro de inventario, etiqueta que no existe en HTML: la
+  fila de totales no contaba como pie de tabla.
+- **`&nbsp;` escrito doblemente escapado**, que se imprimía literal, y `street2`
+  usado como dirección completa, sin calle ni ciudad.
+- **El ARC cortaba el logo**: `margin_top` menor que `header_spacing`.
+
+#### Lo que quedó abierto
+
+- [ ] **La guía solo imprime líneas con lote y destino a cliente.** Un producto
+      sin trazabilidad por lote no aparece: la guía sale sin mercancía, que es
+      un problema legal y no estético. Se conserva el comportamiento y se añadió
+      un aviso visible en lugar de dejar la tabla muda, pero hay que decidir si
+      se corrige.
+- [ ] **Los márgenes de la guía no llegan a las bases ya instaladas.** El
+      registro es `noupdate`, y ese indicador vive en la base. Hace falta un
+      script de migración.
+- [ ] **En el ARC, el libro fiscal y la guía no se puede buscar ni copiar texto
+      del PDF.** Pasan por `web.minimal_layout`, que carga las fuentes de Odoo, y
+      wkhtmltopdf las incrusta como trazos. Es también la razón de que pesen
+      entre 400 KB y 1,4 MB frente a los 130 KB del libro de inventario.
+
+### 6.24 Los huecos del análisis de cobertura, cerrados
 
 El analizador de la skill `senior-qa` encontró seis modelos con lógica propia
 y cero pruebas. Los seis quedaron cubiertos con pruebas reales (no esqueletos):
@@ -1423,7 +1485,7 @@ Con esto, **ningún modelo del módulo con lógica propia queda sin prueba**
 (la advertencia del analizador sigue vigente: es búsqueda de texto, no
 cobertura real — sirve para encontrar huecos, no para declararse cubierto).
 
-### 6.24 QA de cobertura en mornix_dual_currency y mornix_docs
+### 6.25 QA de cobertura en mornix_dual_currency y mornix_docs
 
 Mismo análisis que 6.23, sobre los otros dos módulos:
 
@@ -1439,7 +1501,7 @@ Mismo análisis que 6.23, sobre los otros dos módulos:
   «sin mención», y se quedan así a propósito: cero métodos, solo campos —
   una prueba ahí sería mencionar por mencionar.
 
-### 6.25 QA de cobertura en guías de despacho y portal
+### 6.26 QA de cobertura en guías de despacho y portal
 
 Mismo análisis, sobre las dos áreas que faltaban de este módulo. Doce pruebas
 nuevas (`test_nx_stock_wizards.py` y `TestMixinPortal` en
@@ -1475,7 +1537,7 @@ Dos matices que dejaron las pruebas y conviene saber:
 
 Suite completa de los tres módulos tras el cierre: **347 pruebas, 0 fallos**.
 
-### 6.26 Rendimiento: los computes de la lista de guías, en lote (1.33.2)
+### 6.27 Rendimiento: los computes de la lista de guías, en lote (1.33.2)
 
 El QA incorporó criterios de rendimiento (sección D de
 `docs/CRITERIOS-ACEPTACION.md`): el coste en consultas no debe crecer con el
@@ -1503,7 +1565,7 @@ de doble moneda sobre `account.move.line`.
 mentirosa cuando había varias a la vista; si algún usuario reportó conteos
 raros ahí en v18, era esto.
 
-### 6.27 El asistente de retenciones de empleados, reescrito (1.34.1)
+### 6.28 El asistente de retenciones de empleados, reescrito (1.34.1)
 
 La auditoría de propiedad del código (ver
 [`PROPIEDAD-Y-LICENCIAS.md`](../PROPIEDAD-Y-LICENCIAS.md)) encontró que el
