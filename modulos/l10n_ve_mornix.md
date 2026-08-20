@@ -1484,6 +1484,31 @@ omisión de **toda la base**, no solo de la guía.
 > Es el mismo patrón que con los iconos del portal. Regla práctica: **un
 > registro `noupdate="1"` no se arregla editando el XML**; hace falta migración.
 
+#### El menú «Apps» no exige ningún grupo en Odoo de serie
+
+Un usuario sin permisos de administración —sin `base.group_system`— no puede
+instalar nada, pero **sí veía el menú «Apps» y el catálogo de aplicaciones**:
+ni el menú raíz ni el submenú de la lista de módulos declaran grupo. Para el
+cliente es confuso que un usuario de ventas vea la tienda de aplicaciones, así
+que `security/nx_ocultar_menu_apps.xml` les exige `base.group_system`.
+
+Va en el módulo y no a mano en la base porque una actualización de `base`
+reescribiría el menú y devolvería el catálogo a la vista de todos.
+
+> Cuidado al comprobarlo por HTTP: el cliente web de v20 es una SPA y
+> `/odoo/apps` devuelve **200 igualmente**, porque sirve el mismo esqueleto y
+> el permiso se resuelve después por RPC. Lo que decide lo que el usuario ve
+> son los menús visibles, no el código de estado.
+
+#### Los tests buscaban diarios sin filtrar por compañía
+
+Cuatro archivos hacían `search([...], limit=1)` sobre `account.journal` o
+`account.account` sin condición de compañía. Con una sola compañía en la base
+funcionaba por casualidad; al añadir una segunda, el diario podía salir de la
+compañía equivocada y `TestBloqueoFiscal` empezó a fallar en cuatro pruebas
+—el libro se creaba en una compañía y la factura en otra, así que el bloqueo
+no llegaba a saltar—.
+
 ### 6.24 Los huecos del análisis de cobertura, cerrados
 
 El analizador de la skill `senior-qa` encontró seis modelos con lógica propia
