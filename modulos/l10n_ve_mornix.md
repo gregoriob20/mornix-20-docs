@@ -1632,6 +1632,67 @@ crudos, así que cualquier importación fallaba con «no es texto UTF-8». Si la
 nómina reporta ese error en otras pantallas con carga de archivos, es el
 mismo patrón. Cubierto por 4 pruebas (`test_importar_empleados_islr.py`).
 
+### 6.29 La revisión de la localización: primer bloque (1.37.0)
+
+Cinco puntos del documento de revisión del cliente. Dos de ellos resultaron ser
+**el mismo problema**, y otro no era tal.
+
+#### El TXT del SENIAT salía vacío porque el IVA era del 22 %
+
+El archivo solo contempla las alícuotas legales —0, 8, 16 y 31—. Una línea al
+22 % no cae en ninguna rama del generador: no suma base, no crea fila. El TXT
+se entregaba vacío **sin un solo aviso**, como si ese período no hubiera tenido
+retenciones.
+
+El 22 % venía de los impuestos de la plantilla contable genérica de Odoo, que
+se instalan junto a los de la localización y conviven con ellos en la misma
+lista sin nada que los distinga al facturar. La migración 1.37.0 los desactiva
+—no los borra: las facturas que ya los usan conservan su asiento— con dos
+criterios distintos:
+
+| Caso | Qué se hace |
+|---|---|
+| Alícuota inexistente en Venezuela (12 %, 22 %) | Se desactiva siempre |
+| Duplicado genérico con alícuota legal (0 %, 8 %) | Se desactiva solo si la localización aporta el suyo |
+
+El xmlid de estos impuestos lleva el id de la compañía por delante
+(`1_tax3purchase`, `746_tax3purchase`): buscar por `1_tax` dejaba fuera a todas
+las compañías menos la primera.
+
+Y el generador **ya no calla**: si encuentra una alícuota que no cabe en el
+formato, aborta nombrando los comprobantes afectados. Un archivo vacío que se
+entrega es peor que un error que se ve.
+
+#### El libro fiscal se quedaba atrapado en «Confirmado»
+
+La obligatoriedad de los diarios vivía **solo en la vista**, y el campo es
+además de solo lectura fuera de borrador. Un libro que llegase a confirmarse
+sin diarios no se podía guardar —falta un obligatorio— ni corregir —es
+readonly—, así que «Restablecer a borrador» no llegaba a ejecutarse nunca.
+Ahora lo exige `action_confirm()` y el `required` de la vista es condicional al
+estado.
+
+#### El resumen de compras y ventas sí estaba migrado
+
+Lo que faltaba era la **puerta**: el modelo funcionaba y generaba su hoja, pero
+no tenía ni acción ni menú, así que desde la interfaz no existía. Con su menú
+queda además validable el «Prorrateo de IVA» de los ajustes, cuyo cálculo vive
+dentro de ese mismo asistente.
+
+#### Los totales en bolívares vuelven al pie de la factura
+
+Se habían retirado por considerarse repetidos con el «Desglose de IVA», pero
+ese desglose vive en otra pestaña: en la pantalla de totales, una factura en
+dólares no enseñaba su equivalente en bolívares por ningún lado. Son
+informaciones distintas —aquí el total a pagar, allí el reparto por alícuota
+que alimenta el libro fiscal—.
+
+Van **sin** `oe_subtotal_footer_separator`: esa clase agranda la cifra y le
+reserva a la etiqueta un ancho pensado para importes en divisa, y un total en
+bolívares —1.415.161,88 Bs.F frente a $ 1.830,00— se sale del hueco y se pinta
+encima de su propia etiqueta.
+
+
 ## 7. Cómo levantarlo
 
 ```bash
