@@ -1632,6 +1632,31 @@ crudos, así que cualquier importación fallaba con «no es texto UTF-8». Si la
 nómina reporta ese error en otras pantallas con carga de archivos, es el
 mismo patrón. Cubierto por 4 pruebas (`test_importar_empleados_islr.py`).
 
+### 6.30 El ISLR confirma en un solo paso, como el IVA
+
+«Confirmar» se limitaba a mover el estado a *Confirmado*: no numeraba, no
+generaba asiento y no tocaba las facturas. Todo el trabajo real esperaba a un
+segundo botón, «Hecho». Un comprobante podía quedarse indefinidamente
+confirmado a ojos del usuario pero **sin número de comprobante ni asiento
+contable**.
+
+La retención de IVA nunca funcionó así —su `nx_confirm_check` valida, numera,
+asienta y cierra de una vez— y no había motivo para el paso de más.
+
+`nx_action_done` **se conserva**, y su botón sigue apareciendo cuando el estado
+es *Confirmado*. No es descuido: al hacer el cambio había 12 comprobantes en
+ese estado, y borrar el botón los habría dejado sin forma de completarse —el
+mismo tipo de callejón sin salida que acababa de corregirse en el libro
+fiscal—. En el flujo nuevo no se pasa por ahí, así que ese botón solo lo ven
+los rezagados.
+
+De la barra de estado sale «Confirmado» por el mismo motivo que aparece el
+botón: Odoo pinta siempre el estado actual de un registro, esté o no en
+`statusbar_visible`, así que los antiguos lo siguen viendo y los nuevos ya no
+lo anuncian.
+
+![El comprobante de ISLR, con la barra Borrador → Realizado](../funcional/img/islr-un-solo-paso.png)
+
 ### 6.29 La revisión de la localización: primer bloque (1.37.0)
 
 Cinco puntos del documento de revisión del cliente. Dos de ellos resultaron ser
