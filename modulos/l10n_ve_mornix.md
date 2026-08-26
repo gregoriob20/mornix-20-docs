@@ -1632,6 +1632,42 @@ crudos, así que cualquier importación fallaba con «no es texto UTF-8». Si la
 nómina reporta ese error en otras pantallas con carga de archivos, es el
 mismo patrón. Cubierto por 4 pruebas (`test_importar_empleados_islr.py`).
 
+### 6.32 Libro diario, sin Enterprise (1.39.0)
+
+Migrado de `nx_localizacion/nimetrix_account_journal_report` (v18). Da los
+saldos por cuenta del período, en bolívares o en divisa, y sale en PDF y en
+XLSX.
+
+#### La dependencia de Enterprise era nominal
+
+El manifest de v18 declaraba `account_accountant`, que es de Enterprise. **Nada
+del código lo usaba**: el cálculo es SQL y la salida `xlsxwriter` o QWeb. Al
+integrarlo en `l10n_ve_mornix` se cae sola.
+
+#### Cuatro cosas que lo habrían roto en v20
+
+| Qué traía v18 | Qué pasa en v20 |
+|---|---|
+| `nx_rif` en la cabecera | El campo **no existe**: el informe reventaba al generar. El RIF vive en `vat` |
+| `datas` en el adjunto | El core migró a `raw` (bytes en vez de base64) |
+| `from odoo.tools.misc import xlsxwriter` | Ya no se re-exporta ahí |
+| `jsonb_object_keys(code_store) LIMIT 1` | La primera clave que devuelva Postgres, sin mirar la compañía |
+
+El último es el más sutil: `code_store` guarda un código por compañía, y ahora
+que la base tiene dos, el libro de una podía imprimir los códigos de otra. Se
+pide expresamente la clave de la compañía del informe.
+
+De paso, la consulta en divisa fijaba el idioma a `es_VE` a mano mientras la de
+bolívares usaba el del usuario: el mismo libro cambiaba de idioma según la
+moneda elegida.
+
+#### Qué es y qué no es
+
+Agrupa **por cuenta contable** y suma débitos y créditos del período —es el
+formato que el cliente ya usaba en v18—. No es el libro diario cronológico
+asiento por asiento que describe el Código de Comercio; si hiciera falta ese,
+es otro informe.
+
 ### 6.31 La retención municipal se configura en la compañía (1.38.0)
 
 Para dejarla operativa había que entrar en la ficha de **cada contacto**,
