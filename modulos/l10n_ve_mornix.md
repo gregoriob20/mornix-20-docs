@@ -1632,6 +1632,48 @@ crudos, así que cualquier importación fallaba con «no es texto UTF-8». Si la
 nómina reporta ese error en otras pantallas con carga de archivos, es el
 mismo patrón. Cubierto por 4 pruebas (`test_importar_empleados_islr.py`).
 
+### 6.31 La retención municipal se configura en la compañía (1.38.0)
+
+Para dejarla operativa había que entrar en la ficha de **cada contacto**,
+marcar «¿Es retención municipal?» y elegir dos diarios. Y por partida doble: los
+diarios eran `company_dependent`, así que la pareja se repetía por contacto **y
+por compañía**. El contacto que se olvidaba no retenía, y nadie se enteraba
+hasta la declaración; el que se configuraba a medias generaba su retención con
+el diario vacío.
+
+En la base del cliente eso eran 4 contactos marcados de 14, y los dos reales
+apuntaban al mismo diario.
+
+Ahora manda la compañía:
+
+| Condición | Dónde vive |
+|---|---|
+| Se practica retención municipal | Ajustes de la compañía |
+| Con qué diarios se asienta | Ajustes de la compañía |
+| A esta factura le toca | La línea lleva concepto municipal |
+| A este contacto **no** | Casilla de exclusión en su ficha |
+
+Que el disparo sea el **concepto municipal** no es un atajo: el impuesto sobre
+actividades económicas depende de la actividad, que es justo lo que el concepto
+identifica, no de a quién se factura. Se comprobó además que ninguna factura
+histórica con concepto municipal pertenecía a un contacto sin marcar, así que
+el cambio no altera nada de lo ya emitido.
+
+![Los dos diarios, en los ajustes de la compañía](../funcional/img/ajustes-retencion-municipal.png)
+
+#### Dos tropiezos de la migración
+
+- **`ir_property` ya no existe.** Los `company_dependent` de v20 no viven en esa
+  tabla sino en una columna **JSONB** de la propia tabla, con el id de la
+  compañía como clave: `{"1": 325, "746": 472}`. La migración lee el valor de
+  cada compañía por separado —mezclarlos dejaría a una apuntando a los diarios
+  de la otra— y sube el más repetido.
+- **La vista del contacto se validaba antes de actualizarse.**
+  `views/res_partner.xml` se carga antes que la vista municipal, y al validar
+  la primera Odoo revalida sus hijas, que todavía tenían en la base el campo ya
+  borrado. Un `pre-migrate` la retira; el módulo la recrea unos archivos más
+  adelante con el contenido nuevo.
+
 ### 6.30 El ISLR confirma en un solo paso, como el IVA
 
 «Confirmar» se limitaba a mover el estado a *Confirmado*: no numeraba, no
