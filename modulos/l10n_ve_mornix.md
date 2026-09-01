@@ -1796,6 +1796,44 @@ bolívares —1.415.161,88 Bs.F frente a $ 1.830,00— se sale del hueco y se pi
 encima de su propia etiqueta.
 
 
+### 6.33 La tasa personalizada no convierte lo que ya está en bolívares (mornix_currency_rate 0.8.0)
+
+Actualizar la tasa personalizada de una factura **con líneas** reventaba con
+«The move is not balanced»: 6.750.000 al debe contra 7.500 al haber, con tasa
+900. El factor del descuadre era exactamente la tasa.
+
+`invoice_currency_rate` es el campo con el que Odoo convierte `amount_currency`
+a `balance`. El cálculo le metía la tasa personalizada **sin mirar la moneda**,
+así que una factura emitida en bolívares quedaba guardada con tasa 1/750: una
+conversión de bolívares a bolívares que no debería existir.
+
+Mientras nadie la tocaba no se notaba —las líneas ya estaban escritas—, pero al
+cambiar la tasa Odoo las reconvertía: la línea de producto pasaba a valer
+`importe x tasa` y la contrapartida se quedaba igual.
+
+| Moneda de la factura | `invoice_currency_rate` |
+|---|---|
+| La de la compañía | **1**, siempre: no hay nada que convertir |
+| Divisa, con tasa personalizada | `1 / tasa` |
+| Divisa, sin tasa personalizada | La del día |
+
+La tasa personalizada sigue mandando donde le toca: en el **valor de
+referencia** en divisa, que calcula `mornix_dual_currency`. Comprobado sobre la
+factura del cliente: con tasa 750 el referencial es 10,00 y con 900 pasa a
+8,33, mientras los 7.500 Bs no se mueven. Y en una factura en divisa la tasa
+sigue convirtiendo: 100 USD a 900 son 90.000 Bs.
+
+La migración corrige las facturas ya guardadas —tres en la base— **por SQL a
+propósito**: escribir el campo por el ORM en un asiento publicado dispararía el
+recálculo de sus líneas, que es justo lo que se quiere evitar. Los importes
+contabilizados eran correctos; lo que estaba mal era la tasa guardada junto a
+ellos.
+
+> Las cinco pruebas nuevas se comprobaron revirtiendo la corrección: tres
+> fallan sin ella. Una prueba que no falla cuando el defecto vuelve no sirve de
+> nada.
+
+
 ## 7. Cómo levantarlo
 
 ```bash
