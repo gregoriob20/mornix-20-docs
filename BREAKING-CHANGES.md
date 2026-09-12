@@ -760,6 +760,55 @@ Sirve `('value', '!=', 0)`, que es lo mismo y si esta almacenado.
 
 - [ ] Al migrar cada modulo, buscar `stock.valuation.layer` y `stock.move.name`.
 
+## `hr.contract` desaparecio: ahora es `hr.version`
+
+El contrato dejo de ser un registro aparte. Odoo lo absorbio dentro de `hr`
+como **`hr.version`** —"Employee Record"—, de modo que un empleado tiene
+versiones sucesivas de sus condiciones en lugar de contratos enlazados.
+
+| v18 | v20 |
+|---|---|
+| Modulo `hr_contract` | Fusionado en `hr` |
+| Modelo `hr.contract` | `hr.version` |
+| `employee_id.contract_id` | La version vigente del empleado |
+
+Los campos del contrato sobreviven con su nombre —`wage`, `date_start`,
+`date_end`, `structure_type_id`, `trial_date_end`, `resource_calendar_id`,
+`hr_responsible_id`—, asi que lo que cambia es **como se llega a ellos**, no
+como se llaman.
+
+Cuidado al migrar: no es un renombrado mecanico. Un `Many2one('hr.contract')`
+pasa a `Many2one('hr.version')`, pero la semantica cambia —una version no es un
+contrato— y las busquedas por contrato vigente necesitan repensarse.
+
+> OCA/payroll ya lo hizo en su rama 19.0: mantiene el campo `contract_id` y le
+> cambia el comodelo a `hr.version`. Conservar el nombre del campo ahorra tocar
+> todo el codigo que lo lee.
+
+## `report_file` salio de `ir.actions.report`
+
+Un informe que lo declare revienta al cargar el XML:
+
+```
+ParseError: while parsing report.xml, somewhere inside ...
+```
+
+Se borra el campo y ya. `report_name` sigue siendo el que manda.
+
+## `ir.rule` e `ir.model.access` se unificaron en `ir.access`
+
+v20 fundio los dos mecanismos de permisos en un solo modelo y un solo archivo.
+Un `security.xml` con `<record model="ir.rule">` falla con `KeyError: 'ir.rule'`.
+
+| v18 | v20 |
+|---|---|
+| `security/ir.model.access.csv` | `security/ir.access.csv` |
+| Columnas `perm_read,perm_write,perm_create,perm_unlink` | Una columna `operation` con letras: `r`, `crud`… |
+| `<record model="ir.rule">` en XML | Fila del mismo CSV, con su `domain` |
+
+Las reglas de registro pasan a ser filas con dominio, y el grupo va en
+`group_id/id`. Una regla sin grupo (multi-compañia) deja esa columna vacia.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
