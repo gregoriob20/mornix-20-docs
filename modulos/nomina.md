@@ -209,6 +209,20 @@ de solapes.
 tres sitios que lo miraban —cancelar un recibo, cancelar un lote, marcar como
 pagado— comprueban antes si el campo está.
 
+### Dos cosas más, vistas al escribir el paso a paso
+
+- **El botón «Cerrar» del lote solo aparece en Borrador.** Una vez generados
+  los recibos, el lote queda «Por verificar» y no hay botón que lo cierre: el
+  cierre real es la confirmación de los recibos. Viene así del motor de OCA
+  (`invisible="state != 'draft'"` en `close_payslip_run`). Está documentado en
+  la guía tal como se comporta; decidir si el lote debe cerrarse solo cuando
+  todos sus recibos estén en «Hecho» es una mejora pendiente.
+- **La pestaña Nómina de la ficha del empleado sale con rótulos encimados**
+  («Nuevo contrato» sobre la fecha, «Bs/mes» sobre el salario) y varios campos
+  en inglés («Salary Cestaticket», «Mandatory Social Security»). Es la
+  maquetación de v20 sobre los campos de la localización: cosmético, pero es
+  lo primero que ve quien configura a un empleado.
+
 ## 7. El tablero: lo que se pregunta cada cierre
 
 `mornix_l10n_ve_payroll_dashboard`, escrito en esta migración, responde con
@@ -306,6 +320,10 @@ vídeo tomados de una quincena real:
 | [Procesar una quincena](../funcional/30-nomina/02-la-quincena.md) | Del lote vacío a los recibos confirmados |
 | [Historial y análisis](../funcional/30-nomina/03-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
 | [El tablero de nómina](../funcional/30-nomina/04-el-tablero.md) | Costo total, cestaticket, prestaciones, parafiscales e ISLR |
+
+Las cuatro llevan el **paso a paso** de cada proceso con los nombres de botones
+y campos tal como se ven en pantalla, verificados abriendo cada formulario en
+`nomina_demo`, no de memoria.
 
 Las capturas se regeneran con un comando, contra una base de demostración con
 ocho empleados y dos quincenas:

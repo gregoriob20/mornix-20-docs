@@ -3,108 +3,153 @@
 Es el documento que acompaña a la mercancía desde que se compra hasta que entra
 al almacén, y el sitio donde se mira en qué punto va cada embarque.
 
-## 1. Abrir el expediente
+## El flujo
+
+1. **El proveedor** queda marcado como extranjero.
+2. **Se crea la orden de compra** al proveedor extranjero y se confirma.
+3. **Se abre el expediente** y se le enlaza la compra.
+4. **Avanza por etapas** mientras la mercancía viaja; la bitácora y los
+   contenedores se registran por el camino.
+5. **Se recibe** la mercancía en el almacén.
+6. **Se reparte el costo** del viaje sobre la mercancía —eso es la guía
+   siguiente, [El costo de destino](03-el-costo-de-destino.md).
+
+## 1. El proveedor extranjero
+
+El módulo distingue la compra internacional por el **tipo de persona** del
+proveedor: solo las órdenes a un proveedor **no domiciliado** ofrecen el campo
+del expediente.
+
+### Paso a paso
+
+1. **Contactos → abrir el proveedor** (o **Nuevo**).
+2. **Tipo de contacto**: *Compañía*.
+3. **Tipo de Persona compañía**: **PJND Persona Jurídica No Domiciliada**. Es lo
+   que le dice al sistema que no lleva RIF venezolano y que sus compras son
+   importaciones.
+4. **País** del proveedor.
+5. **Guardar.**
+
+## 2. La orden de compra
+
+![La orden de compra, con su «Nro de Expediente de Importacion»](../img/imp-compra-form.png)
+
+### Paso a paso
+
+1. **Importaciones → Compras → Solicitudes de cotización → Nuevo** (es la misma
+   pantalla de Compras, ya filtrada a proveedores extranjeros).
+2. **Proveedor**: el del paso 1. Al elegirlo aparece **Nro de Expediente de
+   Importacion** en la cabecera. Déjelo vacío por ahora si el expediente aún no
+   existe; se enlaza desde el expediente en el paso 3.
+3. **Moneda**: la de la compra, normalmente **USD**. La **Tasa** se llena con la
+   del día.
+4. Pestaña **Productos → Agregar un producto**: la mercancía, cantidad y precio
+   en divisa. En cada línea, el **sello del certificado** dice si el producto
+   está amparado (verde), por vencer (ámbar), vencido (rojo) o sin certificado
+   (gris).
+5. Pestaña **Otra información**: **Incoterm**, y cuando la aduana los emita,
+   **N° de Planilla de Importación**, **N° de Expediente de Importación**
+   (el de la aduana, distinto del folio interno) y su fecha.
+6. **Confirmar orden.** El estado pasa a **Orden de compra** y se crea la
+   **Recepción** (botón arriba).
+
+## 3. Abrir el expediente
 
 **Importaciones → Información General → Importaciones.**
 
 ![La lista de expedientes](../img/imp-expedientes-listado.png)
 
-**Nuevo** abre un expediente con folio propio —`IMP-00000001`, `IMP-00000002`…—
-que asigna el sistema. El «Nuevo folio» que se ve mientras se llena es solo el
-marcador de pantalla: el folio real aparece al guardar.
+### Paso a paso
+
+1. **Importaciones → Información General → Importaciones → Nuevo.**
+2. **Orden de compra**: elija la orden del paso 2. Solo salen las de
+   proveedores extranjeros que no tengan ya expediente. Puede enlazar varias.
+3. **Rutas de importación**: la ruta. Al elegirla se rellenan solos **Naviera**,
+   **Puerto de Origen**, los **Intermedios**, **Puerto de Destino** y **Días
+   libres**: son de solo lectura, los pone la ruta.
+4. **Agente aduanal**: solo salen los contactos marcados como agente aduanal.
+5. **Almacén**: dónde se recibe la mercancía.
+6. Fechas: **Fecha de Embarque**, **Fecha de Despacho**, **Fecha Llegada a
+   puerto**, **Fecha de Retorno Vacío**. Se van completando según se sepan.
+7. **Incoterm** y **Etiquetas**.
+8. **Guardar.** El expediente toma su folio —`IMP-00000001`— y nace con su
+   **previsión** y su **costo de destino** enlazados (botones **Pronóstico** y
+   **Costos Asociados**, arriba).
 
 ![El expediente, con su ruta, su naviera y sus contenedores](../img/imp-expediente-form.png)
 
-Lo que hay que llenar:
+> **La naviera y los puertos no se escriben.** Si hay que cambiarlos para un
+> embarque concreto, se cambia la ruta o se crea otra.
 
-| Campo | Notas |
-|---|---|
-| **Orden de compra** | Obligatorio: el expediente existe por una compra |
-| **Agente aduanal** | Solo salen los contactos marcados como agente aduanal |
-| **Rutas de importación** | Al elegirla, propone naviera, puertos y días libres |
-| **Almacén** | Dónde se recibe la mercancía |
-| **Fechas** | Embarque, despacho, llegada a puerto y retorno del vacío |
-| **Etiquetas** | Para agrupar y filtrar («urgente», «perecedero») |
+## 4. Las pestañas: lo que se registra por el camino
 
-> **La naviera y los puertos no se escriben.** Son de solo lectura y los pone la
-> ruta. Si hay que cambiarlos para un embarque concreto, se cambia la ruta o se
-> crea otra.
+### Contenedores
 
-## 2. Las pestañas
+1. Pestaña **Contenedores → Agregar una línea**.
+2. **Nro Container**: el número del contenedor (`MSCU-4412239`).
+3. **Tipo de contenedor**: del catálogo.
+4. El contador **Nro de contenedores** de la cabecera se actualiza solo.
 
-- **Bitácora** — el diario del expediente: fecha, novedad, descripción y quién
-  la registró. Es donde queda por escrito la demora, la inspección o el cambio
-  de buque.
-- **Contenedores** — uno por línea, con su número y su tipo del catálogo. El
-  contador del encabezado los cuenta solo.
-- **Agente aduanal** — número y fecha del expediente aduanal.
-- **Documentos** — hasta diez adjuntos con su descripción.
+### Bitácora
 
-## 3. Cómo avanza
+1. Pestaña **Bitácora → Agregar una línea**.
+2. **Fecha**, **Novedad** (el tipo: demora, inspección, cambio de buque…),
+   **Descripción**. El **Responsable** se pone solo.
+3. Es el diario del expediente: lo que queda por escrito para cuando alguien
+   pregunte qué pasó.
+
+### Agente aduanal
+
+Número y fecha del expediente aduanal, y los datos que el agente va entregando.
+
+### Documentos
+
+Hasta diez adjuntos con su descripción: BL, factura comercial, lista de empaque,
+certificados, planilla.
+
+## 5. Avanzar por etapas
 
 El expediente recorre sus etapas con el botón **Siguiente etapa**:
 
 ```
 Nuevo → En Producción → Coordinando Embarque → Navegando → En puerto
-      → Recibido → Folio cerrado
+      → Recibo → Folio cerrado
 ```
 
-y **Cancelado** para el que no llega a puerto.
+### Paso a paso
+
+1. Con la mercancía en fabricación: **Siguiente etapa** → **En Producción**.
+2. Cuando se coordina el embarque: **Siguiente etapa** → **Coordinando
+   Embarque**.
+3. Zarpó: **Siguiente etapa** → **Navegando**. **Desde aquí el Agente aduanal
+   y el Almacén son obligatorios**: si están vacíos, el sistema no deja
+   avanzar.
+4. Llegó: **Siguiente etapa** → **En puerto**. Aparece **Enviar por correo**
+   para avisar.
+5. Salió de aduana y entró al almacén: **Siguiente etapa** → **Recibo**
+   (así está rotulado el estado «recibido»).
+6. Con el costo repartido y todo cuadrado: **Cerrar importación** → **Folio
+   cerrado**. Ya no se edita.
+7. **Cancelado** en cualquier momento antes de cerrar. **Borrador** devuelve
+   un expediente cerrado o cancelado al inicio, si hace falta corregir.
 
 > **Un expediente solo se borra en «Nuevo».** En cuanto avanza —o en cuanto
 > tiene un pedido confirmado o un albarán hecho— el sistema se niega: se
 > archiva, no se borra. Es deliberado: el expediente es la trazabilidad de una
 > compra internacional.
 
-## 4. Los costos de destino
+## 6. Recibir la mercancía
 
-Cada expediente nace con su **costo de destino** asociado, que es donde se
-juntan los gastos del viaje —flete, seguro, aduana, almacenaje, vigilancia— para
-repartirlos después sobre el costo de la mercancía.
+### Paso a paso
 
-![La ficha de costos de destino](../img/imp-costo-destino-form.png)
+1. En el expediente, botón **Recibo** (arriba; también desde la orden de
+   compra, **Recepción**, o en **Inventario → Recepciones**).
+2. Abra el albarán. En cada línea, la **cantidad** recibida.
+3. **Validar.** El albarán pasa a **Hecho**, la mercancía entra al almacén y el
+   albarán aparece en el campo **Albaranes** del expediente.
+4. Si el producto es **almacenable** (casilla **Rastrear inventario** en su
+   ficha), la recepción queda valorada y el reparto del costo tendrá efecto
+   contable. Si no lo es, ver el aviso de la guía siguiente.
 
-Desde ahí se generan los **costos adicionales** de Odoo (`stock.landed.cost`),
-que son los que suben el costo del producto recibido.
-
-### Cómo llegan los gastos
-
-**No se escriben a mano.** Entran solos al **publicar la factura del
-proveedor** —la del flete, la del agente de aduanas— con el **expediente puesto
-en la factura**. Cada línea de servicio que sea «costo en destino» se convierte
-en un gasto asociado, con su importe en bolívares y en divisa.
-
-> Si los gastos no aparecen, lo que falta casi siempre es el expediente en la
-> factura, o que el producto del servicio no tenga marcado «Puede ser costo en
-> destino».
-
-### El camino entero, con números
-
-Así queda una importación de principio a fin (es el ejemplo comprobado en la
-base de pruebas):
-
-| Paso | Importe |
-|---|---|
-| Compra: 100 unidades a 18 USD | 1.800 USD = 65.700 Bs |
-| Flete marítimo | 2.500 USD = 91.250 Bs |
-| Gastos de aduana | 900 USD = 32.850 Bs |
-| **Costo final de la mercancía** | **189.800 Bs — 1.898 Bs por unidad** |
-
-El botón **Crear costo adicional** arma el documento de Odoo con una línea por
-gasto; al validarlo, el costo sube y queda el asiento de valoración.
-
-![El reparto validado, con sus dos líneas de gasto](../img/imp-costo-adicional-form.png)
-
-> **Ojo con el producto.** En Odoo 20 un producto de tipo «bienes» que **no
-> esté marcado como almacenable** deja hacer todo el camino —se recibe, se
-> reparte, el costo unitario sube— **sin generar un solo asiento contable**. Si
-> el valor en inventario sale 0 con el costo unitario ya subido, es eso.
-
-> **La contrapartida del gasto la elige el sistema**, y hoy toma la primera
-> cuenta de gasto que encuentra —en el ejemplo, *Cost of Goods Sold*—. Si su
-> contabilidad necesita otra, hay que decirlo: está anotado como pendiente.
-
-> **Hace falta el permiso «Inventario / Administrador»** para abrir esta ficha:
-> enseña los costos adicionales, y ese modelo no lo lee un usuario de inventario
-> corriente. Con permisos de usuario la pantalla se queda cargando sin decir por
-> qué.
+Con la mercancía recibida, el camino sigue en
+[El costo de destino](03-el-costo-de-destino.md).

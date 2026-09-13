@@ -26,7 +26,7 @@ importe no: el importe dice cuánto se retuvo, que es otra pregunta.
 
 ## 2. Los indicadores
 
-Cada uno es un filtro, ya puesto:
+Cada uno es un filtro, ya puesto en el desplegable del buscador:
 
 | Filtro | Qué contesta |
 |---|---|
@@ -42,16 +42,53 @@ Y tres que separan quién paga qué: **Asignaciones**, **Aportes patronales** y
 
 ![El costo de la nómina por concepto](../img/nomina-tablero-costo.png)
 
-## 3. Cómo se cruza
+## 3. Las consultas típicas, paso a paso
 
-El tablero es un pivote: las agrupaciones ya preparadas son **concepto**,
-**regla salarial**, **naturaleza**, **empleado**, **departamento**,
-**estructura**, **lote** y **mes**. Cruzando concepto contra mes sale la
-evolución; concepto contra departamento, en qué área se va el dinero.
+El tablero abre con dos filtros puestos —**el año en curso** y **Sin los
+totales del recibo**— y agrupado por **Concepto**. Todo lo que sigue parte de
+ahí.
 
-> La «distribución de gastos por regla salarial» que suele pedir contabilidad
-> es este mismo tablero agrupando por **Regla salarial** en vez de por
-> concepto.
+### Cuánto costó la nómina este mes, por departamento
+
+1. **Nómina → Informes → Costo total de nómina.**
+2. En el buscador, pulse el filtro de fecha (**Hasta: 2026**) y cambie el
+   periodo al **mes** que quiere.
+3. Pulse la agrupación **Concepto > Mes** para quitarla, y en el desplegable
+   elija **Agrupar por → Departamento**.
+4. La medida ya es **Costo para la empresa**. Cada barra es un departamento.
+5. Para verlo en tabla, pulse el icono de pivote (arriba a la derecha).
+
+### Cuánto ISLR se le ha retenido a cada empleado en el año
+
+1. **Nómina → Informes → Tablero de nómina.**
+2. Desplegable del buscador → **ISLR retenido**.
+3. Quite la agrupación **Concepto** y agrupe por **Empleado**.
+4. Lea la columna **Importe**: es lo retenido. La columna **Costo para la
+   empresa** sale a 0, y así debe ser.
+5. Para el acumulado mes a mes: en las columnas del pivote pulse **Total → Hasta
+   → Mes**.
+
+### Aportes del patrono contra retenciones del trabajador en parafiscales
+
+1. **Tablero de nómina** → filtro **Parafiscales (IVSS, RPE, FAOV, INCES)**.
+2. Filas: **Concepto**. Columnas: pulse **Total → Naturaleza**.
+3. Salen dos columnas por concepto: **Aporte patronal** y **Deducción al
+   trabajador**. La primera cuesta a la empresa; la segunda, no.
+
+### Cuánto se ha acumulado de prestaciones
+
+1. **Tablero de nómina** → filtro **Prestaciones sociales**.
+2. Agrupe por **Empleado** para el acumulado por persona, o por **Mes** para
+   ver cómo crece.
+3. **Costo para la empresa** es el acumulado del periodo elegido. Amplíe el
+   filtro de fecha para tener el histórico.
+
+### Distribución de gastos por regla salarial
+
+1. **Tablero de nómina**, sin filtros de concepto.
+2. Quite **Concepto** y agrupe por **Regla salarial**.
+3. Cada fila es una regla, con su costo y su importe. Es lo que contabilidad
+   suele pedir como «distribución por regla».
 
 Todo se exporta a hoja de cálculo con el botón de descarga del pivote.
 
@@ -64,13 +101,25 @@ cambiar.
 ![Las reglas, con su concepto](../img/nomina-reglas-listado.png)
 
 El sistema lo propone a partir del código de la regla —`CESTA` es cestaticket,
-`ISLR` es ISLR, `FAOVPAT` es FAOV— y **lo que se ponga a mano manda**: al
-corregirlo queda marcado como fijado a mano y la propuesta automática no vuelve
-a tocarlo, ni siquiera si luego cambia el código de la regla.
+`ISLR` es ISLR, `FAOVPAT` es FAOV— y **lo que se ponga a mano manda**.
+
+### Paso a paso: corregir la clasificación de una regla
+
+1. **Nómina → Configuración → Reglas salariales.**
+2. Desplegable del buscador → **Agrupar por → Concepto del tablero**. Las
+   reglas en **Otro** son las que hay que mirar.
+3. Abra la regla y cambie **Concepto del tablero** al que corresponda.
+4. Al guardar, la casilla **Concepto fijado a mano** queda marcada: la
+   propuesta automática no vuelve a tocarla, ni siquiera si luego cambia el
+   código de la regla.
+5. Para volver a la propuesta automática: desmarque **Concepto fijado a mano**
+   y guarde.
+6. El tablero refleja el cambio en cuanto se recarga: no hay que recalcular
+   ningún recibo.
 
 > **Si un total sale corto, mire aquí primero.** El filtro **Reglas sin
-> clasificar** enseña las que el sistema no supo encuadrar: suman en «Otro», no
-> desaparecen, pero mientras estén ahí el desglose miente por omisión.
+> clasificar** del tablero enseña las líneas de esas reglas: suman en «Otro»,
+> no desaparecen, pero mientras estén ahí el desglose miente por omisión.
 
 ## 5. Qué entra y qué no
 

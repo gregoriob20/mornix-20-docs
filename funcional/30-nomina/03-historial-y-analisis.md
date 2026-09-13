@@ -18,6 +18,14 @@ empleado.
 La lista se abre con los contratos **archivados incluidos**. Suelen ser justo
 los antiguos, que es lo que se viene a buscar.
 
+### Paso a paso: ver la historia laboral de una persona
+
+1. **Nómina → Historial de Contratos.** La lista viene agrupada por empleado.
+2. Pulse el nombre del empleado: se despliegan todas sus versiones de contrato,
+   con fecha de inicio, fin, cargo y sueldo.
+3. Para llegar desde la ficha: **Empleados → ficha → botón Historial** (arriba,
+   junto a «Nóminas»). Es la misma lista, ya filtrada.
+
 ## El aviso de vencimiento
 
 Un contrato a término avisa antes de vencer, en una franja roja sobre la ficha
@@ -26,27 +34,47 @@ del empleado:
 ![La franja de aviso sobre la ficha del empleado](../img/nomina-aviso-vencimiento.png)
 
 Los días de antelación salen del **periodo de aviso de vencimiento** de la
-compañía (Ajustes → Empleados). El aviso cambia de texto según el caso: «vence
-en N días», «vence mañana», «vence hoy», o «venció el … y sigue en curso».
+compañía. El aviso cambia de texto según el caso: «vence en N días», «vence
+mañana», «vence hoy», o «venció el … y sigue en curso».
+
+### Paso a paso: cambiar con cuánta antelación avisa
+
+1. **Ajustes → Empleados.**
+2. Bloque de contratos: **Periodo de aviso de vencimiento de contrato**, en
+   días.
+3. **Guardar.** Es el mismo valor que usa la tarea automática que marca los
+   contratos en «Advertencia»: se configura una vez y sirve para los dos.
 
 ## Renovar un contrato
 
 Cuando el contrato ya venció, la cabecera de la ficha enseña **Renovar
-contrato**. El asistente:
+contrato**. El botón **está en el contrato y no en la ficha del empleado** a
+propósito: cuando a alguien se le vence el contrato lo habitual es que el
+empleado esté archivado, y entonces en la lista de Empleados no aparece. En el
+historial de contratos sí.
 
-1. Propone empezar **el día siguiente** al vencimiento del anterior.
-2. Copia la configuración del contrato que renueva —calendario, tipo de
-   estructura, campos de nómina— y deja ajustar el cargo, la referencia, las
-   fechas y el sueldo.
-3. **Recorta el vencimiento del anterior** al día previo al nuevo.
-4. Enlaza los dos por el campo **Contrato anterior**.
+### Paso a paso: renovar
 
-> El paso 3 no es cosmético: Odoo no deja que dos contratos del mismo empleado
-> se solapen en fechas. Sin recortar, la renovación fallaría con un error del
-> núcleo difícil de interpretar.
+1. **Nómina → Historial de Contratos.** Busque el contrato vencido (o abra la
+   ficha del empleado y pulse **Historial**).
+2. Abra el contrato. Si ya venció y no se ha renovado, arriba está **Renovar
+   contrato**.
+3. Se abre el asistente «Renovar contrato», con todo propuesto:
+   - **Fecha de inicio**: el día siguiente al vencimiento del anterior.
+   - **Cargo**: el del contrato anterior. Si lo cambia, la referencia del
+     contrato nuevo se reescribe con el cargo elegido.
+   - **Referencia**, **fecha de fin** y **sueldo**: ajuste lo que cambie.
+   - Calendario, tipo de estructura y campos de nómina se copian del anterior
+     y no se preguntan.
+4. **Renovar.**
+5. Resultado: el contrato vencido queda cerrado el día previo al nuevo y en el
+   historial; el nuevo queda en curso, enlazado por **Contrato anterior**. El
+   botón **Renovar contrato** desaparece del viejo, para que no se encadenen
+   renovaciones de la renovación sin darse cuenta.
 
-El botón desaparece en cuanto el contrato tiene una renovación, para que no se
-encadenen renovaciones de la renovación sin darse cuenta.
+> **El recorte del vencimiento no es cosmético**: Odoo no deja que dos
+> contratos del mismo empleado se solapen en fechas. Sin recortar, la
+> renovación fallaría con un error del núcleo difícil de interpretar.
 
 ## El análisis de nómina
 
@@ -56,32 +84,29 @@ encadenen renovaciones de la renovación sin darse cuenta.
 
 ![Recorrido: el pivote y lo que se puede cruzar con él](../media/recorrido-nomina-analisis.webm)
 
-Un pivote sobre los recibos. Las medidas:
+Un pivote sobre los recibos, con una fila por recibo y jornada. Las medidas:
 
 | Medida | Qué suma |
 |---|---|
+| **Sueldo básico** | La categoría de sueldo básico |
+| **Sueldo bruto** | El total de asignaciones |
 | **Sueldo neto** | Lo que se paga |
-| **Asignaciones** | Todo lo que suma antes de deducir |
-| **Deducciones** | Lo que se descuenta, en negativo |
-| **Días** y **Horas** | Jornada, cuando los recibos la traen |
+| **Asignaciones** / **Deducciones** | Los dos lados del recibo |
+| **Días** / **Horas** | La jornada que alimentó el cálculo |
+| **Nº de recibos** | Cuántos recibos hay detrás de cada cifra |
 
-Y se puede agrupar por empleado, departamento, estructura, etiqueta del
-empleado, estado o mes.
+Entran los recibos **por verificar, hechos y pagados**: la pre-nómina se quiere
+ver en el análisis, que es justo para lo que se revisa.
 
-### Qué entra y qué no
+### Paso a paso: el neto pagado por departamento y mes
 
-Por defecto se ven los recibos **confirmados**. El filtro **Pre-nómina** enseña
-en cambio los que están **por verificar**: sirve para revisar una quincena antes
-de cerrarla, que es justo para lo que se revisa.
+1. **Nómina → Informes → Análisis de nómina.**
+2. En el pivote, pulse **Total** de las filas → elija **Departamento**.
+3. Pulse **Total** de las columnas → **Hasta → Mes**.
+4. **Medidas → Sueldo neto** (y quite las que no quiera ver).
+5. Para exportarlo, el botón de descarga del pivote lo baja como hoja de
+   cálculo.
 
-> **Un recibo en borrador no aparece.** Si el análisis sale vacío teniendo
-> nóminas, casi siempre es eso: están sin generar o sin confirmar.
-
-## Errores frecuentes
-
-| Síntoma | Causa |
-|---|---|
-| El análisis sale vacío | Los recibos están en borrador, o el filtro está en «Nómina» y solo hay pre-nómina |
-| Un total no cuadra con los recibos | Hay una categoría de regla que el informe no conoce: ver la guía de configuración |
-| No aparece **Renovar contrato** | El contrato no ha vencido, o ya tiene una renovación |
-| El historial solo enseña un contrato | Es un contrato indefinido que nunca se renovó: no hay más versiones |
+> Para el desglose **por concepto** —cestaticket, prestaciones, parafiscales,
+> ISLR— está el [tablero de nómina](04-el-tablero.md): el análisis mira el
+> recibo entero, el tablero mira cada línea.

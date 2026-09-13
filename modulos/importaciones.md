@@ -192,6 +192,11 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
 - **El idioma es_VE hay que activarlo**: el módulo trae sus 593 entradas
   traducidas, pero si el idioma no está activo en la base, la pantalla sale en
   inglés y la traducción no se usa.
+- **La factura del viaje exige «Contabilidad / características completas»**
+  (`account.group_account_user`): con la localización puesta, la factura de
+  proveedor lee los libros fiscales (`nimetrix.fiscal.book`) y sin ese grupo no
+  abre — «Error de acceso», sin más pistas. Apareció al tomar las capturas con
+  el usuario de documentación, que solo tenía facturación.
 
 ## 10. Lo que queda abierto
 
@@ -216,5 +221,6 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
 - **Etiquetas repetidas dentro del propio módulo**: diez `Document`, diez
   `Description`, tres `Flat rate`. Es cosmético, pero en una vista de búsqueda
   el usuario ve varias veces la misma palabra y no sabe cuál elegir.
-- **Sin guía de usuario todavía**: la funcional está en
-  [Importaciones](../funcional/60-importaciones/_app.md).
+- La guía de usuario está en [Importaciones](../funcional/60-importaciones/_app.md):
+  catálogos, expediente y costo de destino, con el paso a paso de cada proceso
+  verificado en pantalla.
