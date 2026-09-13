@@ -11,7 +11,7 @@ En **Mi cuenta** aparecen tres apartados, cada uno con su contador:
 - **Retenciones de ISLR**
 - **Retenciones municipales**
 
-![«Mi cuenta» del proveedor, con los apartados de retenciones](img/portal-mi-cuenta.png)
+![«Mi cuenta» del proveedor, con los apartados de retenciones](../img/portal-mi-cuenta.png)
 
 Cada uno lista sus comprobantes con **la factura afectada, su número de
 control**, la fecha, el importe retenido y el estado. Arriba hay ordenación
@@ -23,11 +23,11 @@ con los datos y los botones de descarga a un lado, migas para volver al
 listado, flechas para pasar al siguiente y el historial de comunicación al
 pie. La misma página que ya conoce de sus facturas.
 
-![El listado de retenciones de IVA como lo ve el proveedor](img/portal-retenciones-iva.png)
+![El listado de retenciones de IVA como lo ve el proveedor](../img/portal-retenciones-iva.png)
 
-![La vista previa del comprobante, con sus datos al lado y el informe incrustado](img/portal-retencion-detalle.png)
+![La vista previa del comprobante, con sus datos al lado y el informe incrustado](../img/portal-retencion-detalle.png)
 
-![Recorrido: el proveedor entra, abre sus retenciones y ve un comprobante](media/recorrido-portal-proveedor.webm)
+![Recorrido: el proveedor entra, abre sus retenciones y ve un comprobante](../media/recorrido-portal-proveedor.webm)
 
 > Un usuario **interno** con permisos de contabilidad ve todos los
 > comprobantes desde su portal, igual que ve todas las facturas. Los apartados

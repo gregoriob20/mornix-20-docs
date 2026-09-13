@@ -21,7 +21,7 @@ Es a propósito: lo que se entregó al SENIAT y lo que está en el sistema tiene
 que decir lo mismo. Si el documento cambiara después, dejarían de coincidir sin
 que nadie se enterara.
 
-![Un comprobante bloqueado: el aviso dice en qué declaración quedó incluido, y la cinta DECLARADO lo marca de un vistazo](img/comprobante-iva-bloqueado.png)
+![Un comprobante bloqueado: el aviso dice en qué declaración quedó incluido, y la cinta DECLARADO lo marca de un vistazo](../img/comprobante-iva-bloqueado.png)
 
 ## Cómo corregir algo ya declarado
 

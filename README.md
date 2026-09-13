@@ -13,7 +13,7 @@ necesidad de acceso al código.
 
 | Carpeta | Para quién | Qué contiene |
 |---|---|---|
-| `funcional/` | Usuarios y consultores | Guías de uso: retenciones, libros fiscales, guías de despacho, doble moneda, portal del proveedor y **nómina**. Con capturas (`img/`) y vídeos (`media/`) |
+| `funcional/` | Usuarios y consultores | Guías de uso **agrupadas por aplicación** —contabilidad, inventario, nómina, portal—, una carpeta por cada una. Con capturas (`img/`) y vídeos (`media/`) |
 | `modulos/` | Desarrollo | Qué se cambió en cada módulo y por qué, defecto por defecto. Una ficha por área: `l10n_ve_mornix` (localización fiscal) y `nomina` |
 | `referencia/` | Desarrollo | Material de consulta de la migración |
 | `qa/` | QA | Criterios y cobertura |
@@ -28,6 +28,37 @@ En la raíz, los documentos transversales:
 - **`INVENTARIO.md`** — módulos de origen y su destino.
 - **`PROPIEDAD-Y-LICENCIAS.md`** y **`censo-licencias.md`** — origen y licencia
   de cada módulo.
+
+## Cómo está organizada la rama de usuario
+
+Por **aplicación**, como la documentación de Odoo: una carpeta por aplicación,
+con su portada y sus guías dentro.
+
+```
+funcional/
+├── 01-primeros-pasos.md        ← lo transversal va suelto en la raíz
+├── 10-contabilidad/
+│   ├── _app.md                 ← la portada: título y de qué va
+│   ├── 01-retencion-iva.md
+│   └── …
+├── 20-inventario/
+├── 30-nomina/
+├── 40-portal/
+├── 80-restricciones.md
+└── 90-respuesta-a-la-revision.md
+```
+
+**La carpeta ES la aplicación.** No hay una lista que mantener en el generador:
+crear una carpeta con su `_app.md` la publica, y añadir un `.md` dentro añade
+una guía. El prefijo numérico da el orden y no se publica.
+
+Desde una subcarpeta las capturas se referencian con `../img/x.png`, que es lo
+correcto al leer el repositorio y también al publicarlo.
+
+> **Una guía es una página, con su índice al lado.** La rama de desarrollo sí
+> parte los documentos largos en apartados —`BREAKING-CHANGES.md` pasa de mil
+> líneas—, pero partir una guía de cincuenta deja cinco páginas de diez, y eso
+> se lee peor. Odoo tampoco lo hace.
 
 ## Cómo se publica
 

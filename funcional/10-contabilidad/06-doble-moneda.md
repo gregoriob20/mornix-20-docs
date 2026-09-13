@@ -17,7 +17,7 @@ La tasa aplicada se guarda **en la propia factura**: es la que se usó al
 asentarla, y no cambia aunque la tasa del día cambie después. Todo lo que se
 calcule sobre esa factura —retenciones, libros, reportes— usa esa misma tasa.
 
-![El pie de la factura: los totales en bolívares y, al lado, sus equivalentes en la moneda referencial](img/factura-desglose-bs.png)
+![El pie de la factura: los totales en bolívares y, al lado, sus equivalentes en la moneda referencial](../img/factura-desglose-bs.png)
 
 ## Saldos del contacto en divisa
 

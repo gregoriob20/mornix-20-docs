@@ -9,7 +9,7 @@ buscando un fallo donde hay una decisión.
 |---|---|
 | Borrar un asiento que no esté en borrador | La contabilidad no se borra: se anula |
 | Cancelar una factura de otro período | Cerrado el mes, cambiarlo descuadra lo ya declarado |
-| Modificar un documento declarado | Ver [Declaraciones y bloqueo](08-declaraciones-y-bloqueo.md) |
+| Modificar un documento declarado | Ver [Declaraciones y bloqueo](10-contabilidad/05-declaraciones-y-bloqueo.md) |
 
 Para cancelar un documento ya sellado con hash inalterable hay un botón
 **Cancelar** propio, que pide confirmación. Solo aparece dentro del período en

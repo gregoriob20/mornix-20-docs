@@ -9,7 +9,7 @@ lo está. El porcentaje sale del contacto: 75 % o 100 % del IVA facturado.
 
 ## El flujo, paso a paso
 
-![Los cinco pasos, desde la factura publicada hasta la declaración](img/flujo-retencion-iva.svg)
+![Los cinco pasos, desde la factura publicada hasta la declaración](../img/flujo-retencion-iva.svg)
 
 1. **Publicar la factura.** El comprobante no se puede generar sobre un
    borrador.
@@ -22,11 +22,11 @@ lo está. El porcentaje sale del contacto: 75 % o 100 % del IVA facturado.
 
 Desde la factura, el botón **Retención IVA** lleva al comprobante.
 
-![El listado de retenciones de IVA a proveedores, con su estado y su número de comprobante](img/retenciones-iva-listado.png)
+![El listado de retenciones de IVA a proveedores, con su estado y su número de comprobante](../img/retenciones-iva-listado.png)
 
-![Recorrido: del listado al comprobante, con sus líneas y su asiento](media/recorrido-retenciones-iva.webm)
+![Recorrido: del listado al comprobante, con sus líneas y su asiento](../media/recorrido-retenciones-iva.webm)
 
-![El comprobante impreso: agente y sujeto retenido, líneas por alícuota y total retenido](img/formato-comprobante-iva.png)
+![El comprobante impreso: agente y sujeto retenido, líneas por alícuota y total retenido](../img/formato-comprobante-iva.png)
 
 ## El número de comprobante
 

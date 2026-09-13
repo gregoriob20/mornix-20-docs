@@ -32,9 +32,9 @@ concepto «no aplica». Si el producto no tiene concepto, esa línea no retiene.
 
 Desde la factura, el botón **Retención ISLR** lleva al comprobante.
 
-![El listado de retenciones de ISLR a proveedores](img/retenciones-islr-listado.png)
+![El listado de retenciones de ISLR a proveedores](../img/retenciones-islr-listado.png)
 
-![El comprobante de ISLR impreso](img/formato-comprobante-islr.png)
+![El comprobante de ISLR impreso](../img/formato-comprobante-islr.png)
 
 ## El XML para el SENIAT
 

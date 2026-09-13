@@ -252,9 +252,9 @@ vídeo tomados de una quincena real:
 
 | Guía | Qué cubre |
 |---|---|
-| [Cómo se configura](../funcional/15-nomina-configuracion.md) | Tipo de estructura, estructura, reglas y el contrato del empleado |
-| [Procesar una quincena](../funcional/16-nomina-la-quincena.md) | Del lote vacío a los recibos confirmados |
-| [Historial y análisis](../funcional/17-nomina-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
+| [Cómo se configura](../funcional/30-nomina/01-configuracion.md) | Tipo de estructura, estructura, reglas y el contrato del empleado |
+| [Procesar una quincena](../funcional/30-nomina/02-la-quincena.md) | Del lote vacío a los recibos confirmados |
+| [Historial y análisis](../funcional/30-nomina/03-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
 
 Las capturas se regeneran con un comando, contra una base de demostración con
 ocho empleados y dos quincenas:

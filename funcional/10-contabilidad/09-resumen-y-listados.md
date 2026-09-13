@@ -23,14 +23,14 @@ concreto. Sale en Excel.
 Sirve para revisar lo emitido en un período sin abrir comprobante por
 comprobante.
 
-![El listado de retenciones de IVA impreso](img/formato-listado-iva.png)
+![El listado de retenciones de IVA impreso](../img/formato-listado-iva.png)
 
 ## Listado de retenciones de ISLR
 
 **Informes de Venezuela → Listado Retención ISLR**. Igual que el anterior, con
 el rango de fechas y el filtro de clientes o proveedores.
 
-![El detalle de ISLR retenido, con concepto, tarifa y sustraendo](img/formato-listado-islr.png)
+![El detalle de ISLR retenido, con concepto, tarifa y sustraendo](../img/formato-listado-islr.png)
 
 ## Reporte de retenciones municipales
 
@@ -38,7 +38,7 @@ el rango de fechas y el filtro de clientes o proveedores.
 y si son de clientes, de proveedores o ambas. Hay que marcar al menos una de
 las dos: si no, el asistente avisa en vez de sacar las dos mezcladas.
 
-![El reporte municipal del período, con su banda de totales](img/formato-reporte-municipal.png)
+![El reporte municipal del período, con su banda de totales](../img/formato-reporte-municipal.png)
 
 ## Cuál usar para qué
 

@@ -1,4 +1,4 @@
-# Nómina: cómo se configura
+# Cómo se configura
 
 Lo que hay que dejar puesto **una vez** para que la nómina se pueda calcular:
 el tipo de estructura, la estructura con sus reglas, y los datos de nómina de
@@ -21,7 +21,7 @@ Se configura de arriba abajo, porque cada pieza necesita la anterior:
 
 **Nómina → Configuración → Tipos de estructura.**
 
-![Los tipos de estructura, con su tipo de sueldo y su estructura por defecto](img/nomina-tipos-estructura.png)
+![Los tipos de estructura, con su tipo de sueldo y su estructura por defecto](../img/nomina-tipos-estructura.png)
 
 Agrupa estructuras que comparten la forma de pagar:
 
@@ -40,7 +40,7 @@ Agrupa estructuras que comparten la forma de pagar:
 
 **Nómina → Configuración → Estructuras salariales.**
 
-![La estructura, con su tipo, su periodicidad, sus departamentos y sus reglas](img/nomina-estructura-form.png)
+![La estructura, con su tipo, su periodicidad, sus departamentos y sus reglas](../img/nomina-estructura-form.png)
 
 La estructura dice **qué reglas se aplican** y en qué orden. Las reglas se
 añaden en la pestaña de abajo; el orden de cálculo lo da la secuencia de cada
@@ -52,7 +52,7 @@ Los **departamentos** acotan a quién alcanza la estructura.
 
 **Nómina → Configuración → Reglas salariales.**
 
-![Las reglas, con su código, su categoría y su secuencia](img/nomina-reglas-listado.png)
+![Las reglas, con su código, su categoría y su secuencia](../img/nomina-reglas-listado.png)
 
 Cada regla es un concepto del recibo: el sueldo, un bono, una deducción. Lo que
 la define:
@@ -94,7 +94,7 @@ Las categorías de esta implantación:
 
 **Empleados → ficha del empleado → pestaña Nómina.**
 
-![La pestaña Nómina de la ficha: sueldo, tipo de sueldo, cestaticket y categoría de pago](img/nomina-empleado-contrato.png)
+![La pestaña Nómina de la ficha: sueldo, tipo de sueldo, cestaticket y categoría de pago](../img/nomina-empleado-contrato.png)
 
 > **En Odoo 20 el contrato ya no es una pantalla aparte.** Es la pestaña
 > «Nómina» de la ficha del empleado, y cada cambio de condiciones crea una

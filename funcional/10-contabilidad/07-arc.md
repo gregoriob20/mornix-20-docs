@@ -19,7 +19,7 @@ Sale un PDF con el detalle mes a mes: código de concepto, cantidad pagada,
 cantidad sujeta a retención, porcentaje e impuesto retenido, con los acumulados
 del año.
 
-![El ARC impreso: detalle mes a mes con los acumulados del año](img/formato-arc.png)
+![El ARC impreso: detalle mes a mes con los acumulados del año](../img/formato-arc.png)
 
 ## Qué entra
 

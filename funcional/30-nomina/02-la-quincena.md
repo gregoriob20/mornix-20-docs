@@ -1,4 +1,4 @@
-# Nómina: procesar una quincena
+# Procesar una quincena
 
 El recorrido completo de un pago, desde el lote vacío hasta los recibos
 confirmados.
@@ -11,13 +11,13 @@ confirmados.
 3. **Revisar** el cálculo, recibo a recibo si hace falta.
 4. **Confirmar.** A partir de aquí los importes quedan fijos.
 
-![Recorrido: del listado de lotes al recibo de una persona](media/recorrido-nomina-quincena.webm)
+![Recorrido: del listado de lotes al recibo de una persona](../media/recorrido-nomina-quincena.webm)
 
 ## 1. El lote
 
 **Nómina → Procesamientos de nóminas → Nuevo.**
 
-![Los lotes del mes, con su período y su estado](img/nomina-lotes-listado.png)
+![Los lotes del mes, con su período y su estado](../img/nomina-lotes-listado.png)
 
 Un lote es una quincena, un mes o cualquier período que se pague junto. Lo que
 se rellena:
@@ -44,7 +44,7 @@ usa para leer los importes en divisa.
 Con el lote en borrador, el botón **Generar recibos** abre un asistente con los
 empleados que entran. Se pueden quitar los que no correspondan.
 
-![El lote con sus ocho recibos generados](img/nomina-lote-form.png)
+![El lote con sus ocho recibos generados](../img/nomina-lote-form.png)
 
 Entra un empleado si, durante el período del lote:
 
@@ -60,16 +60,16 @@ calculadas.
 Los recibos de todos los lotes se ven juntos en **Nómina → Nóminas del
 empleado**:
 
-![El listado de recibos, con su empleado, su período y su estado](img/nomina-recibos-listado.png)
+![El listado de recibos, con su empleado, su período y su estado](../img/nomina-recibos-listado.png)
 
 ## 3. Revisar el cálculo
 
 Entrando a un recibo, la pestaña **Cálculo de la nómina** enseña la cuenta
 completa, línea a línea.
 
-![El recibo por dentro: cada concepto con su base, su tasa y su total](img/nomina-recibo-calculo.png)
+![El recibo por dentro: cada concepto con su base, su tasa y su total](../img/nomina-recibo-calculo.png)
 
-![Recorrido: el recibo de una persona, de la cabecera al cálculo](media/recorrido-nomina-recibo.webm)
+![Recorrido: el recibo de una persona, de la cabecera al cálculo](../media/recorrido-nomina-recibo.webm)
 
 Cómo se lee cada línea:
 

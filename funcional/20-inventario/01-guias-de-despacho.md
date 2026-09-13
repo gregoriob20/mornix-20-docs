@@ -44,4 +44,4 @@ lista.
 La columna **Estado de la guía** indica si el albarán ya se facturó o sigue
 pendiente.
 
-![El listado de guías de despacho, con su número y su estado de facturación](img/guias-despacho-listado.png)
+![El listado de guías de despacho, con su número y su estado de facturación](../img/guias-despacho-listado.png)

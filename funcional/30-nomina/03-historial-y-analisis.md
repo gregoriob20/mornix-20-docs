@@ -1,4 +1,4 @@
-# Nómina: historial de contratos y análisis
+# Historial de contratos y análisis
 
 Dos pantallas que se usan después de pagar: el historial laboral de cada
 persona, y los números de la nómina cruzados como haga falta.
@@ -8,7 +8,7 @@ persona, y los números de la nómina cruzados como haga falta.
 **Nómina → Historial de Contratos**, o el botón **Historial** de la ficha del
 empleado.
 
-![El historial, agrupado por empleado](img/nomina-historial-contratos.png)
+![El historial, agrupado por empleado](../img/nomina-historial-contratos.png)
 
 > **No es una tabla aparte.** En Odoo 20 cada cambio de condiciones —un aumento,
 > un cambio de cargo, una renovación— crea una **versión** del contrato, y el
@@ -23,7 +23,7 @@ los antiguos, que es lo que se viene a buscar.
 Un contrato a término avisa antes de vencer, en una franja roja sobre la ficha
 del empleado:
 
-![La franja de aviso sobre la ficha del empleado](img/nomina-aviso-vencimiento.png)
+![La franja de aviso sobre la ficha del empleado](../img/nomina-aviso-vencimiento.png)
 
 Los días de antelación salen del **periodo de aviso de vencimiento** de la
 compañía (Ajustes → Empleados). El aviso cambia de texto según el caso: «vence
@@ -52,9 +52,9 @@ encadenen renovaciones de la renovación sin darse cuenta.
 
 **Nómina → Informes → Análisis de nómina.**
 
-![El análisis, por empleado y mes](img/nomina-analisis-pivote.png)
+![El análisis, por empleado y mes](../img/nomina-analisis-pivote.png)
 
-![Recorrido: el pivote y lo que se puede cruzar con él](media/recorrido-nomina-analisis.webm)
+![Recorrido: el pivote y lo que se puede cruzar con él](../media/recorrido-nomina-analisis.webm)
 
 Un pivote sobre los recibos. Las medidas:
 
