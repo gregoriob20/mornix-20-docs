@@ -49,6 +49,34 @@ v18, que ya trae dos saltos de version resueltos:
 `nimetrix_standard_report_invoice`, `stock_no_negative`, `unidades_permitidas`,
 `unidades_presentacion`.
 
+## La nomina va aparte
+
+`mornix-tech/nx-nomina` (v18, 55 modulos) **no entra en el inventario de arriba**:
+se migra en su propio repositorio, `gregoriob20/mornix_nomina_20`, y Odoo lo lee
+desde `addons/nomina/`.
+
+| | Modulos |
+|---|---|
+| Migrados e instalando | **35** |
+| Motor de nomina (OCA adaptado) | 1 |
+| Bloqueados por Enterprise o terceros | 20 |
+| **Total del repositorio de origen** | **55** |
+
+Los 35 se instalan de una vez sobre una base vacia y las **102 pruebas pasan**.
+
+Se separo por dos razones, las dos de fondo:
+
+- **El motor no es nuestro.** 42 de los 55 modulos dependian de `hr_payroll`, que
+  es de Enterprise. Se sustituyo por `OCA/payroll` adaptado a v20, que tiene su
+  propio ciclo de vida: cuando OCA saque rama 20.0 habra que rebasar los nueve
+  cambios que le hicimos.
+- **Un bloqueo que no depende de nosotros.** `res.bank` desaparecio de v20 y
+  arrastra 9 modulos de banca y pagos. La decision esta aplazada hasta ver que
+  hace Odoo 20 cuando salga.
+
+Detalle en [modulos/nomina.md](modulos/nomina.md); lista de bloqueados, en
+`BLOQUEADOS.txt` del repositorio de la nomina.
+
 ## Consolidacion: v16 y v18 son del mismo cliente
 
 Los repos `nimetrix/` (v16) y `nx-desarrollo/` (v18) pertenecen a la misma

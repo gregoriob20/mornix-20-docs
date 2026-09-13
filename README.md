@@ -1,15 +1,20 @@
 # Documentación · Migración Mornix a Odoo 20
 
-Toda la documentación de la migración de la localización venezolana de Mornix a
-Odoo 20. Vivía dentro del repositorio de código (`mornix_localizacion_20`) y se
-separó aquí para que pueda consultarse sin necesidad de acceso al código.
+Toda la documentación de la migración de Mornix a Odoo 20 — la localización
+venezolana y la nómina. Vivía dentro del repositorio de código
+(`mornix_localizacion_20`) y se separó aquí para que pueda consultarse sin
+necesidad de acceso al código.
+
+> **El código está en dos repositorios**, no en uno: la localización en
+> `mornix_localizacion_20` y la nómina en `mornix_nomina_20`. La ficha
+> [`modulos/nomina.md`](modulos/nomina.md) explica por qué y cómo se monta.
 
 ## Qué hay
 
 | Carpeta | Para quién | Qué contiene |
 |---|---|---|
 | `funcional/` | Usuarios y consultores | Guías de uso: retenciones, libros fiscales, guías de despacho, doble moneda, portal del proveedor. Con capturas (`img/`) y vídeos (`media/`) |
-| `modulos/` | Desarrollo | Qué se cambió en cada módulo y por qué, defecto por defecto |
+| `modulos/` | Desarrollo | Qué se cambió en cada módulo y por qué, defecto por defecto. Una ficha por área: `l10n_ve_mornix` (localización fiscal) y `nomina` |
 | `referencia/` | Desarrollo | Material de consulta de la migración |
 | `qa/` | QA | Criterios y cobertura |
 | `newsletter/` | Cliente | Resúmenes de novedades |
