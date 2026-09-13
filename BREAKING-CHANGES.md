@@ -809,6 +809,39 @@ Un `security.xml` con `<record model="ir.rule">` falla con `KeyError: 'ir.rule'`
 Las reglas de registro pasan a ser filas con dominio, y el grupo va en
 `group_id/id`. Una regla sin grupo (multi-compañia) deja esa columna vacia.
 
+## `res.bank` desaparecio
+
+El modelo del banco como entidad existia en v18
+(`odoo/addons/base/models/res_bank.py`) y en v20 **el archivo ya no esta**.
+Odoo lo resolvio convirtiendolo en texto: `res.partner.bank.bank_name` es hoy
+un `Char`.
+
+Para una nomina venezolana eso es una perdida, no una simplificacion: los
+archivos de pago al banco llevan el **codigo** de la entidad, no su nombre
+escrito a mano. Quien migre algo que referencie bancos tiene que decidir con
+que lo sustituye.
+
+## `first_contract_date` se movio a `hr.employee`
+
+Estaba accesible desde el contrato; ahora vive en el empleado. Un
+`@api.depends('first_contract_date')` sobre `hr.version` **impide cargar el
+modulo**:
+
+```
+ValueError: Wrong @depends on '_compute_...'. Dependency field
+'first_contract_date' not found in ...
+```
+
+Se llega por el empleado: `@api.depends('employee_id.first_contract_date')`.
+
+## Los grupos perdieron `category_id`
+
+`res.groups.category_id` ya no existe. Se omite, o se usa `privilege_id`.
+
+Ojo al buscarlo: `search_default_category_id` en el contexto de una accion
+sobre `ir.module.module` **no es este campo** y no hay que tocarlo. Es un filtro
+de busqueda.
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
