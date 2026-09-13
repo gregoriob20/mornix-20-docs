@@ -842,6 +842,206 @@ Ojo al buscarlo: `search_default_category_id` en el contexto de una accion
 sobre `ir.module.module` **no es este campo** y no hay que tocarlo. Es un filtro
 de busqueda.
 
+## El contrato perdio su estado
+
+En v18 `hr.contract` tenia `state` con `draft` / `open` / `close` / `cancel`, y un
+cron —«HR Contract: update state»— que lo movia. **En v20 no queda nada de eso.** Un
+contrato esta en vigor si hoy cae entre `contract_date_start` y `contract_date_end`,
+y punto.
+
+No avisa de forma clara: lo que se ve es el modulo negandose a cargar.
+
+```
+ValueError: Wrong @depends on '_compute_...' (compute method of field
+hr.version.mnx_is_renewable). Dependency field 'state' not found in model hr.version.
+```
+
+El dominio que usa el propio core para «contratos vigentes»:
+
+```python
+[('contract_date_start', '<=', hoy),
+ '|', ('contract_date_end', '=', False), ('contract_date_end', '>=', hoy)]
+```
+
+**Consecuencia practica:** un campo calculado a partir de ese dominio **no puede ser
+`store=True`**. Un contrato vence porque pasa el tiempo, no porque alguien escriba en
+el: con el valor almacenado, el boton de renovar no aparece el dia que toca.
+
+## `date_start` y `date_end` de la version son calculados
+
+`hr.version` tiene cuatro fechas y es facil escribir en las que no son:
+
+| Campo | Que es | Se puede escribir |
+|---|---|---|
+| `date_version` | Desde cuando rige esta version | Si |
+| `contract_date_start` | Inicio del contrato | Si |
+| `contract_date_end` | Fin del contrato | Si |
+| `date_start` / `date_end` | Vigencia de la version, calculada | **No** |
+
+Escribir en `date_start` no da error al leer el codigo, pero el valor no llega a la
+base. Las fechas del contrato son las de `contract_*`.
+
+## El contrato ya no tiene formulario propio
+
+v20 no trae ninguna vista `form` de `hr.version`: trae lista, grafico, pivote y
+busqueda. **El formulario del contrato es el del empleado**, y sus campos viven en la
+pestaña «Nomina» (`//page[@name='payroll_information']`).
+
+Lo que eso obliga a cambiar en una vista heredada:
+
+| v18 | v20 |
+|---|---|
+| `inherit_id` = `hr_contract.hr_contract_view_form` | `hr.view_employee_form` |
+| `model` = `hr.contract` | **`hr.employee`** (el del padre) |
+| `//group[@name='salary_info']` | `//group[@name='contract']` |
+| `//div[@name='wage']` | igual, dentro de la pestaña Nomina |
+| `//field[@name='date_end']` | `//div[@name='contract_dates']` |
+| `hr_contract.hr_contract_view_tree` | `hr.hr_version_list_view` (modelo `hr.version`) |
+| `hr_contract.hr_contract_view_search` | `hr.hr_version_search_view` |
+
+> **La trampa:** `_inherits` delega **campos**, no **metodos**. Un boton
+> `type="object"` puesto en el formulario del empleado busca el metodo en
+> `hr.employee` y no lo encuentra en la version. Hace falta un envoltorio:
+>
+> ```python
+> class HrEmployee(models.Model):
+>     _inherit = 'hr.employee'
+>
+>     def mi_accion(self):
+>         self.ensure_one()
+>         return self.current_version_id.mi_accion()
+> ```
+
+## `hr.contract.history` desaparecio
+
+Era el modelo detras de la pantalla «Historial de contratos» de v18. En v20 el
+historial **es el listado de versiones del empleado** (`hr.hr_version_list_view`,
+accion `hr.action_hr_version`), y la ficha ya trae un boton «History» que lo abre.
+
+Un modulo que lo heredaba no arranca:
+
+```
+TypeError: Model 'hr.contract.history' does not exist in registry.
+```
+
+Si lo unico que hacia era añadir columnas, se añaden al listado de versiones y el
+modulo se queda sin modelo propio.
+
+## Campos del contrato que venian de Enterprise
+
+Estos no los quito v20 «de Community»: **nunca estuvieron en Community**. Venian de
+`hr_payroll` o `hr_contract_salary` de Enterprise, y el motor de OCA tampoco los trae.
+Una localizacion que los use tiene que reponerlos.
+
+| Campo | Modelo | Para que se usa en la localizacion |
+|---|---|---|
+| `wage_type` | `hr.version` | Mensual u horario; manda en el calculo |
+| `hourly_wage` | `hr.version` | Jornal por hora, alimenta los dias trabajados |
+| `contract_type_id` | `hr.version` | Sin sustituto; su sitio lo ocupa `employee_type_id` |
+| `registration_number` | `hr.employee` | Retirado; la localizacion ya usa su propio codigo |
+| `type_id` | `hr.payroll.structure` | Agrupa estructuras por tipo |
+| `default_struct_id` | `hr.payroll.structure.type` | Estructura que se propone al generar recibos |
+| `default_schedule_pay` | `hr.payroll.structure.type` | Periodicidad; decide como se promedia el salario |
+| `wage_type` | `hr.payroll.structure.type` | Idem, a nivel de tipo |
+
+**Consecuencia practica:** conviene reponerlos en el modulo mas bajo de la cadena que
+los necesite, no en cada uno. Si dos modulos declaran el mismo campo con distinto tipo,
+el que cargue segundo gana y el fallo aparece lejos de su causa.
+
+## `hr.payroll.report` no existe fuera de Enterprise
+
+El analisis de nomina —el pivote de recibos por empleado y mes— era de
+`hr_payroll` (Enterprise). Ni Community ni OCA lo traen, y con el se van sus vistas
+(`payroll_report_view_search`) y el menu del que colgaban los informes
+(`menu_hr_payroll_report`).
+
+Un modulo que lo extendia parcheando su SQL con `str.replace` no tiene nada que
+parchear: hay que escribir la vista entera sobre las tablas de OCA
+(`hr_payslip`, `hr_payslip_line`, `hr_payslip_worked_days`).
+
+> Al escribirla, ojo con la granularidad: si se une con `employee_category_rel` —un
+> empleado puede llevar varias etiquetas— cada etiqueta multiplica la fila y `wd.id`
+> deja de ser clave unica. Se resuelve con `ROW_NUMBER() OVER (...)` como `id`.
+
+## `hr.salary.rule` ya no apunta a su estructura
+
+En Enterprise la regla pertenecia a **una** estructura (`struct_id`, Many2one). El
+motor de OCA invierte la relacion: es la estructura la que lista sus reglas
+(`rule_ids`, Many2many sobre `hr_structure_salary_rule_rel`). Una regla puede estar en
+varias.
+
+Los dominios que filtraban reglas por estructura fallan al validar la vista:
+
+```
+Unknown field "hr.salary.rule.struct_id" in domain of <field name="salary_rules_for_basic">
+```
+
+El lado inverso se puede declarar sin tocar OCA, pero **no como Many2many normal**:
+`hr.payslip.line` hereda de `hr.salary.rule` por prototipo, asi que el campo se
+clonaria con la misma tabla y las mismas columnas, y Odoo lo rechaza:
+
+```
+TypeError: Many2many fields hr.payslip.line.struct_ids and hr.salary.rule.struct_ids
+use the same table and columns
+```
+
+Se declara calculado, con `search` propio: lo que los dominios necesitan es buscar, no
+almacenar. Y la comparacion pasa de `=` a `in`, porque la cardinalidad cambio de verdad.
+
+## Las vistas de busqueda ya no admiten `<group expand=... string=...>`
+
+El `<group>` que agrupa los «Agrupar por» perdio los dos atributos. El error que sale
+no nombra ninguno de los dos:
+
+```
+Invalid view <modelo>.view.search definition in False
+```
+
+El detalle solo aparece en el log, como aviso:
+
+```
+RELAXNG_ERR_INVALIDATTR: Invalid attribute expand for element group
+RELAXNG_ERR_EXTRACONTENT: Element search has extra content: field
+```
+
+La forma valida es un `<group>` pelado, como hace el core.
+
+## `res.groups.users` paso a llamarse `user_ids`
+
+```
+ValueError: Invalid field 'users' in 'res.groups'
+```
+
+Aparece al cargar un `<record model="res.groups">` con
+`<field name="users" eval="[(4, ref('base.user_admin'))]"/>`.
+
+## `mail.thread.cc` desaparecio
+
+El mixin que guardaba los CC de los correos entrantes ya no existe:
+
+```
+TypeError: Model 'x' inherits from non-existing model 'mail.thread.cc'.
+```
+
+Si lo que se usaba de el era el hilo de mensajes, `mail.thread` a secas basta.
+
+## `-i` sobre un modulo ya instalado no hace nada
+
+No es una rotura de v20, pero cuesta la misma vuelta que una. Instalar con `-i` un
+modulo que ya figura como `installed` **no carga sus datos**: Odoo lo salta sin decir
+nada y el comando termina en verde.
+
+Pasa, por ejemplo, al instalar un modulo con parte de su manifest comentado para
+aislar un fallo: al restaurarlo, el `-i` de la segunda vuelta no vuelve a cargar nada.
+Lo que se ve despues es un XML-id que «no existe» aunque el archivo lo declare.
+
+**Consecuencia practica:** mirar el estado antes de elegir la bandera.
+
+```bash
+estado=$(psql -Atc "select state from ir_module_module where name='$m'")
+[ "$estado" = installed ] && bandera=-u || bandera=-i
+```
+
 ## Roturas por modulo
 
 _(Se va llenando durante la migracion.)_
