@@ -48,12 +48,12 @@ trampa, explicada abajo.
 
 | | |
 |---|---|
-| Módulos del cliente | 54 en el árbol (55 en el origen) |
+| Módulos del cliente | 55 en el árbol (54 migrados + el tablero, escrito aquí) |
 | Motor de nómina | 1 (`payroll`, OCA adaptado) |
 | Python | 346 archivos · 15.467 líneas |
 | XML | 155 archivos · 9.495 líneas |
 | Motor OCA | 32 archivos · 3.655 líneas de Python |
-| Pruebas | **102**, en 11 módulos |
+| Pruebas | **112**, en 12 módulos |
 
 Reparto de las pruebas:
 
@@ -63,6 +63,7 @@ Reparto de las pruebas:
 | `payroll` (motor OCA) | 27 |
 | `mnx_l10n_ve_payroll_hr_contract_history` | 20 |
 | `l10n_ve_payroll_hr_payroll` | 10 |
+| `mornix_l10n_ve_payroll_dashboard` | 10 |
 | `l10n_ve_payroll_res_config_settings` | 3 |
 | resto (6 módulos) | 7 |
 
@@ -208,7 +209,56 @@ de solapes.
 tres sitios que lo miraban —cancelar un recibo, cancelar un lote, marcar como
 pagado— comprueban antes si el campo está.
 
-## 7. Cómo se comprueba
+## 7. El tablero: lo que se pregunta cada cierre
+
+`mornix_l10n_ve_payroll_dashboard`, escrito en esta migración, responde con
+datos las preguntas que se repiten en toda implantación: costo total, reparto
+por regla, cestaticket, prestaciones acumuladas, parafiscales, incidencia de
+bonos —y cuánto de eso va en divisa— e ISLR retenido.
+
+**El problema de fondo no es sumar: es saber qué suma dónde.** Los códigos de
+las reglas los pone cada implantación, así que una lista fija de códigos dentro
+del informe funciona en un cliente y miente en el siguiente. La solución es que
+cada regla lleve su **concepto** como un campo más:
+
+| | |
+|---|---|
+| Se propone | a partir del código de la regla (`CESTA` → cestaticket, `FAOVPAT` → FAOV) |
+| Se corrige | a mano, y entonces queda marcado y la propuesta no vuelve a tocarlo |
+| Lo que no encaja | cae en «Otro» y **sigue sumando**: no desaparece de los totales |
+
+Sobre eso va una vista SQL, `mnx.payroll.dashboard`, con una fila por línea de
+recibo y los importes en las dos monedas.
+
+**Dos decisiones que sostienen los números:**
+
+- **El bruto y el neto del recibo no son conceptos**, son sumas de lo demás. Se
+  clasifican como «Total del recibo» y **no entran en el costo**: con ellos
+  dentro, la demostración daba 593.705 donde el bruto real era 201.000 —el
+  triple, y sin que ningún número pareciera raro—.
+- **Una retención no es costo.** El ISLR ya está dentro del sueldo del que se
+  descuenta; sumarlo otra vez sería contar dos veces el mismo bolívar. Por eso
+  el costo son las **asignaciones más los aportes patronales**, y las
+  retenciones se informan aparte, en positivo.
+
+Tres roturas de v20 aparecieron construyéndolo:
+
+| Qué | Síntoma |
+|---|---|
+| `<group string="…">` en una vista de búsqueda | v20 no admite el atributo: la vista queda inválida y **no instala** |
+| `context_today().replace(...).strftime(...)` en el dominio de un filtro | El cliente no sabe evaluarlo: la pantalla se cae al abrirla. El filtro de periodo se declara con `date="campo"` |
+| Un modelo `_auto = False` sin `_depends` | El ORM no vuelca lo pendiente antes de leer: un recibo recién calculado **no aparece**. En pantalla casi no se nota; en una prueba falla siempre |
+
+Y un defecto propio, del mismo tipo que ya tenía el código de la regla: cambiar
+la secuencia de una regla recalcula su código, y eso **borraba la clasificación
+hecha a mano** sin decir nada. Se resolvió como lo resuelve
+`l10n_ve_payroll_automatic_rule_code` con `nx_code_manual`: una marca de «esto
+lo puso una persona».
+
+10 pruebas propias. La guía de uso está en
+[El tablero de nómina](../funcional/30-nomina/04-el-tablero.md).
+
+## 8. Cómo se comprueba
 
 Instalar de una vez sobre una base **nueva**, no sobre una que ya los tenga.
 
@@ -227,7 +277,7 @@ docker compose run --rm odoo20 odoo -d nomina_test -i <lista de modulos> \
 > sus datos**: Odoo lo salta y el comando termina en verde. Mirar el estado antes
 > de elegir entre `-i` y `-u`.
 
-## 8. Dónde vive el código
+## 9. Dónde vive el código
 
 El repositorio es `gregoriob20/mornix_nomina_20`, y Odoo lo lee desde
 `addons/nomina/` del repositorio de código.
@@ -245,9 +295,9 @@ python3 scripts/sincronizar_nomina.py --subir  # addons/nomina/ -> clon
 > `--subir` antes de commitear. Al revés, el contenedor sigue viendo lo viejo y
 > se depura código que no se está ejecutando.
 
-## 9. La guía de usuario
+## 10. La guía de usuario
 
-La rama funcional de la nómina son tres documentos, con capturas y recorridos en
+La rama funcional de la nómina son cuatro documentos, con capturas y recorridos en
 vídeo tomados de una quincena real:
 
 | Guía | Qué cubre |
@@ -255,6 +305,7 @@ vídeo tomados de una quincena real:
 | [Cómo se configura](../funcional/30-nomina/01-configuracion.md) | Tipo de estructura, estructura, reglas y el contrato del empleado |
 | [Procesar una quincena](../funcional/30-nomina/02-la-quincena.md) | Del lote vacío a los recibos confirmados |
 | [Historial y análisis](../funcional/30-nomina/03-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
+| [El tablero de nómina](../funcional/30-nomina/04-el-tablero.md) | Costo total, cestaticket, prestaciones, parafiscales e ISLR |
 
 Las capturas se regeneran con un comando, contra una base de demostración con
 ocho empleados y dos quincenas:
