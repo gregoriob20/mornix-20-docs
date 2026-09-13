@@ -13,7 +13,7 @@ necesidad de acceso al código.
 
 | Carpeta | Para quién | Qué contiene |
 |---|---|---|
-| `funcional/` | Usuarios y consultores | Guías de uso: retenciones, libros fiscales, guías de despacho, doble moneda, portal del proveedor. Con capturas (`img/`) y vídeos (`media/`) |
+| `funcional/` | Usuarios y consultores | Guías de uso: retenciones, libros fiscales, guías de despacho, doble moneda, portal del proveedor y **nómina**. Con capturas (`img/`) y vídeos (`media/`) |
 | `modulos/` | Desarrollo | Qué se cambió en cada módulo y por qué, defecto por defecto. Una ficha por área: `l10n_ve_mornix` (localización fiscal) y `nomina` |
 | `referencia/` | Desarrollo | Material de consulta de la migración |
 | `qa/` | QA | Criterios y cobertura |

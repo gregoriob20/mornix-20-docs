@@ -245,12 +245,43 @@ python3 scripts/sincronizar_nomina.py --subir  # addons/nomina/ -> clon
 > `--subir` antes de commitear. Al revés, el contenedor sigue viendo lo viejo y
 > se depura código que no se está ejecutando.
 
-## 9. Lo que todavía no está documentado
+## 9. La guía de usuario
 
-**La guía funcional de nómina no existe.** Este documento es la rama de
-desarrollo: qué se migró, qué se rompió y qué falta. La rama de usuario
-—`funcional/`, con capturas— cubre la localización fiscal y no la nómina.
+La rama funcional de la nómina son tres documentos, con capturas y recorridos en
+vídeo tomados de una quincena real:
 
-Escribirla exige recorrer los flujos reales con datos del cliente: generar un
-lote, calcular un recibo, revisar el análisis. Eso está pendiente y **no se
-suple inventándolo**.
+| Guía | Qué cubre |
+|---|---|
+| [Cómo se configura](../funcional/15-nomina-configuracion.md) | Tipo de estructura, estructura, reglas y el contrato del empleado |
+| [Procesar una quincena](../funcional/16-nomina-la-quincena.md) | Del lote vacío a los recibos confirmados |
+| [Historial y análisis](../funcional/17-nomina-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
+
+Las capturas se regeneran con un comando, contra una base de demostración con
+ocho empleados y dos quincenas:
+
+```bash
+cd docker
+CAPTURAS_AREA=nomina CAPTURAS_DB=nomina_demo \
+    docker compose --profile capturas run --rm capturas
+```
+
+> **La base de la nómina es `nomina_demo`, no `odoo20`.** Cada área tiene la
+> suya, y por eso las capturas se piden por área: una sola lista obligaría a que
+> todas las pantallas existieran en todas las bases.
+
+### Lo que la guía destapó
+
+Escribirla no fue documentar lo que había: mirar las capturas una a una sacó
+cinco defectos que ninguna prueba veía, cuatro de ellos **silenciosos**.
+
+| Qué se veía | Qué estaba pasando |
+|---|---|
+| La columna «Total Ref» en 0,00 | El importe en divisa colgaba de un método del motor de Enterprise que OCA no llama nunca. La nómina en bolívares con referencia en divisa —el motivo de esta localización— llevaba sin funcionar |
+| «Importe −21.000,00» en una deducción | Se invertía el signo de la **base** del porcentaje, no solo el del total |
+| El análisis vacío con nóminas confirmadas | El informe colgaba de las líneas de jornada, y en v20 un recibo puede no tenerlas |
+| El análisis sumando 32.000 donde había 191.705 | Una categoría que el informe no conocía: no suma y no avisa |
+| «Expected singleton» al confirmar | Confirmar **más de un recibo a la vez** —lo normal— era imposible |
+
+Los cinco están arreglados y con prueba propia. Es el argumento a favor de
+documentar con capturas de verdad: un informe vacío y un recibo con un signo al
+revés se ven de un vistazo, y no aparecen en ninguna traza.
