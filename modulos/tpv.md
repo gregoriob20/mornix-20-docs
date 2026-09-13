@@ -75,6 +75,13 @@ importe en divisa en rojo, y el pie suma impuestos y total en las dos monedas.
 
 ![Dos productos en el carrito, con el importe en divisa en cada línea](../funcional/img/tpv-venta.png)
 
+El recorrido entero, del tablero a la venta armada:
+
+![Del tablero a la venta: abrir la caja y añadir dos productos](../funcional/media/recorrido-tpv-venta.webm)
+
+El video se corta donde se corta el TPV: en el carrito. No enseña el cobro
+porque el cobro todavía no funciona —lo de abajo—.
+
 > El precio en bolívares **no se escribe**: sale de `list_price_usd × tasa`. Es
 > como trabaja esta localización, y quien monte una demo tiene que saberlo o los
 > productos salen todos a 0,00.
