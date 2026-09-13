@@ -86,11 +86,18 @@ de `addons/`, que no se versiona en este repositorio.
 | Area | Origen (v18) | Destino | Punto de montaje | Estado |
 |---|---|---|---|---|
 | Punto de venta | `mornix-tech/nx_point_of_sale` (12 modulos) | `gregoriob20/mornix_pos_20` | `addons/point_of_sale/` | Instala, el TPV abre y se arma una venta; **la pantalla de pago no funciona** |
-| Importaciones | `mornix-tech/nx-import` (1 modulo) | `gregoriob20/mornix_importaciones` | `addons/importaciones/` | Instala, las 18 pantallas abren, 12 pruebas; **el negocio sin ejercitar** |
+| Importaciones | `mornix-tech/nx-import` (1 modulo) | `gregoriob20/mornix_importaciones` | `addons/importaciones/` | Instala, las 18 pantallas abren, 13 pruebas y **el camino completo cuadrado**: compra, recepcion y reparto del costo |
 
 En importaciones, lo que habria bloqueado la instalacion entera estaba en una
 sola linea del manifest: `stock_enterprise`, declarado y **sin usar**. Se
 comprobo antes de quitarlo.
+
+Lo que queda abierto ahi es una dependencia que nadie habia declarado:
+`create_landed_cost()` escribia dos campos —`currency_price_unit` y
+`nx_rate_ref`— que pone `nimetrix_stock_cost_usd`, del repositorio de doble
+moneda. **No esta migrado, y no es un porte mecanico**: sus 1.741 lineas estan
+escritas sobre `stock.valuation.layer`, el modelo que v20 elimino. Mientras
+tanto el reparto se hace en bolivares.
 
 Detalle en [modulos/tpv.md](modulos/tpv.md) y
 [modulos/importaciones.md](modulos/importaciones.md).

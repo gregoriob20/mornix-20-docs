@@ -1,8 +1,9 @@
 # Importaciones — un módulo, 29 modelos y 12 pruebas nuevas
 
-> Estado: **instala, las 18 pantallas abren y las 12 pruebas pasan**. Lo que no
-> está probado es el negocio: ningún expediente ha recorrido todavía el camino
-> completo de compra → recepción → reparto del costo.
+> Estado: **instala, las 18 pantallas abren, las 13 pruebas pasan y el camino
+> completo —compra, recepción y reparto del costo— está recorrido y cuadrado**.
+> Lo que falta es la columna en divisa del reparto: depende de un módulo que no
+> está migrado (punto 7).
 > Origen: `mornix-tech/nx-import`, rama `main`, commit `3857102`.
 > Destino: `gregoriob20/mornix_importaciones`, versión `1.1.0` (Odoo la prefija
 > con la serie vigente → `19.5.1.1.0`).
@@ -32,7 +33,7 @@ repartidos sobre el costo de la mercancía (`stock.landed.cost`).
 | Modelos declarados | 29 |
 | Vistas | 26 archivos |
 | Pruebas al llegar | **0** |
-| Pruebas ahora | **12** |
+| Pruebas ahora | **13** |
 
 ## 3. La dependencia que habría bloqueado todo
 
@@ -110,9 +111,51 @@ Cero diálogos de error, cero errores de consola.
 > Un reinicio del contenedor y las 18 abrieron. Ver
 > [Roturas entre versiones](../BREAKING-CHANGES.md).
 
-## 7. Las pruebas
+## 7. El camino completo, recorrido
 
-12, escritas en la migración —el módulo llegó sin ninguna—:
+Instalar y abrir no es funcionar. Se recorrió el flujo entero en `import_test`
+con `scripts/probar_flujo_importacion.py`, y cuadra:
+
+| Paso | Qué se hizo | Resultado |
+|---|---|---|
+| Compra | 100 unidades a 18 USD, proveedor no domiciliado, expediente enlazado | 1.800 USD = **65.700 Bs** |
+| Recepción | Albarán validado | 100 unidades en existencias |
+| Factura del viaje | Flete 2.500 USD + aduana 900 USD, con el expediente puesto | **gastos asociados creados solos** al publicarla |
+| Cálculo del costo | Reparto por cantidad | 657 FOB + 912,50 CIF + 328,50 nacional = **1.898 Bs/unidad** |
+| Reparto | Costo adicional validado | asiento `STJ/2026/09/0001`, 124.100 Bs a valoración |
+| Comprobación | Valor en inventario | **189.800 Bs** y **1.898 Bs/unidad** |
+
+Las dos cifras se calculan por caminos distintos —el módulo por un lado, la
+valoración de Odoo por otro— y coinciden: 65.700 + 91.250 + 32.850 = 189.800.
+
+![El reparto ya validado, con sus dos líneas de costo](../funcional/img/imp-costo-adicional-form.png)
+
+**Tres roturas más de v20 aparecieron aquí**, y ninguna se ve instalando:
+
+| Qué | Dónde | Síntoma |
+|---|---|---|
+| `purchase.order.line.product_uom` → **`uom_id`** | cálculo del costo de destino y de la previsión | `AttributeError` al calcular: el reparto no llega a empezar |
+| `stock.valuation.layer` **eliminado** | la valoración vive ahora en `stock.move.value` y `product.total_value` | Cualquier comprobación de valor escrita contra SVL revienta |
+| `currency_price_unit` y `nx_rate_ref` en el costo adicional | `create_landed_cost()` | `ValueError: Invalid field` — **el reparto entero se cae** |
+
+Las dos primeras están corregidas. La tercera es de fondo y está en el punto 9.
+
+> **La trampa que más caro sale:** un producto de tipo «bienes» **sin
+> `is_storable`** deja hacer todo el camino —se recibe, se reparte, el costo
+> unitario sube— y **no genera un solo asiento contable**. En la primera pasada
+> el reparto salió «validado» con la contabilidad en blanco. Lo que lo delata es
+> que el valor en inventario sea 0 con el costo unitario ya subido.
+
+> **La contrapartida del reparto es arbitraria.** `create_landed_cost()` busca
+> «la primera cuenta de gasto que encuentre» y con ella carga las dos líneas;
+> en la prueba salió *Cost of Goods Sold*. El gasto asociado **ya guarda la
+> cuenta de la factura** (`product_invoice_account_id`) y no se usa. No se ha
+> cambiado: toca a la contabilidad del cliente y es decisión suya, no de la
+> migración.
+
+## 8. Las pruebas
+
+13, escritas en la migración —el módulo llegó sin ninguna—:
 
 | Qué prueba | Por qué |
 |---|---|
@@ -128,14 +171,15 @@ Cero diálogos de error, cero errores de consola.
 | El impuesto y su grupo comparten país | El defecto del punto 5, con prueba que lo fija |
 | Los impuestos de la casa no se borran | Se archivan |
 | La instalación dejó el catálogo de contenedores | |
+| **El costo repartido llega al producto** | El camino entero en una prueba: compra, recepción, factura del flete, cálculo y reparto. Fija las dos roturas de v20 del punto 7 |
 
 ```bash
 docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
     --test-enable --test-tags /foreing_trade_import --stop-after-init
-# 0 failed, 0 error(s) of 12 tests
+# 0 failed, 0 error(s) of 13 tests
 ```
 
-## 8. Lo que hay que saber antes de montarlo
+## 9. Lo que hay que saber antes de montarlo
 
 - **La compañía necesita país** (punto 5).
 - **Una moneda activa y «sincronizar» en verdadero**, o la lista de expedientes
@@ -149,10 +193,18 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
   traducidas, pero si el idioma no está activo en la base, la pantalla sale en
   inglés y la traducción no se usa.
 
-## 9. Lo que queda abierto
+## 10. Lo que queda abierto
 
-- **El negocio no está probado.** Instala y abre; nadie ha llevado todavía un
-  expediente de compra a recepción y reparto del costo con números reales.
+- **La columna en divisa del reparto.** `create_landed_cost()` escribía
+  `currency_price_unit` y `nx_rate_ref` en las líneas del costo adicional. Esos
+  campos no son de Odoo: los pone `nimetrix_stock_cost_usd`, del repositorio de
+  doble moneda, **que no está migrado** — y no es un porte mecánico: sus 1.741
+  líneas están escritas sobre `stock.valuation.layer`, el modelo que v20
+  eliminó, así que hay que rehacerlo. Mientras tanto el reparto se hace **en
+  bolívares** y las columnas en divisa se escriben solo si el modelo las tiene.
+- **Usar la cuenta de la factura** como contrapartida del reparto, en vez de la
+  primera cuenta de gasto que aparezca (punto 7). Es una decisión contable del
+  cliente.
 - **El nombre del módulo lleva una errata de origen**: `foreing_trade_import`.
   No se corrige a la ligera: renombrar un módulo obliga a migrar datos en las
   bases de los clientes, igual que se decidió con `nimetrix.*` en la

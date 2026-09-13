@@ -67,10 +67,42 @@ repartirlos después sobre el costo de la mercancía.
 Desde ahí se generan los **costos adicionales** de Odoo (`stock.landed.cost`),
 que son los que suben el costo del producto recibido.
 
-> **Esta parte no está comprobada en Odoo 20.** La pantalla abre y los gastos se
-> registran, pero el reparto sobre la mercancía no se ha ejercitado todavía con
-> una recepción real. Hasta que se compruebe, conviene revisar a mano el costo
-> resultante del producto.
+### Cómo llegan los gastos
+
+**No se escriben a mano.** Entran solos al **publicar la factura del
+proveedor** —la del flete, la del agente de aduanas— con el **expediente puesto
+en la factura**. Cada línea de servicio que sea «costo en destino» se convierte
+en un gasto asociado, con su importe en bolívares y en divisa.
+
+> Si los gastos no aparecen, lo que falta casi siempre es el expediente en la
+> factura, o que el producto del servicio no tenga marcado «Puede ser costo en
+> destino».
+
+### El camino entero, con números
+
+Así queda una importación de principio a fin (es el ejemplo comprobado en la
+base de pruebas):
+
+| Paso | Importe |
+|---|---|
+| Compra: 100 unidades a 18 USD | 1.800 USD = 65.700 Bs |
+| Flete marítimo | 2.500 USD = 91.250 Bs |
+| Gastos de aduana | 900 USD = 32.850 Bs |
+| **Costo final de la mercancía** | **189.800 Bs — 1.898 Bs por unidad** |
+
+El botón **Crear costo adicional** arma el documento de Odoo con una línea por
+gasto; al validarlo, el costo sube y queda el asiento de valoración.
+
+![El reparto validado, con sus dos líneas de gasto](../img/imp-costo-adicional-form.png)
+
+> **Ojo con el producto.** En Odoo 20 un producto de tipo «bienes» que **no
+> esté marcado como almacenable** deja hacer todo el camino —se recibe, se
+> reparte, el costo unitario sube— **sin generar un solo asiento contable**. Si
+> el valor en inventario sale 0 con el costo unitario ya subido, es eso.
+
+> **La contrapartida del gasto la elige el sistema**, y hoy toma la primera
+> cuenta de gasto que encuentra —en el ejemplo, *Cost of Goods Sold*—. Si su
+> contabilidad necesita otra, hay que decirlo: está anotado como pendiente.
 
 > **Hace falta el permiso «Inventario / Administrador»** para abrir esta ficha:
 > enseña los costos adicionales, y ese modelo no lo lee un usuario de inventario
