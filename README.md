@@ -55,6 +55,25 @@ una guía. El prefijo numérico da el orden y no se publica.
 Desde una subcarpeta las capturas se referencian con `../img/x.png`, que es lo
 correcto al leer el repositorio y también al publicarlo.
 
+### Los enlaces de la estructura anterior no se pierden
+
+Cuando la rama de usuario era plana, cada `##` se publicaba como su propia
+página, con el identificador `<guía>-<apartado>`. Esos enlaces estaban en
+correos y en los favoritos de la gente.
+
+El portal los resuelve solo, sin una tabla que mantener: el apartado que era una
+página es hoy un ancla **con el mismo identificador**, así que el destino se
+deduce del propio enlace.
+
+| Enlace de antes | A dónde va |
+|---|---|
+| `…/retencion-de-iva-el-flujo-paso-a-paso` | `…/retencion-de-iva#el-flujo-paso-a-paso` |
+| `…/nomina-procesar-una-quincena` | `…/procesar-una-quincena` — era una guía que cambió de nombre, no un apartado |
+| `…/esto-no-existe` | 404, como debe ser |
+
+Redirigir a lo primero que suene parecido sería peor que no encontrar, así que
+si no encaja nada el 404 se queda.
+
 > **Una guía es una página, con su índice al lado.** La rama de desarrollo sí
 > parte los documentos largos en apartados —`BREAKING-CHANGES.md` pasa de mil
 > líneas—, pero partir una guía de cincuenta deja cinco páginas de diez, y eso
