@@ -35,6 +35,7 @@ Repos de origen:
 | v18 | `nx-desarrollo/nx_tools` | 39 |
 | v18 | `nx-desarrollo/nx_localizacion` | 18 |
 | v18 | `nx-desarrollo/nx_point_of_sale` | 12 |
+| v18 | `mornix-tech/nx-import` | 1 |
 | v18 | `nx-desarrollo/nx_dual_currency` | 9 |
 | v18 | `nx-desarrollo/nx_sucursales` | 8 |
 
@@ -76,6 +77,23 @@ Se separo por dos razones, las dos de fondo:
 
 Detalle en [modulos/nomina.md](modulos/nomina.md); lista de bloqueados, en
 `BLOQUEADOS.txt` del repositorio de la nomina.
+
+## El TPV y las importaciones, tambien en su propio repositorio
+
+Mismo patron que la nomina: repositorio propio, y Odoo lo lee desde su carpeta
+de `addons/`, que no se versiona en este repositorio.
+
+| Area | Origen (v18) | Destino | Punto de montaje | Estado |
+|---|---|---|---|---|
+| Punto de venta | `mornix-tech/nx_point_of_sale` (12 modulos) | `gregoriob20/mornix_pos_20` | `addons/point_of_sale/` | Instala, el TPV abre y se arma una venta; **la pantalla de pago no funciona** |
+| Importaciones | `mornix-tech/nx-import` (1 modulo) | `gregoriob20/mornix_importaciones` | `addons/importaciones/` | Instala, las 18 pantallas abren, 12 pruebas; **el negocio sin ejercitar** |
+
+En importaciones, lo que habria bloqueado la instalacion entera estaba en una
+sola linea del manifest: `stock_enterprise`, declarado y **sin usar**. Se
+comprobo antes de quitarlo.
+
+Detalle en [modulos/tpv.md](modulos/tpv.md) y
+[modulos/importaciones.md](modulos/importaciones.md).
 
 ## Consolidacion: v16 y v18 son del mismo cliente
 
