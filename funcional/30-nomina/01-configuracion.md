@@ -17,8 +17,8 @@ Se configura de arriba abajo, porque cada pieza necesita la anterior:
 3. **Reglas salariales** — cómo se calcula cada concepto.
 4. **El contrato del empleado** — el sueldo y a qué estructura pertenece.
 
-Lo que sigue es cada paso tal como se hace en pantalla. Los nombres de botones
-y campos son los que se ven, incluidos los que quedaron en inglés.
+Lo que sigue es cada paso tal como se hace en pantalla, con los nombres de
+botones y campos tal como se ven.
 
 ## 1. El tipo de estructura
 
@@ -169,21 +169,18 @@ concepto de sueldo nuevo lo incluye en la base sin tocar la deducción.
    - **Contrato**: la fecha de inicio del contrato. **Sin ella el empleado no
      entra en ningún lote**: para el sistema no tiene contrato en vigor.
    - **Salario** y, debajo, el tipo (*Sueldo fijo*).
-   - **«Salary Cestaticket»**: el monto mensual del bono de alimentación, si la
+   - **Cestaticket**: el monto mensual del bono de alimentación, si la
      compañía lo paga.
    - El **tipo de estructura** (categoría de pago): el del paso 1.
 3. Bloque **Aportes parafiscales**: marque lo que le aplica a esta persona —
-   «Mandatory Social Security» (IVSS), «Forced Unemployment» (RPE), «Housing
-   Policy Law» (FAOV), «Inces», «Income Tax ISRL» (y su porcentaje). Las
-   reglas de nómina leen estas casillas para decidir si descuentan o no.
+   **Seguro Social Obligatorio**, **Régimen Prestacional de Empleo**, **FAOV
+   (Ley de Política Habitacional)**, **INCES**, **Retención de ISLR** (y su
+   porcentaje). Las reglas de nómina leen estas casillas para decidir si
+   descuentan o no.
 4. **Guardar.**
 5. Si cambian las condiciones más adelante —un aumento, otro cargo—, no edite
    encima: **Nuevo contrato** crea una versión nueva y la anterior queda en el
    **Historial**.
-
-> Varios rótulos de esta pestaña salen en inglés («Salary Cestaticket»,
-> «Mandatory Social Security»): son campos de la localización que todavía no
-> tienen traducción al español de Venezuela. Es cosmético, y está anotado.
 
 ## Errores frecuentes
 

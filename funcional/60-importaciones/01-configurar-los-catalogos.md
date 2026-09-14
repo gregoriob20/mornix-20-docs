@@ -99,7 +99,8 @@ La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
 > **La ruta no se guarda sin su línea de flete.** En **Gastos Asociados** tiene
 > que haber una línea con el mismo producto que el **Concepto de Flete**; Odoo
 > la propone al elegirlo, y si se borra, la ruta se niega a guardar con
-> *«There must be at least one line related to the freight concept»*.
+> *«En la pestaña de gastos asociados tiene que haber al menos una línea con el
+> concepto de flete»*.
 
 ## 5. Almacenes
 

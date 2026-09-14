@@ -1049,3 +1049,40 @@ _(Se va llenando durante la migracion.)_
 | Modulo | Sintoma | Version que lo introdujo | Solucion |
 |---|---|---|---|
 | | | | |
+
+## Las traducciones se exportan con `odoo i18n export`, no con `--i18n-export`
+
+`--i18n-export`, `--i18n-import` y `--load-language` desaparecieron de las
+opciones del servidor. Ahora son subcomandos:
+
+```bash
+odoo i18n export -d <base> -l es_VE -o salida.po modulo1 modulo2
+odoo i18n import -d <base> -l es_VE -w modulo/i18n/es_VE.po
+odoo i18n loadlang -d <base> -l es_VE
+```
+
+Dos detalles del `entrypoint.sh` de este proyecto: el `-c` de la configuración
+tiene que ir **después** del segundo subcomando (`i18n export -c conf`), y la
+carpeta de salida debe ser escribible por el usuario del contenedor.
+
+## Un término compartido sale como `#. modules: a, b`
+
+Cuando el mismo texto lo usan varios módulos, la exportación lo escribe una vez
+con `#. modules:` **en plural y separado por comas**. Un lector que solo busque
+`#. module:` pierde esas entradas de **todos** los módulos, y el campo sigue en
+inglés en los que no tenían traducción propia. Pasó con «Average wage».
+
+## Las traducciones de código Python exigen `#. odoo-python`
+
+Desde v16 las traducciones de `_()` no van a la base: se leen del `.po` del
+módulo en tiempo de ejecución, y **solo las entradas marcadas con el comentario
+`#. odoo-python`** (`#. odoo-javascript` para la web). Un `.po` con el `msgstr`
+lleno pero sin esa marca se importa «con éxito» y el mensaje sigue saliendo en
+inglés. Se comprueba desde el shell:
+
+```python
+from odoo.tools.translate import code_translations
+code_translations.get_python_translations('l10n_ve_mornix', 'es_VE')
+```
+
+Si devuelve un diccionario vacío, falta la marca.

@@ -90,18 +90,18 @@ y **SITEF**— contra el diario de banco.
 1. **Punto de venta → Configuración → Punto de venta**, abra **Caja principal**
    (o **Nuevo** para otra caja: **Punto de venta** es su nombre).
 2. Pestaña **Configuración**, bloque de la localización:
-   - **«Show dual currency»**: marcado. Añade a cada producto y a cada línea
+   - **Mostrar doble moneda**: marcado. Añade a cada producto y a cada línea
      su precio en la otra moneda.
-   - **«Currency»**: **USD**.
-   - **«Rate»**: se llena solo con la tasa vigente. **No lo toque** (ver abajo).
+   - **Moneda**: **USD**, la moneda de exhibición.
+   - **Tasa**: se llena sola con la tasa vigente. **No la toque** (ver abajo).
    - **Apertura/Cierre en USD**: si la caja se cuenta también en divisa al
      abrir y al cerrar.
    - **Servidor Fiscal**: la máquina fiscal, cuando la haya.
 3. Más abajo, **Métodos de pago**: marque los que ofrece esta caja.
 4. **Guardar.**
 
-> **La tasa se ve aquí, pero no se pone aquí.** El campo **Rate** es la tasa de
-> la moneda en Contabilidad, y se muestra como Odoo la guarda: dólares por
+> **La tasa se ve aquí, pero no se pone aquí.** El campo **Tasa** es la tasa
+> de la moneda en Contabilidad, y se muestra como Odoo la guarda: dólares por
 > bolívar (`0,0273972…`), no bolívares por dólar. En la caja se ve del derecho
 > —`USD: 36.5` en la cabecera—. Para cambiarla se carga la tasa del día en
 > Contabilidad; tocarla aquí no es el camino.
@@ -109,10 +109,6 @@ y **SITEF**— contra el diario de banco.
 > **Con la caja abierta no se cambian los ajustes.** Odoo avisa en una franja
 > amarilla: *«Hay una sesión abierta para este PdV. Antes de cambiar algunos
 > ajustes debe cerrar la sesión»*. Es de Odoo, no de la localización.
-
-> **Varios rótulos salen en inglés** —«Show dual currency», «Currency», «Rate»—:
-> son campos de la localización que todavía no tienen traducción al español de
-> Venezuela. Es cosmético, y está anotado.
 
 ## 4. El IGTF
 

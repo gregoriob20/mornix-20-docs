@@ -218,10 +218,11 @@ pagado— comprueban antes si el campo está.
   la guía tal como se comporta; decidir si el lote debe cerrarse solo cuando
   todos sus recibos estén en «Hecho» es una mejora pendiente.
 - **La pestaña Nómina de la ficha del empleado sale con rótulos encimados**
-  («Nuevo contrato» sobre la fecha, «Bs/mes» sobre el salario) y varios campos
-  en inglés («Salary Cestaticket», «Mandatory Social Security»). Es la
+  («Nuevo contrato» sobre la fecha, «Bs/mes» sobre el salario). Es la
   maquetación de v20 sobre los campos de la localización: cosmético, pero es
-  lo primero que ve quien configura a un empleado.
+  lo primero que ve quien configura a un empleado. Los rótulos en inglés que
+  tenía («Salary Cestaticket», «Mandatory Social Security») ya están
+  traducidos: ver «Traducciones» más abajo.
 
 ## 7. El tablero: lo que se pregunta cada cierre
 
@@ -354,3 +355,30 @@ cinco defectos que ninguna prueba veía, cuatro de ellos **silenciosos**.
 Los cinco están arreglados y con prueba propia. Es el argumento a favor de
 documentar con capturas de verdad: un informe vacío y un recibo con un signo al
 revés se ven de un vistazo, y no aparecen en ninguna traza.
+
+## 11. Traducciones
+
+Se revisó **todo lo que sale en pantalla** de los módulos de la casa —campos,
+selecciones, menús, vistas y mensajes de Python— exportando las traducciones
+es_VE de cada base (`odoo i18n export`) y separando lo que de verdad se ve en
+inglés de lo que simplemente no tiene `msgstr` porque ya está escrito en
+español en el código. De 8.064 términos, **~330 salían en inglés**;
+quedan **0**, y ninguno es una etiqueta: son fragmentos de código,
+HTML y expresiones de plantilla que no se traducen.
+
+Las traducciones viven en `scripts/i18n/*_es_VE.json` del repositorio de
+migración y las aplica `scripts/completar_traducciones.py`, que reescribe el
+`i18n/es_VE.po` de cada módulo a partir de la exportación —con sus referencias,
+que es lo que el importador necesita— y se cargan con `odoo i18n import -w`.
+
+> **Tres trampas de v20 que costaron una tarde**, anotadas en
+> [Roturas entre versiones](../BREAKING-CHANGES.md): la exportación ya no es
+> `--i18n-export` sino el subcomando `odoo i18n export`; un término compartido
+> por varios módulos sale como `#. modules: a, b` y se pierde si solo se lee el
+> singular; y las traducciones de código Python **exigen la marca
+> `#. odoo-python`** en el `.po`, sin la cual el `_()` sigue en inglés aunque
+> el `msgstr` esté lleno.
+
+Lo que sigue en inglés no es nuestro: «Load a Template» en la ficha del
+empleado y «Connect printers to your PoS» en la caja son huecos de la
+traducción es_VE del propio Odoo.

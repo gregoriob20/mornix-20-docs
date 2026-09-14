@@ -224,3 +224,30 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
 - La guía de usuario está en [Importaciones](../funcional/60-importaciones/_app.md):
   catálogos, expediente y costo de destino, con el paso a paso de cada proceso
   verificado en pantalla.
+
+## 11. Traducciones
+
+Se revisó **todo lo que sale en pantalla** de los módulos de la casa —campos,
+selecciones, menús, vistas y mensajes de Python— exportando las traducciones
+es_VE de cada base (`odoo i18n export`) y separando lo que de verdad se ve en
+inglés de lo que simplemente no tiene `msgstr` porque ya está escrito en
+español en el código. De 8.064 términos, **~50 salían en inglés**;
+quedan **0**, y ninguno es una etiqueta: son fragmentos de código,
+HTML y expresiones de plantilla que no se traducen.
+
+Las traducciones viven en `scripts/i18n/*_es_VE.json` del repositorio de
+migración y las aplica `scripts/completar_traducciones.py`, que reescribe el
+`i18n/es_VE.po` de cada módulo a partir de la exportación —con sus referencias,
+que es lo que el importador necesita— y se cargan con `odoo i18n import -w`.
+
+> **Tres trampas de v20 que costaron una tarde**, anotadas en
+> [Roturas entre versiones](../BREAKING-CHANGES.md): la exportación ya no es
+> `--i18n-export` sino el subcomando `odoo i18n export`; un término compartido
+> por varios módulos sale como `#. modules: a, b` y se pierde si solo se lee el
+> singular; y las traducciones de código Python **exigen la marca
+> `#. odoo-python`** en el `.po`, sin la cual el `_()` sigue en inglés aunque
+> el `msgstr` esté lleno.
+
+Lo que sigue en inglés no es nuestro: «Load a Template» en la ficha del
+empleado y «Connect printers to your PoS» en la caja son huecos de la
+traducción es_VE del propio Odoo.
