@@ -1086,3 +1086,24 @@ code_translations.get_python_translations('l10n_ve_mornix', 'es_VE')
 ```
 
 Si devuelve un diccionario vacío, falta la marca.
+
+## Una tasa de cambio vale desde el día SIGUIENTE a su fecha
+
+`res.currency._get_rates` busca la tasa con `('name', '<', fecha)` —**menor
+estricto**—: para convertir un importe del 15 de septiembre toma la tasa
+fechada el 14 o antes, nunca la del 15. En v18 era `<=`. Consecuencias:
+
+- Una tasa cargada hoy **no se usa hoy** en las conversiones del núcleo
+  (`_convert`), salvo que sea la única que exista (entonces entra el
+  «fallback» a la tasa más antigua).
+- La localización **sí** usa la tasa del día en la factura: `mornix_dual_currency`
+  la fija en `nx_rate` y el total en bolívares del núcleo sale con ella (se
+  comprobó: factura de 100 USD fechada hoy con tasa 40 hoy y 36,5 ayer →
+  4.600 Bs por los dos caminos).
+- Pero lo que convierte con `_convert` a secas —el FOB del costo de destino
+  en importaciones, que parte de la orden de compra— usa la tasa **del día
+  anterior**. Una orden y su factura del mismo día pueden convertir a tasas
+  distintas si la tasa cambió ese día.
+- **Las pruebas que crean «la tasa de hoy» y convierten hoy fallan** en cuanto
+  existe otra tasa anterior (el cron del BCV carga una cada día). La de
+  importaciones se fecha ayer y hoy a la vez, para satisfacer los dos caminos.

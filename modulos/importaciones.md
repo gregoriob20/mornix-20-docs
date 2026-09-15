@@ -1,6 +1,6 @@
 # Importaciones — un módulo, 29 modelos y 12 pruebas nuevas
 
-> Estado: **instala, las 18 pantallas abren, las 13 pruebas pasan y el camino
+> Estado: **instala, las 18 pantallas abren, las 14 pruebas pasan y el camino
 > completo —compra, recepción y reparto del costo— está recorrido y cuadrado**.
 > Lo que falta es la columna en divisa del reparto: depende de un módulo que no
 > está migrado (punto 7).
@@ -33,7 +33,7 @@ repartidos sobre el costo de la mercancía (`stock.landed.cost`).
 | Modelos declarados | 29 |
 | Vistas | 26 archivos |
 | Pruebas al llegar | **0** |
-| Pruebas ahora | **13** |
+| Pruebas ahora | **14** |
 
 ## 3. La dependencia que habría bloqueado todo
 
@@ -89,6 +89,21 @@ grupo se busca por país y, si hay que crearlo, se crea con el de la compañía.
 > instalar. Sin él, el módulo se planta con *«The company does not have a
 > configured country»* — es una guarda suya, no un fallo: sin país no sabe con
 > qué país crear los impuestos.
+
+### 5 bis. Un defecto que solo salió al crear una base de cliente
+
+Al montar `auromin` desde cero —`base` primero, la compañía en Venezuela y
+después los 53 módulos de una vez— la instalación llegó al final y se cayó
+entera con *«the tax: TSA cannot be removed from the model, it can only be
+archived»*. El orden de los hechos: el gancho de este módulo crea TSA y TSS,
+y **después** Odoo carga el plan contable venezolano de la compañía nueva
+borrando con `force_delete` los impuestos que hubiera para recrearlos desde
+la plantilla. La guarda de `unlink`, pensada para que una persona no borre el
+impuesto, se interponía al sistema.
+
+Ahora la guarda deja pasar el contexto `force_delete` —que solo pone Odoo— y
+sigue frenando el borrado a mano. Con prueba. No apareció en `import_test`
+porque allí el plan ya estaba cargado cuando el módulo se instaló.
 
 ## 6. Lo que el instalador no ve
 
@@ -146,6 +161,13 @@ Las dos primeras están corregidas. La tercera es de fondo y está en el punto 9
 > el reparto salió «validado» con la contabilidad en blanco. Lo que lo delata es
 > que el valor en inventario sea 0 con el costo unitario ya subido.
 
+> **La tasa del FOB es la del día anterior.** El cálculo del costo de destino
+> convierte las órdenes de compra con `_convert`, y v20 toma para una fecha la
+> tasa **anterior** a ella (`name < fecha`, ver Roturas entre versiones). La
+> factura del viaje, en cambio, usa la tasa del día que fija la localización.
+> Si la tasa cambió ese día, FOB y gastos no comparten tasa: hay que saberlo al
+> cuadrar.
+
 > **La contrapartida del reparto es arbitraria.** `create_landed_cost()` busca
 > «la primera cuenta de gasto que encuentre» y con ella carga las dos líneas;
 > en la prueba salió *Cost of Goods Sold*. El gasto asociado **ya guarda la
@@ -155,7 +177,7 @@ Las dos primeras están corregidas. La tercera es de fondo y está en el punto 9
 
 ## 8. Las pruebas
 
-13, escritas en la migración —el módulo llegó sin ninguna—:
+14, escritas en la migración —el módulo llegó sin ninguna—:
 
 | Qué prueba | Por qué |
 |---|---|
@@ -172,11 +194,12 @@ Las dos primeras están corregidas. La tercera es de fondo y está en el punto 9
 | Los impuestos de la casa no se borran | Se archivan |
 | La instalación dejó el catálogo de contenedores | |
 | **El costo repartido llega al producto** | El camino entero en una prueba: compra, recepción, factura del flete, cálculo y reparto. Fija las dos roturas de v20 del punto 7 |
+| **La recarga del plan contable sí puede borrar los impuestos** | La guarda de TSA/TSS tumbaba la instalación en una base nueva (punto 5 bis) |
 
 ```bash
 docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
     --test-enable --test-tags /foreing_trade_import --stop-after-init
-# 0 failed, 0 error(s) of 13 tests
+# 0 failed, 0 error(s) of 14 tests
 ```
 
 ## 9. Lo que hay que saber antes de montarlo

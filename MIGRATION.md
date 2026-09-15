@@ -102,6 +102,32 @@ tanto el reparto se hace en bolivares.
 Detalle en [modulos/tpv.md](modulos/tpv.md) y
 [modulos/importaciones.md](modulos/importaciones.md).
 
+## La base del cliente: `auromin`
+
+Creada el 15 de septiembre de 2026 con todo lo migrado, en tres pasos que se
+repiten con dos scripts: `base` solo → `configurar_auromin.py` (compañía en
+Venezuela, bolívares, es_VE) → los 53 módulos de una vez →
+`configurar_auromin_post.py` (moneda de referencia, tasa del BCV, caja y
+métodos de pago, permisos del administrador).
+
+| | |
+|---|---|
+| Módulos de la casa instalados | **54** (53 + `l10n_ve`), 152 en total |
+| Plan contable | venezolano (`ve`), 276 cuentas, 8 diarios más el de efectivo |
+| Idioma | es_VE activo y por defecto; zona horaria America/Caracas |
+| Monedas | VES de la compañía; USD activa, sincronizada con el BCV, tasa del día cargada (842,21 Bs) |
+| Caja | «Caja principal» con doble moneda y tres métodos: Efectivo Bs, VPOS, SITEF |
+| Pantallas comprobadas en navegador | 11 de 11 (nómina, TPV, importaciones, contabilidad, productos) |
+| Acceso | https://auromin.migracion.mornix.tech (el certificado se emite al primer acceso) |
+
+Lo que **no** se inventó y queda para el cliente: RIF y dirección de la
+compañía, la contraseña del administrador (sigue la de fábrica: **cambiarla**),
+los usuarios, los productos, las cuentas bancarias y la estructura de nómina.
+
+Dos cosas salieron de crearla y ya están corregidas: la guarda de impuestos
+de importaciones tumbaba la instalación en una base nueva (ver su ficha), y el
+plan venezolano no trae diario de efectivo, así que el script lo crea.
+
 ## Consolidacion: v16 y v18 son del mismo cliente
 
 Los repos `nimetrix/` (v16) y `nx-desarrollo/` (v18) pertenecen a la misma
