@@ -5,9 +5,11 @@ trabaja el comercio: los productos que salen en caja, los métodos de pago —en
 bolívares, en divisa, con punto bancario o con retención—, la caja en sí, la
 máquina fiscal y los terminales.
 
-Esta guía va por **casos de uso**: cada apartado dice qué se quiere lograr, qué
-hay que tener antes y el paso a paso con los nombres exactos de los campos.
-Los datos de ejemplo son los de la caja de demostración («Caja principal»).
+Esta guía va por **casos de uso**: cada apartado dice **para qué** sirve la
+pieza, **por qué** está montada así —casi siempre por una regla de Odoo 20 o
+una exigencia del SENIAT— y el paso a paso con los nombres exactos de los
+campos, con un **ejemplo con números** donde ayuda. Los datos son los de la caja
+de demostración («Caja principal»), a **36,50 Bs por dólar**.
 
 ## El orden importa
 
@@ -28,6 +30,16 @@ Los datos de ejemplo son los de la caja de demostración («Caja principal»).
 | Tiene varias cajas o varios cajeros | + 3 (casos de varias cajas y de empleados) |
 
 ## 1. Los productos que salen en caja
+
+**Para qué**: decidir qué se vende en la caja y a qué precio, de forma que el
+precio siga la tasa del día sin retocar productos.
+
+**Por qué el precio se escribe en divisa**: el comercio piensa los precios en
+dólares porque el bolívar cambia a diario; si se escribieran en bolívares
+habría que reetiquetar cada mañana. Por eso la ficha tiene **Precio de venta $**
+como campo que se escribe y **Precio de venta** (Bs) como campo calculado:
+`precio en $ × tasa del día`. El precio en divisa es estable; el de bolívares se
+mueve solo.
 
 Un producto aparece en el TPV solo si lleva marcada la casilla **Punto de
 venta** de su ficha. No basta con que exista ni con que tenga precio.
@@ -55,6 +67,17 @@ venta** de su ficha. No basta con que exista ni con que tenga precio.
 > tasa del día en Contabilidad, no el precio. Ver
 > [Doble moneda](../10-contabilidad/06-doble-moneda.md).
 
+**Ejemplo.** «Aceite de girasol 1 L», **Precio de venta $**: `3,25`, IVA 16 %
+incluido en el precio.
+
+| Tasa del día | Precio de venta (Bs) | Qué cambió |
+|---|---:|---|
+| 36,50 | 118,63 | Es lo que se ve hoy en la caja |
+| 37,00 | 120,25 | Mañana, tras cargar la tasa; nadie tocó el producto |
+| 0 (sin tasa cargada) | 0,00 | La caja vende a cero: hay que cargar la tasa, no el precio |
+
+De los 118,63 Bs, 102,27 son base y 16,36 IVA; el tique fiscal los separa así.
+
 ### Casos de uso de productos
 
 | Caso | Cómo se configura |
@@ -67,6 +90,9 @@ venta** de su ficha. No basta con que exista ni con que tenga precio.
 | **Precio distinto según la caja** | Use una **lista de precios** por caja (**Punto de venta → Productos → Listas de precios**) y asígnela en la caja, apartado **Precios**. El precio en divisa de la ficha es el de la lista por defecto. |
 
 ### Caso de uso: no vender lo que no hay
+
+**Para qué**: que el cajero no cobre un producto que el almacén no tiene, en
+tiendas donde la caja no ve el anaquel (varias cajas, venta por catálogo).
 
 El TPV valida las existencias **contra el almacén de la caja**: al añadir un
 producto de tipo *Bienes* comprueba la cantidad disponible en el almacén del
@@ -88,9 +114,29 @@ No hay nada que activar; viene con la instalación. Lo que sí hay que cuidar:
 
 ![Los métodos de pago de la caja: efectivo Bs, efectivo USD y los dos terminales](../img/tpv-metodos-pago.png)
 
-Cada método dice **por dónde entra el dinero** (el diario) y **cómo se cobra**
-(efectivo, banco, terminal, otra moneda, retención). En la demo hay cuatro:
-**Efectivo Bs**, **Efectivo USD**, **Punto de venta (VPOS)** y **SITEF**.
+**Para qué**: cada método de pago es una **puerta** por la que entra dinero a la
+venta. Dice **por dónde entra** (el diario contable), **cómo se cobra**
+(efectivo, banco, terminal, otra moneda, retención) y **qué hay que anotar**
+(referencia, monto en divisa, código para la máquina fiscal). En la demo hay
+cuatro: **Efectivo Bs**, **Efectivo USD**, **Punto de venta (VPOS)** y **SITEF**.
+
+**Por qué hay tantos casos**: en Venezuela una misma venta se paga con tres o
+cuatro instrumentos distintos, y cada uno tiene consecuencias contables y
+fiscales propias —el dólar lleva IGTF, el pago móvil exige referencia, el
+contribuyente especial retiene—. Un método por instrumento hace que la caja
+sepa qué calcular y qué pedir en cada botón, y que el cierre totalice por
+separado lo que la contabilidad y el SENIAT quieren ver separado.
+
+**Ejemplo.** Una venta de 100 $ (3.650,00 Bs) que, por pagarse en parte en
+divisa, termina en 3.715,70 Bs con el IGTF:
+
+| Botón (método) | Lo que teclea el cajero | Lo que guarda la caja |
+|---|---|---|
+| Efectivo USD | `60` | 2.190,00 Bs, monto en divisa 60,00, tasa 36,50; dispara la línea IGTF (65,70) |
+| Pago móvil Banesco | `1400` + referencia `0412…7781` | 1.400,00 Bs, referencia obligatoria, sin IGTF |
+| Efectivo Bs | `130` | 125,70 Bs cobrados y 4,30 de vuelto en la gaveta |
+
+Los tres métodos existen porque cada fila necesita una regla distinta.
 
 ### Las tres reglas de Odoo 20 que hay que conocer antes
 
@@ -173,6 +219,13 @@ Diarios → Nuevo**: nombre «Caja divisas», **Tipo**: *Banco*, **Código**:
     «divisa» de la impresora.
 11. **Punto de venta**: la caja. **Guardar.**
 
+**Ejemplo.** Venta de 202,58 Bs; el cliente da **20 $**. El cajero pulsa
+**Efectivo USD** y escribe `20`: la caja anota 730,00 Bs (20 × 36,50), añade la
+línea IGTF por 6,08 Bs (3 % sobre los 202,58 de la venta, que es el tope) y
+calcula el vuelto: 730,00 − 208,66 = **521,34 Bs**, o **14,28 $**. El cierre
+verá 20 $ de entrada en la categoría *Divisas*. El detalle del cálculo está en
+[Cobrar en dos monedas y el IGTF](03-cobrar-en-dos-monedas-y-el-igtf.md).
+
 Con esto, al cobrar, el botón **Efectivo USD** pide el importe en dólares, lo
 convierte con la tasa que ve en la cabecera y añade la línea de IGTF. El
 efectivo en dólares **no entra en el conteo de apertura y cierre** de la caja
@@ -193,6 +246,13 @@ propio diario «Caja euros».
 
 El cobro con tarjeta pasa por el terminal VPOS conectado a la caja: la caja
 envía el importe y el terminal devuelve aprobado o rechazado.
+
+**Por qué integrado y no «a mano»**: sin integración el cajero teclea el monto
+en el punto, espera el voucher y anota el importe en la caja; dos tecleos, dos
+oportunidades de error y un cierre que hay que cuadrar contra el lote del banco.
+Con la integración la caja manda el importe exacto y guarda la **referencia** y
+el **lote** que devuelve el terminal, así el cierre del punto sale de la misma
+caja.
 
 **Antes**: activar VPOS en **Ajustes** (apartado 5) y tener el diario de banco
 del punto.
@@ -281,6 +341,24 @@ Al cobrar, el cajero elige el cliente (con su RIF), pulsa el método y la caja
 calcula solo el importe retenido; el resto se cobra con los demás métodos.
 Se crea un segundo método al 100 % si hay clientes con esa alícuota.
 
+**Por qué se monta como método y no como descuento**: el cliente no está
+pagando menos, está pagando **una parte al SENIAT** en nombre de la tienda. La
+factura sale por el total; lo que falta en la gaveta tiene que quedar como un
+derecho por cobrar que se cancela con el comprobante de retención. Un método
+sobre un diario de retenciones hace exactamente ese asiento.
+
+**Ejemplo.** Venta de **1.160,00 Bs** (base 1.000,00 + IVA 160,00) a un
+contribuyente especial al 75 %.
+
+| Método | Cálculo | Importe |
+|---|---|---:|
+| Retención IVA 75 % | 75 % × 160,00 | 120,00 |
+| Punto de venta (VPOS) | lo que falta | 1.040,00 |
+| **Total cubierto** | | **1.160,00** |
+
+Con **Retención Base** al 1 % sobre los mismos datos, el método tomaría 1 % ×
+1.000,00 = 10,00.
+
 ### Caso G — Cuenta de cliente (fiado)
 
 Es de Odoo: **Tipo**: *Cuenta de cliente*. La venta queda como deuda del
@@ -298,9 +376,33 @@ reportes de cierre y en el Reporte Z: «Efectivo», «Punto de venta»,
 asígnela en **Categoría de pago** de cada método. Sin categoría, el método
 sale suelto en el cierre.
 
+**Por qué agrupar**: el que cuadra la caja no quiere ver siete métodos, quiere
+ver **lo que hay en la gaveta**, **lo que está en el banco** y **lo que hay en
+divisa**. El encargado cuenta bolívares contra *Efectivo*, dólares contra
+*Divisas*, y cruza el lote del terminal contra *Punto de venta*.
+
+**Ejemplo.** Cierre de un día con seis métodos, resumido por categoría:
+
+| Categoría | Métodos que suma | Total Bs | En USD |
+|---|---|---:|---:|
+| Efectivo | Efectivo Bs | 2.600,00 | 71,23 |
+| Divisas | Efectivo USD, Zelle | 2.664,50 | 73,00 |
+| Punto de venta | VPOS Tarjeta, SITEF PinPad, Pago móvil | 5.905,70 | 161,80 |
+
 ## 3. La caja
 
 **Punto de venta → Configuración → Punto de venta → Caja principal.**
+
+**Para qué**: la caja es el puesto de venta: qué productos ofrece, con qué
+métodos cobra, en qué moneda exhibe, si se cuenta en divisa, qué impresora
+fiscal usa y quién puede atenderla. Todo lo que el cajero ve en pantalla sale
+de esta ficha.
+
+**Por qué la doble moneda es un ajuste de la caja y no de la compañía**: una
+misma empresa puede tener una caja que exhibe en dólares y otra que exhibe en
+euros, o una caja de mostrador con conteo en divisa y una caja de delivery sin
+él. Cada caja fija su moneda de exhibición y su tasa; la contabilidad sigue en
+bolívares para todas.
 
 ![Los ajustes de la caja: doble moneda a la izquierda, servidor fiscal a la derecha](../img/tpv-caja-ajustes.png)
 
@@ -322,15 +424,20 @@ sale suelto en el cierre.
 
 > **La tasa se ve aquí, pero no se pone aquí.** El campo **Tasa** es la tasa
 > de la moneda en Contabilidad, y se muestra como Odoo la guarda: dólares por
-> bolívar (`0,0273972…`), no bolívares por dólar. En la caja se ve del derecho
-> —`USD: 36.5` en la cabecera—. Para cambiarla se carga la tasa del día en
-> Contabilidad; tocarla aquí no es el camino.
+> bolívar (`0,0273972…`, que es 1 ÷ 36,50), no bolívares por dólar. En la caja
+> se ve del derecho —`USD: 36.5` en la cabecera—. Para cambiarla se carga la
+> tasa del día en Contabilidad; tocarla aquí no es el camino.
 
 > **Con la caja abierta no se cambian los ajustes.** Odoo avisa en una franja
 > amarilla: *«Hay una sesión abierta para este PdV. Antes de cambiar algunos
 > ajustes debe cerrar la sesión»*. Es de Odoo, no de la localización.
 
 ### Caso de uso: la caja se cuenta en dólares
+
+**Por qué**: el conteo estándar de Odoo solo cuadra el método de tipo
+*Efectivo*, que es en bolívares. Los dólares entran por el método «Efectivo
+USD» (tipo Banco) y quedarían fuera del arqueo: nadie sabría si los 20 $ de la
+mañana siguen en la gaveta. **Apertura/Cierre en USD** añade el segundo conteo.
 
 Si el comercio guarda los dólares en la misma gaveta y quiere que el cajero
 declare cuántos billetes en divisa había al abrir y cuántos al cerrar:
@@ -340,6 +447,11 @@ declare cuántos billetes en divisa había al abrir y cuántos al cerrar:
    USD. Al cerrar, igual, y la diferencia se calcula por moneda.
 3. El método «Efectivo USD» del caso B debe estar en la caja: es lo que se
    compara con el conteo.
+
+**Ejemplo.** Apertura: 500,00 Bs y 40 $. Cobros del turno: 2.100,00 Bs en
+efectivo y 65 $ en billetes; vueltos en divisa: 12 $. Al cerrar la caja espera
+**2.600,00 Bs** y **93 $**. Si el cajero cuenta 2.600,00 y 90, la diferencia es
+0,00 en bolívares y **−3 $** en divisa: se sabe en qué gaveta falta.
 
 ### Caso de uso: varios cajeros en la misma caja
 
@@ -374,9 +486,16 @@ cuando el cajero no elige a nadie.
 
 ## 4. La máquina fiscal
 
-Dos piezas: la **impresora** (un registro con su serial) y el **servidor
-fiscal** (el programa que corre en el equipo de la caja y habla con la
-impresora por el puerto).
+**Para qué**: que la factura de cada venta salga por la impresora fiscal
+homologada —la única con validez ante el SENIAT— y que su número vuelva a la
+venta de Odoo.
+
+**Por qué dos piezas**: la **impresora** se registra con su serial porque ese
+serial identifica la memoria fiscal en los reportes Z y en el libro de ventas;
+el **servidor fiscal** se configura aparte porque es un programa que corre en
+la PC de la caja con el driver del fabricante, y la caja le habla por una URL.
+Cómo se usa después —factura, nota de crédito, reimpresión, Z— está en
+[La máquina fiscal, el cierre y los reportes](04-la-maquina-fiscal-el-cierre-y-los-reportes.md).
 
 ### Paso a paso: registrar la impresora
 
@@ -420,6 +539,13 @@ En la ficha de la caja, columna derecha:
      cajero lo dispare cuando toque.
 6. **Guardar.**
 
+**Ejemplo: ¿Automático o Manual?** Tienda con **una caja y una impresora**:
+*Automático*; al cerrar la sesión sale el Z y nadie tiene que acordarse.
+Tienda con **dos cajas que comparten la impresora** (regla del SENIAT: un Z por
+máquina y jornada): las dos en *Manual*; la caja 1 cierra a las 6 sin Z, la
+caja 2 cierra a las 8 y el encargado pulsa **ReporteZ** una sola vez. En
+*Automático* la caja 1 habría emitido un Z a las 6 y partido el día en dos.
+
 > **Empiece en Prueba.** Con *Prueba* se puede recorrer toda la caja —venta,
 > pago, cierre— sin impresora conectada. Cambie a *HK* o *PNP* solo cuando el
 > servidor de impresión responda en la **IP Servidor**; si no responde, cada
@@ -432,8 +558,15 @@ y el detalle de ventas.
 ## 5. Los terminales, en Ajustes
 
 **Punto de venta → Configuración → Ajustes**, bloque **Terminales de pago**.
-Estos ajustes **son comunes a todas las cajas**: la conexión se pone una vez y
-los métodos de pago de los casos C y D la usan.
+
+**Para qué**: decirle a la caja dónde está el servicio del terminal y con qué
+credenciales entra, para que los métodos de los casos C y D puedan mandar
+importes y recibir respuestas.
+
+**Por qué en Ajustes y no en el método**: la conexión es **una por comercio**
+—un afiliado, una IP, unas credenciales— y la usan todos los métodos VPOS o
+SITEF de todas las cajas. Ponerla una vez evita repetirla (y desactualizarla)
+en cada método.
 
 ### VPOS
 
@@ -475,10 +608,25 @@ los métodos de pago de los casos C y D la usan.
 
 ## 6. El IGTF
 
+**Para qué**: que la caja cobre el **3 %** de Impuesto a las Grandes
+Transacciones Financieras sobre lo que el cliente paga en divisa, lo imprima en
+la factura fiscal y lo contabilice, sin que el cajero haga la cuenta.
+
+**Por qué es un producto**: la máquina fiscal solo imprime lo que está en el
+tique, y la contabilidad solo registra lo que está en la factura. Si el IGTF
+fuera un cálculo aparte no saldría en ninguno de los dos. Por eso se añade a la
+venta como **una línea más**, con un producto de servicio dedicado.
+
 **Contabilidad → Configuración → Ajustes → Configuración IGTF**: la **Tasa
 IGTF (%)** (3) y el **Producto IGTF**, que es el producto de servicio con el que
 se añade la línea del impuesto a la venta. Se configura una vez por compañía;
 los métodos con **Retener igtf** marcado son los que lo disparan.
+
+**Ejemplo.** Venta de 3.650,00 Bs (100 $). Pagada toda en dólares: base 3.650,00
+→ IGTF **109,50** → total 3.759,50. Pagada 60 $ en billetes y el resto por
+pago móvil: base 2.190,00 → IGTF **65,70** → total 3.715,70. Pagada toda por
+punto: base 0 → **sin línea de IGTF**. El impuesto sigue a la forma de pago,
+no al producto.
 
 > El IGTF **no está portado a Odoo 20 todavía**. La configuración se guarda,
 > pero no se aplica: el cobro es justo la parte que no funciona. No se use esta
@@ -486,7 +634,8 @@ los métodos con **Retener igtf** marcado son los que lo disparan.
 
 ## 7. Lo que ya viene puesto
 
-Dos comportamientos de la caja que no tienen configuración:
+Dos comportamientos de la caja que no tienen configuración (su uso, con
+ejemplos, está en [Abrir la caja y vender](02-abrir-la-caja-y-vender.md)):
 
 - **Descuento al total.** En la pantalla de venta, el botón **Descuento al
   total** pide un porcentaje de 0 a 100 y lo aplica a todas las líneas. Sin
