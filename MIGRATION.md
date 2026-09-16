@@ -92,15 +92,40 @@ En importaciones, lo que habria bloqueado la instalacion entera estaba en una
 sola linea del manifest: `stock_enterprise`, declarado y **sin usar**. Se
 comprobo antes de quitarlo.
 
-Lo que queda abierto ahi es una dependencia que nadie habia declarado:
+Lo que quedo abierto ahi fue una dependencia que nadie habia declarado:
 `create_landed_cost()` escribia dos campos —`currency_price_unit` y
-`nx_rate_ref`— que pone `nimetrix_stock_cost_usd`, del repositorio de doble
-moneda. **No esta migrado, y no es un porte mecanico**: sus 1.741 lineas estan
-escritas sobre `stock.valuation.layer`, el modelo que v20 elimino. Mientras
-tanto el reparto se hace en bolivares.
+`nx_rate_ref`— que ponia `nimetrix_stock_cost_usd`, del repositorio de doble
+moneda, escrito sobre `stock.valuation.layer`, el modelo que v20 elimino.
+**Cerrado el 16 de septiembre de 2026**: el costo en divisa se reescribio
+dentro de `l10n_ve_mornix` (1.40.0) sobre la valoracion de v20, con los mismos
+nombres de campo (ver la seccion siguiente).
 
 Detalle en [modulos/tpv.md](modulos/tpv.md) y
 [modulos/importaciones.md](modulos/importaciones.md).
+
+## La doble moneda: que queda de `nx_dual_currency`
+
+Revisado el 16 de septiembre de 2026 contra `mornix-tech/nx_dual_currency`
+(`main`, 79748b0; 10 modulos, 12.400 lineas de Python). Lo que hay en v20 y lo
+que falta, modulo por modulo:
+
+| Modulo v18 | Lineas | En v20 | Estado |
+|---|---:|---|---|
+| `nimetrix_dual_currency` | 4.397 | `mornix_dual_currency` 1.8.0 | **Migrado**; mismos 11 modelos y los mismos campos (v20 añade `nx_diferencial_ref`, `nx_balance_ref_forzado`, `nx_full_reconcile_ref_id`). Faltan por revisar los ultimos commits de v18: totales USD en las listas de facturas, `nx_costo_unit_bs` para cargar en Bs sin borrar el precio, propagacion de `nx_rate_custome` del pago al asiento |
+| `nimetrix_currency_rate` (repo `nx_localizacion`) | — | `mornix_currency_rate` 0.8.0 | **Migrado** |
+| `nimetrix_stock_cost_usd` | 1.741 | `l10n_ve_mornix` 1.40.0, `nx_cost_*` | **Reescrito** sobre `stock.move.value`: valor $ y tasa por movimiento, coste promedio $ por producto, costos en destino en dos monedas, `Costo $` sincronizado. Fuera: fabricacion, subcontratacion, ajuste $ al facturar (ver la ficha, §6.34) |
+| `nimetrix_cost_usd_property` | 241 | — | **No hace falta**: en v20 `standard_price_usd` ya es un campo normal por compañia |
+| `nimetrix_list_price_property` | 501 | `l10n_ve_mornix` (`list_price_usd`, `list_price_vat`, `list_price_vat_usd`) | **Absorbido** desde el piloto |
+| `nimetrix_dual_pricelist` | 118 | `mornix_dual_currency` (bases `standard_price_usd`, `list_price_usd`, `nx_last_cost_usd`) | **Absorbido**; queda por comprobar `nx_price_fixed_usd` (precio fijo en $ por regla) y la actualizacion masiva de tarifas al cambiar la tasa (`mornix_currency_rate.update_product_pricelist`) |
+| `nimetrix_igtf_dual` | 34 | — | **Pendiente, trivial**: 34 lineas que dependen de `nimetrix_igtf`; va con el IGTF del TPV |
+| `mornix_iva_islr_edit_total_bs_fix` | 905 | — | **Por revisar**: corrige retenciones IVA/ISLR de facturas en USD con «Editar total Bs»; la retencion en v20 se reescribio (ficha de la localizacion §6.4) y hay que ver si el caso sigue existiendo |
+| `nimetrix_account_reports_dual` | 2.446 | — | **Bloqueado por Enterprise**: extiende `account_reports`. El libro diario en divisa ya se hizo sin Enterprise (§6.32); los demas informes (balance, mayor, antigüedad, flujo de caja) en divisa necesitarian el mismo camino |
+| `nimetrix_customer_statement` | 696 | — | **Bloqueado por Enterprise** (`account_reports`). Estado de cuenta del cliente en divisa: se puede rehacer como informe QWeb propio |
+| `nimetrix_mrp_dual_currency` | 1.335 | — | **Fuera de alcance**: fabricacion (`mrp_account`, `mrp_workorder` Enterprise). Se retoma si el cliente fabrica |
+
+**Consecuencia:** de las diez piezas, cinco estan cubiertas, una no hace
+falta, una es trivial, una hay que revisar y dos dependen de Enterprise o de
+MRP. El costo en divisa —la que bloqueaba importaciones— ya esta.
 
 ## La base del cliente: `auromin`
 

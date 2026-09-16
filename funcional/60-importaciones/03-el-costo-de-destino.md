@@ -183,7 +183,8 @@ un contra-asiento. Se calcula hasta que cuadre; se reparte una vez.
    asociados; si falta algo, lo dice en un aviso y no crea nada.
 2. Se abre el **costo adicional** ya armado: los **Traslados** (la recepción),
    una línea por gasto en **Costos adicionales**, con su **Cuenta**, su
-   **Método de división** y su **Costo** en bolívares.
+   **Método de división**, su **Costo** en bolívares y, al lado, la **Tasa** de
+   la factura del gasto y su **Costo $**.
 3. **Calcular.** La pestaña **Ajustes de valoración** enseña, por producto, el
    coste previo y lo que se le reparte.
 4. **Validar.** El estado pasa a **Registrado**, se genera el **Asiento
@@ -196,10 +197,10 @@ un contra-asiento. Se calcula hasta que cuadre; se reparte una vez.
 
 **Ajustes de valoración**, tras **Calcular**:
 
-| Producto | Cantidad | Coste previo | Reparto | Coste nuevo |
-|---|---:|---:|---:|---:|
-| Baldosa cerámica 60×60 | 100 | 65.700,00 | +124.100,00 | 189.800,00 |
-| *por unidad* | | *657,00* | *+1.241,00* | *1.898,00* |
+| Producto | Cantidad | Coste previo | Reparto | Coste nuevo | Valor original $ | Costo adicional $ | Valor nuevo $ |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Baldosa cerámica 60×60 | 100 | 65.700,00 | +124.100,00 | 189.800,00 | 1.800,00 | +3.400,00 | 5.200,00 |
+| *por unidad* | | *657,00* | *+1.241,00* | *1.898,00* | *18,00* | *+34,00* | *52,00* |
 
 **Asiento** `STJ/2026/10/0001`, tras **Validar**:
 
@@ -230,9 +231,12 @@ vender la mercancía del contenedor.
 > cuenta de la factura. Si su contabilidad necesita otra, hay que decirlo:
 > está anotado como pendiente.
 
-> **El detalle en divisa del reparto no está todavía.** El costo adicional se
-> hace en bolívares; las columnas en divisa dependen de un módulo que no se ha
-> migrado. El cálculo del costo de destino (paso 2) sí lleva las dos monedas.
+> **El reparto también va en divisa.** Cada gasto del costo adicional lleva su
+> **Costo $** y su **Tasa** (la de su factura), y cada ajuste su **Valor original
+> $** y **Costo adicional $**. Al validar, el valor en divisa de la recepción
+> sube con el reparto y el **Coste promedio $** del producto —y el **Costo $**
+> de su ficha— se recalculan. El detalle está en la guía
+> [El costo en divisa](../20-inventario/02-el-costo-en-divisa.md).
 
 > **Permisos.** Para abrir el costo de destino hace falta **Inventario /
 > Administrador** (enseña los costos adicionales); para registrar la factura

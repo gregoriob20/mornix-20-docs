@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 213 pruebas sin errores ni advertencias**.
+> 219 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.35.0`).
@@ -93,10 +93,14 @@ facturas afectadas. `nx_facturas_sin_clasificar()` las devuelve.
 
 ```
 base_vat · base_address_extended · l10n_ve · account_debit_note
-sale · purchase · product
+sale · purchase · product · stock_account · sale_stock · portal
+purchase_stock · stock_landed_costs
 ```
 
-Las siete existen en v20. `l10n_ve` aporta el plan de cuentas venezolano, que
+Todas existen en v20. Las cuatro de inventario llegaron con lo absorbido:
+`stock_account` y `sale_stock` con las guías de despacho y el libro de
+inventario (1.31.0), `purchase_stock` y `stock_landed_costs` con el costo en
+divisa (1.40.0). `l10n_ve` aporta el plan de cuentas venezolano, que
 **hay que cargar explícitamente** en cada base: sin él no hay cuentas ni diarios
 y nada contable funciona.
 
@@ -1833,6 +1837,115 @@ ellos.
 > fallan sin ella. Una prueba que no falla cuando el defecto vuelve no sirve de
 > nada.
 
+
+### 6.34 El costo en divisa, dentro de la localización (1.40.0)
+
+**Qué hace.** Cada movimiento de inventario valorado guarda su **valor en la
+moneda referencial** (`stock.move.nx_value_ref`) y **la tasa** con la que se
+valoró (`nx_rate`); el producto tiene **coste promedio $** y **valor total $**
+(`nx_avg_cost_ref`, `nx_total_value_ref`) derivados de esos movimientos; los
+costos en destino se reparten en las dos monedas (`currency_price_unit` y
+`nx_rate_ref` en la línea de gasto; `nx_former_cost_usd`,
+`nx_additional_landed_cost_usd`, `nx_final_cost_usd` y `tasa` en el ajuste); y
+`Costo $` de la ficha (`standard_price_usd`, de `mornix_dual_currency`) se
+mantiene igual al promedio en los productos con costo promedio o FIFO.
+
+**De dónde viene.** Es la reescritura de `nimetrix_stock_cost_usd` (v18, 1.741
+líneas, repo `nx_dual_currency`), que estaba escrito sobre
+`stock.valuation.layer`. v20 eliminó ese modelo: el valor vive en el propio
+`stock.move` (`value`, `remaining_value`, `_set_value()`, `_get_value_data()`) y
+el costo del producto se recalcula desde los movimientos hechos
+(`_run_average_batch`, `total_value`, `avg_cost`). El costo en divisa se
+engancha en los mismos sitios: `_set_value()` fija `nx_value_ref` cada vez que
+v20 fija `value` —al validar, y otra vez cuando un costo en destino o una
+factura lo corrigen—, y `_action_done()` lleva el promedio a `Costo $`.
+
+**Por qué en `l10n_ve_mornix` y no en `mornix_dual_currency`.** El usuario lo
+pidió así: toda la lógica de costo en la localización. Y había una razón
+técnica: `mornix_currency_rate` depende de `l10n_ve_mornix`, así que la
+localización **no puede** depender de `mornix_dual_currency` (ciclo, §2.1).
+Por eso el costo en divisa es autónomo —usa `res.company.nx_currency_ref_id`,
+que la localización ya tenía— y toca los campos de la doble moneda **solo si
+existen** (`'standard_price_usd' in _fields`, `nx_price_unit_usd`, `nx_rate`,
+`nx_rate_custome`): instala y funciona sin ella; con ella, sincroniza `Costo $`
+y estampa la tasa en los asientos de valoración y de reparto.
+
+**Cómo se valora cada movimiento** (archivo `nx_cost_stock_move.py`):
+
+| Movimiento | Valor $ | Tasa |
+|---|---|---|
+| Entrada por compra | `nx_price_unit_usd` de la línea (con descuento) × cantidad; sin doble moneda, el precio de la orden si está en la moneda referencial; si no, `value ÷ tasa` | `purchase.order.nx_rate`; sin ella, la del día del movimiento |
+| Devolución de una salida | Lo que valía la salida, a prorrata | La del día |
+| Otra entrada | Promedio $ del producto → `Costo $` → `value ÷ tasa` | La del día |
+| Salida | Cantidad × promedio $ del producto (sin contar el propio movimiento) | La del día |
+| + costos en destino validados | Σ `nx_additional_landed_cost_usd` de sus ajustes | La de cada gasto |
+
+La tasa «del día» es `res.company.nx_rate_ref_at(fecha)`: la última cotización
+con `name <= fecha`, de la compañía o compartida, en **Bs por unidad de divisa**
+(`inverse_company_rate`). Es el criterio de la localización, no el de
+`res.currency._convert` (`name < fecha`): están anotados los dos en
+[Roturas entre versiones](../BREAKING-CHANGES.md).
+
+**Los nombres de campo del costo en destino son los de v18** a propósito:
+`foreing_trade_import.create_landed_cost()` los escribe desde el costo de
+destino y no hubo que tocarlo; su nota «se escriben solo si el modelo las
+tiene» ya no aplica porque ahora siempre las tiene.
+
+**Lo que queda fuera, y por qué:**
+
+- **Fabricación y subcontratación** (la mitad de `stock_move.py` de v18): el
+  costo $ de un producto fabricado desde sus componentes. `mrp_workorder` es
+  Enterprise y el cliente no fabrica. Un producto fabricado entra hoy al
+  promedio $ de su ficha.
+- **El ajuste en divisa al facturar** (`account_move_line.py` de v18): v20
+  corrige el valor en Bs cuando la factura difiere de la orden
+  (`_get_value_from_account_move`); el valor $ se queda con el de la orden. Si
+  el proveedor factura otro precio en divisa, el ajuste es un costo en destino.
+- **Los importes referenciales de las líneas del asiento** no se escriben:
+  `nx_debit_ref`/`nx_credit_ref` son campos calculados y almacenados de la
+  doble moneda; se calculan desde el `nx_rate` del asiento, que es lo que se
+  estampa (`nx_rate_custome = True` para que la tasa del día no lo pise).
+
+**Pruebas** (`tests/test_costo_ref.py`, 6): la tasa por fecha con el criterio
+del día; la entrada por compra (100 × 18 $ a 36,50 → 1.800 $, 65.700 Bs,
+promedio 18 $, `Costo $` = 18); el costo en destino (3.400 $ a 36,50 →
+124.100 Bs en la línea, 5.200 $ en el ajuste, promedio 52 $, `standard_price`
+1.898 Bs); la salida de 20 al promedio (1.040 $, valor total 4.160 $, el
+promedio no se mueve); dos compras a tasas distintas (18 $ a 36,50 y 20 $ a
+40,00 → promedio 19 $, sumado en dólares y no reconvertido); y el recálculo del
+histórico (se borra el valor $ de una entrada, un reparto y una salida y se
+recupera igual, con el promedio **a la fecha** de cada movimiento). Corren con y
+sin `mornix_dual_currency`, y se saltan si la compañía está en dólares.
+
+> **Al escribir las pruebas apareció la diferencia de criterio de tasa.** La
+> orden de compra toma `nx_rate` con la cotización de **ayer** (`name < fecha`,
+> como `_convert`) y la localización la de **hoy** (`name <= fecha`). Con dos
+> cotizaciones distintas en días seguidos, el valor en Bs de la recepción
+> (64.800) y el que uno espera del precio × tasa del día (65.700) no cuadran.
+> No es un error del costo en divisa: es Odoo. La prueba pone la misma tasa
+> ayer y hoy para medir el costo y no ese desfase; el desfase queda anotado en
+> BREAKING-CHANGES.
+
+**El histórico se valora aparte.** Los movimientos hechos antes de 1.40.0
+tienen `nx_value_ref` en NULL, y el promedio $ sale bajo hasta que se valoren
+(en `import_test` daba 26 $ en vez de 52 $: la mitad de las entradas sin
+divisa). Una vez por compañía, desde el shell:
+
+```python
+env['stock.move'].nx_recalcular_valor_ref_historico()   # devuelve cuántos valoró
+env.cr.commit()
+```
+
+Recorre los movimientos valorados sin valor $ del más antiguo al más nuevo,
+con la tasa de su documento o la de su fecha, y sincroniza `Costo $`. Está
+hecho para correrse al migrar la base de un cliente con inventario; en
+`auromin` no hace falta porque todavía no tiene movimientos.
+
+**Consecuencia práctica.** El `Costo $` de la ficha deja de ser un dato que
+alguien mantiene: sale de las compras y de los costos en destino. Si un cliente
+lo venía escribiendo a mano en productos con costo promedio, la primera
+recepción lo pisa con el promedio real; si quiere fijarlo, el producto va en
+costo **estándar**, que no se sincroniza.
 
 ## 7. Cómo levantarlo
 

@@ -1107,3 +1107,11 @@ fechada el 14 o antes, nunca la del 15. En v18 era `<=`. Consecuencias:
 - **Las pruebas que crean «la tasa de hoy» y convierten hoy fallan** en cuanto
   existe otra tasa anterior (el cron del BCV carga una cada día). La de
   importaciones se fecha ayer y hoy a la vez, para satisfacer los dos caminos.
+- **El costo en divisa** (`l10n_ve_mornix` 1.40.0) convierte con su propia
+  función, `res.company.nx_rate_ref_at(fecha)`, que usa `name <= fecha` —el
+  criterio del día, el mismo que `nx_rate` en la factura— y devuelve Bs por
+  unidad de divisa (`inverse_company_rate`). Pero la **orden de compra** toma
+  su `nx_rate` con el criterio del núcleo (la de ayer), y la entrada por compra
+  hereda esa tasa: valor en Bs y valor en $ cuadran entre sí, aunque la tasa
+  «del día» sea otra. La prueba `TestCostoRef` fecha la misma cotización ayer
+  y hoy para medir el costo y no ese desfase.

@@ -153,7 +153,8 @@ valoración de Odoo por otro— y coinciden: 65.700 + 91.250 + 32.850 = 189.800.
 | `stock.valuation.layer` **eliminado** | la valoración vive ahora en `stock.move.value` y `product.total_value` | Cualquier comprobación de valor escrita contra SVL revienta |
 | `currency_price_unit` y `nx_rate_ref` en el costo adicional | `create_landed_cost()` | `ValueError: Invalid field` — **el reparto entero se cae** |
 
-Las dos primeras están corregidas. La tercera es de fondo y está en el punto 9.
+Las tres están corregidas: las dos primeras aquí, la tercera en
+`l10n_ve_mornix` 1.40.0, que ahora define esos dos campos (ver el punto 10).
 
 > **La trampa que más caro sale:** un producto de tipo «bienes» **sin
 > `is_storable`** deja hacer todo el camino —se recibe, se reparte, el costo
@@ -223,13 +224,15 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
 
 ## 10. Lo que queda abierto
 
-- **La columna en divisa del reparto.** `create_landed_cost()` escribía
-  `currency_price_unit` y `nx_rate_ref` en las líneas del costo adicional. Esos
-  campos no son de Odoo: los pone `nimetrix_stock_cost_usd`, del repositorio de
-  doble moneda, **que no está migrado** — y no es un porte mecánico: sus 1.741
-  líneas están escritas sobre `stock.valuation.layer`, el modelo que v20
-  eliminó, así que hay que rehacerlo. Mientras tanto el reparto se hace **en
-  bolívares** y las columnas en divisa se escriben solo si el modelo las tiene.
+- ~~**La columna en divisa del reparto.**~~ **Cerrado en `l10n_ve_mornix`
+  1.40.0.** `create_landed_cost()` escribía `currency_price_unit` y
+  `nx_rate_ref`, campos de `nimetrix_stock_cost_usd` (v18, sobre
+  `stock.valuation.layer`, que v20 eliminó). El costo en divisa se reescribió
+  dentro de la localización sobre `stock.move.value`, con **los mismos nombres
+  de campo**, así que este módulo no cambió una línea: el reparto sale en las
+  dos monedas y el coste promedio $ del producto se recalcula. Ver la ficha de
+  la localización, §6.34, y la guía
+  [El costo en divisa](../funcional/20-inventario/02-el-costo-en-divisa.md).
 - **Usar la cuenta de la factura** como contrapartida del reparto, en vez de la
   primera cuenta de gasto que aparezca (punto 7). Es una decisión contable del
   cliente.
