@@ -4,6 +4,13 @@ Un expediente de importación se apoya en catálogos que se dejan puestos **una
 vez**: los puertos, la naviera, la ruta, el almacén, los aranceles y los
 certificados. Todo vive en **Importaciones → Configuración**.
 
+**Por qué tanto catálogo**: cada expediente repite los mismos datos —la misma
+ruta, la misma naviera, los mismos gastos del viaje— y lo que cambia es la
+mercancía y las fechas. Si se escribieran a mano en cada expediente, habría
+tantas grafías de «La Guaira» como expedientes, y el tránsito promedio o la
+demora por contenedor no se podrían calcular. Los catálogos se llenan una vez
+y el expediente los elige.
+
 ## El orden importa
 
 Cada pieza necesita la anterior:
@@ -20,6 +27,9 @@ Cada pieza necesita la anterior:
 
 ![Los puertos, con su referencia y su país](../img/imp-puertos-listado.png)
 
+**Para qué**: los extremos y las escalas de cada ruta. Se escriben una vez y
+las rutas los eligen.
+
 ### Paso a paso
 
 1. **Importaciones → Configuración → Puertos → Nuevo.** La lista se edita en
@@ -30,10 +40,20 @@ Cada pieza necesita la anterior:
 4. Pulse fuera de la fila o **Guardar**. Repita para cada puerto: al menos uno
    de origen y uno de destino.
 
+**Por qué el código internacional**: es el que aparece en el BL (conocimiento
+de embarque) y en la planilla de aduana. Con `CNSHA` en el sistema, quien lea
+el BL encuentra el puerto sin adivinar si se escribió «Shanghai», «Shanghái» o
+«Shangai».
+
 ## 2. Navieras
 
-Cada naviera se apoya en un **contacto** de Odoo: si ya está en la agenda, se
-enlaza; si no, se crea primero el contacto.
+**Para qué**: quién transporta y a quién se le paga el flete. Cada naviera se
+apoya en un **contacto** de Odoo: si ya está en la agenda, se enlaza; si no,
+se crea primero el contacto.
+
+**Por qué contacto y naviera son dos registros**: el contacto es a quien se le
+factura (Contabilidad lo necesita como proveedor); la naviera añade lo que
+Contabilidad no sabe: sus gastos fijos por viaje y su tarifa de demora.
 
 ### Paso a paso
 
@@ -47,10 +67,23 @@ enlaza; si no, se crea primero el contacto.
    devolución del contenedor, cuando hay.
 6. **Guardar.**
 
+**Ejemplo.** Oceanic Lines cobra 85 $ por día de demora a partir del día libre
+número 8. Un contenedor que llega a puerto el 5 de octubre y se devuelve vacío
+el 17 lleva 12 días: 7 libres y **5 de demora × 85 $ = 425 $**, que aparecerán
+como gasto del expediente. Sin la tarifa cargada, ese gasto se conoce cuando
+llega la factura, un mes después.
+
 ## 3. Los productos de servicio del viaje
 
-Los gastos —flete, aduana, seguro, almacenaje— se facturan como **servicios**, y
-el módulo necesita reconocerlos para llevarlos al costo.
+**Para qué**: los gastos —flete, aduana, seguro, almacenaje— se facturan como
+**servicios**, y el módulo necesita reconocerlos para llevarlos al costo.
+
+**Por qué el gasto es un producto**: la factura de la naviera es una factura de
+proveedor como cualquier otra, y en Odoo una factura tiene líneas con
+productos. Marcar el producto como «costo en destino» es lo que le dice al
+módulo «esta línea no es un gasto del mes, es parte del costo de la
+mercancía»; el **tipo de concepto** le dice en qué columna del costo va (CIF o
+nacional).
 
 ### Paso a paso: crear el concepto de flete
 
@@ -64,6 +97,11 @@ el módulo necesita reconocerlos para llevarlos al costo.
 5. **Guardar.** Repita para los gastos de aduana, el seguro y lo que se
    facture aparte.
 
+| Tipo de concepto | Columna del costo | Ejemplos |
+|---|---|---|
+| *Flete marítimo*, *Seguro* | **CIF** (lo que cuesta poner la mercancía en el puerto de destino) | Flete Shanghái → La Guaira, póliza del embarque |
+| *Gastos de aduana*, *Gastos de almacenaje*, *Flete terrestre*, *Gastos generales* | **Costo nacional** (lo que cuesta sacarla del puerto y llevarla al almacén) | Honorarios del agente, arancel e IVA de importación si se facturan como gasto, almacenaje en puerto, gandola al almacén |
+
 > Sin las dos marcas —*Servicio* con **Puede ser costo en destino** y su **Tipo
 > de concepto**— el producto no aparece en la lista desplegable de la ruta ni
 > entra en el reparto del costo. Es el motivo más frecuente de «no me sale el
@@ -75,7 +113,14 @@ el módulo necesita reconocerlos para llevarlos al costo.
 
 ![La ficha de una ruta, con sus puertos y sus gastos asociados](../img/imp-ruta-form.png)
 
-La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
+**Para qué**: la ruta es la que sabe por dónde va la mercancía y cuánto cuesta
+el viaje. Al elegirla en el expediente se rellenan la naviera, los puertos y
+los días libres, y sus gastos asociados sirven de **presupuesto** del viaje.
+
+**Por qué la ruta lleva los gastos**: el flete Shanghái → La Guaira en un
+contenedor de 40 pies cuesta más o menos lo mismo en cada viaje. Tenerlo en la
+ruta permite estimar el costo de destino **antes** de que llegue la factura de
+la naviera, y comparar después lo presupuestado con lo facturado.
 
 ### Paso a paso
 
@@ -96,6 +141,12 @@ La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
 9. **Guardar.** La ruta queda **Activa**; **Inactiva** la retira de las listas
    sin borrarla.
 
+**Ejemplo.** La ruta `SHA-LAG` de la demo: origen `CNSHA`, destino `VELAG`,
+naviera Oceanic Lines, **7 días libres**, **tránsito estimado 35 días**,
+concepto de flete «Flete marítimo» con tarifa **2.500 $**. Tras tres
+expedientes que tardaron 33, 38 y 41 días, **Tránsito Promedio Real** dirá
+**37,3**: es la cifra que hay que usar para prometer fechas, no la estimada.
+
 > **La ruta no se guarda sin su línea de flete.** En **Gastos Asociados** tiene
 > que haber una línea con el mismo producto que el **Concepto de Flete**; Odoo
 > la propone al elegirlo, y si se borra, la ruta se niega a guardar con
@@ -103,6 +154,9 @@ La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
 > concepto de flete»*.
 
 ## 5. Almacenes
+
+**Para qué**: dónde se recibe la mercancía y qué cobra el sitio donde espera
+antes de entrar (el almacén del puerto o el depósito aduanero).
 
 ### Paso a paso
 
@@ -116,6 +170,16 @@ La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
 ## 6. Aranceles
 
 ![Las partidas arancelarias, con su tasa](../img/imp-aranceles-listado.png)
+
+**Para qué**: cada mercancía tiene una **partida arancelaria** que fija el
+porcentaje de arancel y qué certificados exige la aduana. Enlazarla al producto
+permite estimar el impuesto antes de nacionalizar y saber qué papeles hay que
+tener listos.
+
+**Por qué la tasa va entre 0 y 100**: es un porcentaje sobre el valor CIF. El
+sistema no deja guardar otra cosa porque una tasa de 1.500 —un cero de más—
+convertiría la estimación en un disparate sin que nadie lo notara hasta la
+planilla.
 
 ### Paso a paso
 
@@ -131,9 +195,21 @@ La ruta es la que sabe por dónde va la mercancía y cuánto cuesta el viaje.
 8. Enlace la partida en la ficha del producto importado, pestaña de
    importaciones, campo **Partida arancelaria**.
 
+**Ejemplo.** Partida `6907.21.00.00` (baldosas cerámicas), tasa **15 %**. Para
+las 100 unidades de la demo, el valor CIF es 1.800 $ de mercancía + 2.500 $ de
+flete = **4.300 $ = 156.950 Bs**; el arancel estimado es 15 % × 156.950 =
+**23.542,50 Bs**, y el IVA de importación (16 % sobre CIF + arancel) sería
+**28.878,80 Bs**. Son cifras de **estimación**: el gasto real entra al costo
+cuando el agente aduanal factura (guía 3). En el flujo comprobado de la demo el
+agente facturó 900 $ de gastos de aduana y no se cargó el arancel aparte.
+
 ## 7. Contenedores
 
 ![El catálogo de contenedores, con sus medidas y su carga máxima](../img/imp-contenedores-listado.png)
+
+**Para qué**: el catálogo de tipos de contenedor —medidas, capacidad, tara,
+carga máxima— que usa el expediente para registrar los contenedores del
+embarque y el costo de destino para repartir por **capacidad del contenedor**.
 
 Vienen **precargados** —dry de 20 y 40 pies, y los demás tipos habituales— con
 sus medidas interiores, su capacidad cúbica, su tara y su carga máxima. La
@@ -141,9 +217,24 @@ instalación los copia a cada compañía de la base. Si hace falta uno nuevo:
 **Nuevo**, nombre, referencia, medidas y **carga máxima**, y la casilla de
 contenedor activo.
 
+**Ejemplo.** Un dry de 40 pies tiene unos 67 m³ y 26.500 kg de carga máxima.
+Las 100 cajas de baldosas de la demo ocupan 4 m³ y pesan 2.000 kg: van holgadas
+en un 20 pies (33 m³, 28.000 kg). El dato sirve para elegir el contenedor y,
+después, para repartir el flete entre los productos según lo que ocupan.
+
 ## 8. Certificados
 
 ![Los certificados, con su vigencia y su estado](../img/imp-certificados-listado.png)
+
+**Para qué**: los permisos que la aduana exige para nacionalizar ciertas
+mercancías —sanitario, fitosanitario, de origen, norma COVENIN—. Cada uno tiene
+vigencia, y **un certificado vencido detiene el contenedor en aduana**, con
+demora y almacenaje corriendo.
+
+**Por qué el aviso está en la compra y no en el expediente**: cuando el
+expediente existe, la mercancía ya está comprada. El momento de darse cuenta de
+que el certificado vence en tres semanas es **al hacer el pedido**, que es
+cuando todavía se puede renovar a tiempo o no comprar.
 
 ### Paso a paso: el tipo y el certificado
 
@@ -166,6 +257,12 @@ contenedor activo.
 | **Por vencerse** | Faltan 30 días o menos |
 | **Vencido** | Ya pasó la fecha |
 
+**Ejemplo.** «Certificado sanitario» `CERT-001`, **Hasta: 15/10/2026**. Hoy,
+16 de septiembre, faltan 29 días: está **Por vencerse** y la línea de las
+baldosas en el pedido de compra sale en **ámbar**. Con un tránsito de 35 días,
+la mercancía llegará el 5 de octubre y se nacionalizará después del 15: hay que
+renovar el certificado **antes de confirmar la compra**, o llegará vencido.
+
 > **El aviso llega donde se compra.** En la línea del pedido de compra aparece
 > un sello por producto: verde si el certificado está vigente, ámbar si está
 > por vencer, rojo si venció y gris si el producto no tiene certificado. Es la
@@ -179,6 +276,9 @@ contenedor activo.
 - **Agente aduanal**: es un contacto de Odoo con la casilla **Agente aduanal**
   marcada (**Contactos → abrir el contacto → pestaña de importaciones**). Solo
   los contactos con esa casilla salen en el campo **Agente aduanal** del
-  expediente.
+  expediente. **Por qué la casilla**: sin ella, el campo ofrecería a todos los
+  contactos de la agenda y el agente sería una búsqueda entre cientos.
 - **Etiquetas**: **Importaciones → Configuración → Etiquetas → Nuevo**, nombre y
   color. Sirven para agrupar y filtrar expedientes («urgente», «perecedero»).
+  **Ejemplo**: con la etiqueta «Perecedero» en los expedientes de alimentos, el
+  filtro de la lista enseña de un vistazo cuáles no pueden esperar en puerto.
