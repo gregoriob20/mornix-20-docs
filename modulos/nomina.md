@@ -1,7 +1,7 @@
 # Nómina venezolana — 35 módulos sobre el motor de OCA
 
-> Estado: **los 35 módulos libres instalan de una vez sobre una base vacía y las
-> 102 pruebas pasan**, propias y del motor.
+> Estado: **los 36 módulos libres instalan de una vez sobre una base vacía y las
+> 119 pruebas pasan**, propias y del motor.
 > Origen: `mornix-tech/nx-nomina`, v18 — 55 módulos.
 > Destino: **repositorio propio**, `gregoriob20/mornix_nomina_20`, montado en
 > `addons/nomina/`.
@@ -48,12 +48,12 @@ trampa, explicada abajo.
 
 | | |
 |---|---|
-| Módulos del cliente | 55 en el árbol (54 migrados + el tablero, escrito aquí) |
+| Módulos del cliente | 56 en el árbol (54 migrados + el tablero y el portal del empleado, escritos aquí) |
 | Motor de nómina | 1 (`payroll`, OCA adaptado) |
 | Python | 346 archivos · 15.467 líneas |
 | XML | 155 archivos · 9.495 líneas |
 | Motor OCA | 32 archivos · 3.655 líneas de Python |
-| Pruebas | **112**, en 12 módulos |
+| Pruebas | **119**, en 13 módulos |
 
 Reparto de las pruebas:
 
@@ -64,6 +64,7 @@ Reparto de las pruebas:
 | `mnx_l10n_ve_payroll_hr_contract_history` | 20 |
 | `l10n_ve_payroll_hr_payroll` | 10 |
 | `mornix_l10n_ve_payroll_dashboard` | 10 |
+| `mornix_l10n_ve_payroll_portal` | 7 |
 | `l10n_ve_payroll_res_config_settings` | 3 |
 | resto (6 módulos) | 7 |
 
@@ -312,7 +313,7 @@ python3 scripts/sincronizar_nomina.py --subir  # addons/nomina/ -> clon
 
 ## 10. La guía de usuario
 
-La rama funcional de la nómina son cuatro documentos, con capturas y recorridos en
+La rama funcional de la nómina son cinco documentos, con capturas y recorridos en
 vídeo tomados de una quincena real:
 
 | Guía | Qué cubre |
@@ -321,8 +322,9 @@ vídeo tomados de una quincena real:
 | [Procesar una quincena](../funcional/30-nomina/02-la-quincena.md) | Del lote vacío a los recibos confirmados |
 | [Historial y análisis](../funcional/30-nomina/03-historial-y-analisis.md) | Historial de contratos, renovación y el informe |
 | [El tablero de nómina](../funcional/30-nomina/04-el-tablero.md) | Costo total, cestaticket, prestaciones, parafiscales e ISLR |
+| [El portal del empleado](../funcional/30-nomina/05-el-portal-del-empleado.md) | Acceso al portal y descarga de los recibos confirmados |
 
-Las cuatro llevan el **paso a paso** de cada proceso con los nombres de botones
+Las cinco llevan el **paso a paso** de cada proceso con los nombres de botones
 y campos tal como se ven en pantalla, verificados abriendo cada formulario en
 `nomina_demo`, no de memoria.
 
@@ -382,3 +384,57 @@ que es lo que el importador necesita— y se cargan con `odoo i18n import -w`.
 Lo que sigue en inglés no es nuestro: «Load a Template» en la ficha del
 empleado y «Connect printers to your PoS» en la caja son huecos de la
 traducción es_VE del propio Odoo.
+
+> **Un «Talla» donde debía decir «Nombre».** El recibo de nómina en PDF —y la
+> columna Nombre de reglas, categorías y lotes— salía rotulado «Talla». La
+> causa estaba en `l10n_ve_payroll_contract_allocation/i18n/es_VE.po`: el
+> término compartido `Name` (`#. modules: … payroll`) tenía como traducción la
+> de la talla de dotación, y al cargarse pisaba el «Nombre» de todos los
+> modelos del motor. Se corrigió a «Nombre» (también en `es.po`) y se recargó
+> con `odoo i18n import -w` en `nomina_demo` y `auromin`. Lo destapó la
+> vista previa del recibo en el portal del empleado.
+
+## 12. El portal del empleado (`mornix_l10n_ve_payroll_portal` 1.0.0)
+
+Cada empleado descarga sus recibos confirmados desde **Mi cuenta → Recibos de
+nómina**, con un usuario de **portal**. Es el mismo patrón que las retenciones
+en el portal del proveedor de la localización, y por las mismas razones: el
+portal estándar, una tarjeta `portal.entry`, un listado paginado con búsqueda y
+una vista previa con el informe incrustado y su descarga.
+
+| Pieza | Qué hace |
+|---|---|
+| `hr.payslip` + `portal.mixin` | URL `/my/recibos-de-nomina/<id>`, token, `get_portal_url()`, nombre del PDF (`Recibo_de_nomina_SLIP_016_2026_09_16.pdf`) |
+| `security/ir.access.csv` | **Una regla** para `base.group_portal`: lectura de `hr.payslip` solo en estado `done` y solo si el empleado apunta al usuario (`employee_id.user_id`) o a su contacto (`employee_id.work_contact_id`) |
+| `controllers/portal.py` | `/my/recibos-de-nomina` (listado, ordenación por período o número, búsqueda por número o lote) y `/my/recibos-de-nomina/<id>` (vista previa, `?report_type=pdf&download=1`) |
+| `hr.employee.action_mnx_acceso_portal` | Botón **Acceso al portal** en la cabecera de la ficha: abre el `portal.wizard` estándar con el contacto de trabajo ya elegido; exige correo de trabajo |
+| Informe | `payroll.action_report_payslip`; si `l10n_ve_payroll_hr_payroll_receipt_payment` está instalado, ese informe ya es el recibo venezolano y sale sin más |
+
+Dos decisiones que conviene conocer:
+
+- **El listado filtra por persona también al usuario interno.** Las retenciones
+  del proveedor no lo hacen —el contable quiere verlas todas—; aquí quien entra
+  a «Mis recibos» quiere los suyos aunque sea el gerente de nómina. Los
+  empleados de quien está conectado se buscan por `user_id` o por
+  `work_contact_id`.
+- **Los `nx_*_portal()` del recibo van con `sudo()`.** El usuario de portal lee
+  el recibo, pero no la ficha del empleado ni la estructura; sin eso el listado
+  daba «Error de acceso» al pintar un nombre.
+
+Siete pruebas en `tests/test_portal.py`: el portal ve solo los recibos
+confirmados del propio empleado; el de otro y el propio en borrador dan
+`AccessError`; la URL, el neto y el nombre del PDF; el botón de acceso con y sin
+correo; y, por HTTP, el listado (200, con su recibo y sin el ajeno), la vista
+previa, la descarga (`application/pdf`, `attachment`), la redirección del
+recibo ajeno y la tarjeta de «Mi cuenta».
+
+> **Las pruebas HTTP piden `--db-filter`.** El `dbfilter=^%d$` del contenedor
+> compara con el *host* de la petición, y el servidor de pruebas contesta en
+> `localhost`: sin `--db-filter '^nomina_demo$'` las rutas del portal dan 404 en
+> la prueba aunque funcionen en el navegador.
+
+Para la demo, `scripts/configurar_portal_nomina.py` pone correo a los ocho
+empleados y crea el usuario de portal de Argenis Rondón
+(`argenis.rondon@demo.mornix`); es lo que usan las capturas
+`nomina-portal-*.png`. **No se ejecuta en la base de un cliente**: allí el
+acceso se da desde la ficha del empleado.

@@ -17,6 +17,7 @@ venezolana tiene reglas que ninguna nómina genérica trae:
 | El cestaticket y los bonos en divisa pesan tanto como el sueldo | Campos propios en el contrato y conceptos propios en el tablero |
 | La garantía de prestaciones se acumula cada mes aunque no se pague | Un aporte patronal que no toca el neto pero sí el costo y el pasivo |
 | Las mismas seis preguntas en cada cierre: costo total, cestaticket, prestaciones, parafiscales, bonos, ISLR | El **tablero de nómina**, con un indicador por pregunta |
+| Cada quincena alguien pide copia de su recibo | El **portal del empleado**: cada quien descarga sus recibos confirmados con su usuario |
 
 La nómina se apoya en el motor `payroll` de la OCA, no en el de Odoo
 Enterprise: los nombres de pantalla pueden diferir de la documentación oficial
@@ -35,6 +36,7 @@ dólar**.
 | [Procesar una quincena](02-la-quincena.md) | El lote, la generación de recibos, cómo leer el cálculo línea a línea, confirmar |
 | [Historial de contratos y análisis](03-historial-y-analisis.md) | Versiones del contrato, aviso de vencimiento, renovación, el pivote de análisis |
 | [El tablero de nómina](04-el-tablero.md) | Costo total, cestaticket, prestaciones, parafiscales, bonos, ISLR: qué suma cada indicador y por qué |
+| [El portal del empleado](05-el-portal-del-empleado.md) | Cómo se le da acceso a un empleado y cómo ve y descarga sus recibos confirmados desde «Mi cuenta» |
 
 > **El orden importa.** Sin el tipo de estructura, la estructura y las reglas
 > configuradas, un lote se genera vacío o los recibos salen sin líneas. Empiece
