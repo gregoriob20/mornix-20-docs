@@ -215,6 +215,20 @@ asientos: Odoo se niega a cambiarla— y solo completa lo que falte (país, mone
 de referencia, tasa del día, grupos del administrador). Las 19 acciones del
 módulo abren para el administrador; el expediente de demo es `IMP-00000001`.
 
+Y se recorrió allí el **flujo completo** con `probar_flujo_importacion.py`
+(expediente `IMP-00000002`, compra `P00273`, factura `BILL/2026/09/0014`,
+costo adicional `LC/COST-00000004`, asiento `STJ/2026/09/0001`), **con las
+tasas reales del BCV** y no con la de 36,50 de la demo: la compra tomó 847,44
+(la de ayer, criterio del núcleo) y la factura del flete 848,55 (la del día).
+Resultado: 100 unidades, 4.410.455,72 Bs de valor —1.800 $ × 847,44 + 3.400 $
+× 848,55— y **coste promedio 52,00 $**, con `Costo $` de la ficha en 52,00 y
+las cuatro líneas del asiento de reparto con su importe referencial (2.500 y
+900 $). Es la primera vez que el costo en divisa se comprueba con dos tasas
+distintas en un mismo producto fuera de las pruebas. La mercancía de demo se
+movió antes a su propia categoría «Importados», para que el cambio a FIFO con
+valoración automática no tocara la categoría «Gastos» que comparte con los
+servicios.
+
 ## 9. Lo que hay que saber antes de montarlo
 
 - **La compañía necesita país** (punto 5).
