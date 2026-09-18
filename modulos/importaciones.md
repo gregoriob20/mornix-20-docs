@@ -203,6 +203,18 @@ docker compose run --rm odoo20 odoo -d import_test -u foreing_trade_import \
 # 0 failed, 0 error(s) of 14 tests
 ```
 
+## 8 bis. Dónde está instalado
+
+En `import_test` (la base del área, con el flujo completo y las capturas), en
+`auromin` (la del cliente) y, desde el 18 de septiembre de 2026, en `odoo20`,
+la base de la localización y la documentación: el usuario echó en falta el
+menú allí. Se instaló con `-i foreing_trade_import` y se configuró con
+`scripts/configurar_importaciones.py`, que para eso dejó de renombrar la
+compañía y de cambiarle la moneda —`odoo20` ya lleva bolívares (VEF) y tiene
+asientos: Odoo se niega a cambiarla— y solo completa lo que falte (país, moneda
+de referencia, tasa del día, grupos del administrador). Las 19 acciones del
+módulo abren para el administrador; el expediente de demo es `IMP-00000001`.
+
 ## 9. Lo que hay que saber antes de montarlo
 
 - **La compañía necesita país** (punto 5).
