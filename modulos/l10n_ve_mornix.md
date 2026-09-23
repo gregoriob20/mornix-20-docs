@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 219 pruebas sin errores ni advertencias**.
+> 221 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.35.0`).
@@ -1946,6 +1946,46 @@ alguien mantiene: sale de las compras y de los costos en destino. Si un cliente
 lo venía escribiendo a mano en productos con costo promedio, la primera
 recepción lo pisa con el promedio real; si quiere fijarlo, el producto va en
 costo **estándar**, que no se sincroniza.
+
+### 6.35 Importar productos con dos compañías en la base (1.40.1)
+
+**El síntoma.** En `odoo20` —que tiene a Ridery al lado de Mornix Tech—
+importar productos desde Inventario abortaba en todas las filas: *«Ocurrió un
+error al escribir en el campo product.template.taxes_id. Estos registros están
+restringidos. Administrator no tiene acceso 'leer' a Impuesto… multi-company
+issue»*. El archivo estaba bien: sus impuestos («IVA 16% venta/compra»)
+resolvían al de Mornix Tech.
+
+**La causa** era un `create` de `product.template` heredado de v18 en este
+módulo: añadía a cada producto nuevo el IVA por defecto de
+`self.env.companies.search([])` —que ignora el recordset y devuelve **todas**
+las compañías— y lo escribía **sin sudo**. Con una compañía a la que el usuario
+no accede, la escritura revienta; y aunque accediera, cargar impuestos ajenos a
+cada producto que uno crea desde su compañía no es lo que nadie espera.
+
+**La corrección** fue quitar el `create`: v20 ya hace eso en `account`
+(`_force_default_tax`, con sudo, para los productos sin compañía). Dos pruebas
+nuevas (`test_producto_impuestos_multicompania.py`): un usuario con acceso a una
+sola compañía crea un producto con la otra al lado, y un producto que ya trae su
+IVA no recibe además el por defecto.
+
+**Dos fallos más que destapó la misma importación**, cada uno en su módulo:
+
+- **`Costo $` se perdía al crear** (`mornix_dual_currency` 1.8.1). El campo vive
+  en la variante, y al crear la plantilla el inverso corre antes de que exista:
+  un producto importado con «Costo $: 0,52» quedaba en 0,00 (escribirlo después
+  sí funcionaba). Se declara en `_get_related_fields_variant_template()`, que es
+  como el núcleo trata `standard_price`. Dos pruebas.
+- **Crear una compañía reventaba con Importaciones instalado**
+  (`foreing_trade_import` 1.2.1): su hook creaba las tasas TSA/TSS sin grupo de
+  impuestos —obligatorio en v20— y exigía país con `UserError`, con lo que
+  ninguna compañía sin país se podía crear (tres pruebas de esta localización
+  caían solo en `odoo20`). Ahora busca o crea el grupo, y sin país no hace nada
+  hasta que se le ponga.
+
+**Comprobado** reproduciendo la importación del usuario (25 productos) desde el
+shell como administrador: 25 de 25, con «IVA 16% venta» y «IVA 16% compra», el
+costo en Bs y **Costo $ 0,52**.
 
 ## 7. Cómo levantarlo
 

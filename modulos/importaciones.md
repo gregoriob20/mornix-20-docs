@@ -229,6 +229,16 @@ movió antes a su propia categoría «Importados», para que el cambio a FIFO co
 valoración automática no tocara la categoría «Gastos» que comparte con los
 servicios.
 
+## 8 ter. La compañía nueva ya no revienta (1.2.1)
+
+El hook que crea las tasas aduaneras TSA y TSS al crear una compañía exigía país
+con `UserError` y creaba los impuestos **sin grupo de impuestos**, que en v20 es
+obligatorio: en una base con este módulo no se podía crear ninguna compañía. Se
+destapó por las pruebas de la localización, que crean compañías de prueba, al
+instalar Importaciones en `odoo20`. Ahora busca o crea el grupo (como ya hacía
+el hook de instalación), sin país no hace nada, y las tasas se crean cuando la
+compañía reciba país (`_nx_crear_impuestos_aduana`).
+
 ## 9. Lo que hay que saber antes de montarlo
 
 - **La compañía necesita país** (punto 5).
