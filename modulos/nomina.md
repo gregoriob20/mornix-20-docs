@@ -218,12 +218,28 @@ pagado— comprueban antes si el campo está.
   (`invisible="state != 'draft'"` en `close_payslip_run`). Está documentado en
   la guía tal como se comporta; decidir si el lote debe cerrarse solo cuando
   todos sus recibos estén en «Hecho» es una mejora pendiente.
-- **La pestaña Nómina de la ficha del empleado sale con rótulos encimados**
-  («Nuevo contrato» sobre la fecha, «Bs/mes» sobre el salario). Es la
-  maquetación de v20 sobre los campos de la localización: cosmético, pero es
-  lo primero que ve quien configura a un empleado. Los rótulos en inglés que
-  tenía («Salary Cestaticket», «Mandatory Social Security») ya están
-  traducidos: ver «Traducciones» más abajo.
+- ~~**La pestaña Nómina de la ficha del empleado sale con rótulos encimados**~~
+  **Resuelto el 23 de septiembre de 2026.** No era la maquetación de v20: era
+  un `<group>` que `l10n_ve_payroll_bonus` metía **dentro** de
+  `//group[@name='contract']`. Un grupo anidado convierte al padre en grupo de
+  columnas, no de rejilla etiqueta/valor, y todo lo que había en él —los campos
+  del core y los de la localización— se apilaba a lo ancho: los `o_row` encogían
+  a un píxel («Bs» sobre «/ mes», el importe ilegible) y la casilla «Recibe
+  comisión» perdía su rótulo. Se destapó midiendo el DOM con Playwright
+  (`grid-template-columns` del grupo y anchos de cada fila), no a ojo. Cambios,
+  cada uno en su módulo:
+
+  | Módulo | Versión | Qué |
+  |---|---|---|
+  | `l10n_ve_payroll_bonus` | 1.0.3 | El anticipo quincenal va como etiqueta + fila, sin `<group>` anidado |
+  | `l10n_ve_payroll_salary_fields` | 1.0.3 | El importe no repite la moneda (`no_symbol`: la enseña el selector); «/ mes» y «/ hora» en línea; la **fecha de fin** en su propia fila, porque «inicio → al → fin → Nuevo contrato» no cabe en la columna (los hijos de un `o_row` encogen por CSS del núcleo) |
+  | `mnx_l10n_ve_payroll_hr_contract_history` | 1.0.2 | El botón **Historial** pasa de la fila de fechas a la cabecera «Resumen del contrato» |
+  | `l10n_ve_payroll_estimated_profits` | 1.0.2 | Marcadores «Desde / Hasta» |
+  | `l10n_ve_payroll_hr_payroll`, `l10n_ve_payroll_employee` | 1.0.3 | El término compartido «Tipo de sueldo» estaba traducido como «Tipo de salario por defecto» |
+  | `l10n_ve_payroll_employee_seniority` | 1.0.1 | «Antigüedad» con acento |
+
+  Lo que sigue en inglés en esa pestaña —«Load a Template», «40 hours/week»—
+  es del propio `hr` de v20.
 
 ### El «Instructor» del empleado dejó de ser obligatorio (`l10n_ve_payroll_employee` 1.0.2)
 

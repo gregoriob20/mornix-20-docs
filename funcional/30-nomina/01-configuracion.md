@@ -114,7 +114,7 @@ cambia en todas a la vez.
 3. **Referencia**: un código corto y estable, por ejemplo `QUINC`. Los informes
    y las fórmulas lo usan.
 4. **Tipo de estructura**: el creado en el paso 1. Al elegirlo, **Moneda** y
-   **Tipo de salario por defecto** se rellenan solos.
+   **Tipo de sueldo** se rellenan solos.
 5. **Pago programado predeterminado**: *Quincenal*, *Mensual*… Es lo que
    propone el lote al crearse.
 6. **Departamentos**: opcional. Si se deja vacío, la estructura vale para todos.
