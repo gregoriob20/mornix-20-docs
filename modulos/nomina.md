@@ -225,6 +225,16 @@ pagado— comprueban antes si el campo está.
   tenía («Salary Cestaticket», «Mandatory Social Security») ya están
   traducidos: ver «Traducciones» más abajo.
 
+### El «Instructor» del empleado dejó de ser obligatorio (`l10n_ve_payroll_employee` 1.0.2)
+
+v18 exigía el instructor (`coach_id`) en la ficha del empleado, y la migración
+lo repuso igual en el formulario —v20 lo había quitado de ahí—. El usuario lo
+pidió opcional el 23 de septiembre de 2026: no toda empresa asigna instructor,
+y exigirlo frenaba el alta de empleados en `odoo20`. Sigue en el formulario,
+junto al responsable, sin `required`; correo de trabajo, departamento, cédula y
+país siguen siendo obligatorios. Actualizado en `odoo20`, `nomina_demo` y
+`auromin`.
+
 ## 7. El tablero: lo que se pregunta cada cierre
 
 `mornix_l10n_ve_payroll_dashboard`, escrito en esta migración, responde con
