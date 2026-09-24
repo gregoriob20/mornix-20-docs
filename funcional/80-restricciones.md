@@ -25,7 +25,12 @@ curso.
 | Editar vistas desde la interfaz | Lo mismo: un cambio hecho ahí no queda en el repositorio y se pierde en la siguiente actualización |
 
 **Instalar y actualizar módulos sí funciona con normalidad.** La restricción
-solo afecta a editar vistas a mano.
+solo afecta a editar vistas a mano. **Guardar los Ajustes** de cualquier
+aplicación también funciona: Odoo enciende y apaga algunas vistas al guardar
+(por ejemplo, la de «producto obligatorio» en Ventas), y eso no cuenta como
+editarlas. Si al guardar Ajustes le salió *«Solo el superusuario puede
+modificar vistas del sistema»*, era un defecto corregido en septiembre de 2026:
+actualice la localización.
 
 ## Datos obligatorios
 

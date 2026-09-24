@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 221 pruebas sin errores ni advertencias**.
+> 223 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.35.0`).
@@ -953,6 +953,17 @@ ni tocar vistas del sistema desde la interfaz.
 > superusuario, así que no la estorba, pero un administrador normal no podrá
 > editar vistas desde la interfaz. Es lo que el cliente quiere para que la
 > localización no se altere sin pasar por el repositorio.
+>
+> **Afinado en 1.40.2** (24 de septiembre de 2026): al administrador le saltaba
+> el candado al **guardar los Ajustes del Punto de venta**. La causa era el
+> propio Odoo: `sale.res.config.settings.set_values()` enciende o apaga la
+> vista `view_order_form_mandatory_product` escribiendo `active`, como el
+> usuario y sin `sudo`. Eso no es editar una vista —no toca la arquitectura y
+> se rehace en cada guardado—, así que el candado deja pasar una escritura que
+> solo cambie `active` y cualquier operación con `env.su`. Crear, borrar o
+> reescribir vistas desde la interfaz sigue bloqueado. Dos pruebas nuevas en
+> `TestCandadoVistas`: el `active` pasa (y con otro campo al lado, no), y
+> guardar `res.config.settings` como administrador no choca con el candado.
 
 ### 6.15 Reporte ARC (versión 1.30.0)
 
