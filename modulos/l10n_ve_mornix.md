@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 223 pruebas sin errores ni advertencias**.
+> 298 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.35.0`).
@@ -1997,6 +1997,91 @@ IVA no recibe además el por defecto.
 **Comprobado** reproduciendo la importación del usuario (25 productos) desde el
 shell como administrador: 25 de 25, con «IVA 16% venta» y «IVA 16% compra», el
 costo en Bs y **Costo $ 0,52**.
+
+### 6.36 Los 16 defectos de la segunda revisión (1.41.0; `mornix_dual_currency` 1.8.2)
+
+El informe «Defectos a corregir · Localización Venezuela · Odoo 20» (rondas del
+7, 8 y 21 de septiembre de 2026) trajo 16 defectos con evidencia. La tabla con
+el estado de cada uno está en la guía
+[Respuesta a la revisión](../funcional/90-respuesta-a-la-revision.md); aquí, lo
+que conviene saber del código.
+
+**H-03, el plan de cuentas.** No es un defecto nuestro sino de la plantilla
+`l10n_ve` de v20: 236 de 278 cuentas vienen como `asset_current`. Se añadió
+`models/nx_plan_cuentas.py`: un mapa prefijo → tipo (`111` caja, `114` pagos
+anticipados, `12` fijo, `2` pasivo corriente, `25` largo plazo, `3` patrimonio,
+`4` cuentas de orden, `5` ingresos, `6` costo directo, `7` gastos, `91` otros
+egresos, `92` otros ingresos…), aplicado en `_post_load_data` al cargar el plan
+y disponible como `res.company.nx_retipar_plan_cuentas()` para una base que ya
+lo tenía. **Nunca toca** las cuentas de tipo por cobrar, por pagar, caja,
+tarjeta ni resultados no distribuidos: esas las puso Odoo para los diarios y la
+conciliación. De paso carga las traducciones `name@es` de la plantilla. En
+`odoo20` retipó 227 cuentas; en `auromin`, 227; los nombres pasaron a español
+(«7111006 PUBLICIDAD», «2172002 RETENCIONES I.S.L.R. PROVEEDORES», pasivo
+corriente).
+
+**H-09, el resumen de IVA.** `periods_tax_withholding` sumaba **todas** las
+retenciones del período: las que nosotros practicamos a proveedores (una deuda
+con el SENIAT) junto a las que nos practicaron los clientes (un crédito). Con
+las ajenas la casilla 27 consumía la cuota y el impuesto del período salía en
+cero (467.451,16 Bs en la prueba del revisor). Ahora filtra `nx_type` de venta y
+resta la nota de crédito. **H-24**: la casilla 19 (excedente anterior) llevaba
+en «base imponible» el total de compras del período; va en 0,00, porque un
+excedente no es una compra. **H-14**: la casilla 22 imprimía el factor
+(«0,99») en vez del porcentaje («98,79 %»).
+
+**H-05 y H-23, retención municipal.** El asiento de una nota de crédito se
+invierte (`_nx_lineas_asiento` intercambia debe y haber cuando `move_type` es
+`out_refund`/`in_refund`) y el reporte lleva base y retenido con el signo del
+total. El comprobante manual: `onchange` sobre `move_id` que trae cuenta, diario
+y una línea por concepto con la base convertida (`_nx_valores_linea_retencion`,
+el mismo que usa la generación automática); el `onchange` del concepto en la
+línea también rellena la base; `_nx_check_publicable` impide publicar sin líneas,
+en 0,00 o sin cuenta; y `action_cancel` ya no exige anular la factura —una
+factura cobrada y declarada no se anula por un comprobante mal hecho—. El campo
+`amount` se rotula «Total retenido». La prueba antigua que fijaba «cancele
+primero la factura» se reescribió al comportamiento nuevo.
+
+**H-22, relación de IVA retenido.** `monto_suj_retencion` tomaba
+`amount_tax` de la factura, que va en su moneda: 800 $ en una fila y bolívares
+en las demás. Ahora suma `nx_amount` de las líneas de impuesto del comprobante,
+ya en bolívares, con signo en notas de crédito.
+
+**H-12, libro fiscal.** `action_confirm` marcaba como declaradas todas las
+facturas de `_get_domain()`, que no lleva fechas (el SQL del informe las aplica
+aparte): un libro de septiembre marcaba junio y agosto y pisaba la marca de sus
+libros. Ahora acota por `date` al período y excluye lo declarado en otro libro
+confirmado.
+
+**H-16, H-19, H-20, ISLR.** `nx_action_done` rechaza un comprobante ya hecho o
+cancelado (no «no confirmado»: «Confirmar» llega a él desde borrador, §6.30) y
+`nx_action_cancel`, uno cancelado; el botón se oculta en cancelado. El compute
+`_nx_retention_rate` devolvía un diccionario y no asignaba: `read([])` y la
+exportación reventaban con «Compute method failed to assign». Y
+`nx_currency_base_amount` / `nx_currency_amount` se rellenan con la base y el
+retenido en la moneda de la factura, a la tasa propia del documento
+(`_nx_factor_divisa`: total en divisa entre total en Bs), 0 en bolívares.
+
+**H-13 y H-15, doble moneda** (`mornix_dual_currency` 1.8.2). El diferencial
+cambiario en divisa se creaba por un delta de un centavo por apunte —el redondeo
+de convertir cada línea aparte— con todas las líneas en 0 Bs; ahora se omite
+cuando `|delta| <= redondeo × apuntes`, y el diferencial real sigue saliendo.
+`nx_balance_ref` dividía el balance entre `nx_rate` aunque el asiento fuera en
+euros (la tasa del euro no da dólares): la tasa del documento solo vale si el
+asiento está en Bs o en la referencial; si no, o sin tasa guardada, se convierte
+a la tasa del día de la referencial.
+
+**H-08 y H-17.** Faltaba la fila de `nimetrix.libro.diario.wizard` en
+`ir.access.csv` (el único asistente sin permiso); «Tipo proveedor» en el libro
+de ventas pasa a «Tipo cliente», y «CÓDIGO RE RETENCIÓN» del ARC a «CÓDIGO DE
+RETENCIÓN».
+
+**Pruebas**: `tests/test_defectos_revision.py` (plan de cuentas por código y
+respeto de las protegidas; resumen solo ventas; línea de ISLR legible y
+exportable; hecho/cancelar no se repiten; retención manual: no publica en
+cero, el `onchange` trae las líneas, se cancela sin tocar la factura, la nota
+de crédito invierte el asiento). Suite completa de la localización en verde en
+`odoo20`; la de doble moneda, 64 en verde.
 
 ## 7. Cómo levantarlo
 

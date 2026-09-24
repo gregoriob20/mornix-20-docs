@@ -214,3 +214,35 @@ Las dos entradas nuevas —Libro Diario y Resumen de compras y ventas— aparece
 junto a los informes que ya conocían:
 
 ![Informes de Venezuela](img/rev-menu-informes.png)
+
+---
+
+# Segunda revisión: los 16 defectos del informe de septiembre
+
+El informe **«Defectos a corregir · Localización Venezuela · Odoo 20»** (rondas
+del 7, 8 y 21 de septiembre de 2026) recoge 16 defectos con su evidencia.
+Qué se hizo con cada uno (versiones: `l10n_ve_mornix` 1.41.0,
+`mornix_dual_currency` 1.8.2):
+
+| ID | Defecto | Estado | Qué se hizo |
+|---|---|---|---|
+| H-01 | No se puede crear ningún producto | **Resuelto** (1.40.1, antes del informe) | Se retiró el `create` que cargaba impuestos de todas las compañías; v20 lo hace en `account` con permisos |
+| H-03 | Plan de cuentas tipificado como activo | **Resuelto** | Tipificación por código al cargar el plan y retipado de las bases existentes; nombres en español |
+| H-09 | La autoliquidación declara cero | **Resuelto** | La casilla 27 solo suma las retenciones que nos practican los **clientes**, con la nota de crédito en negativo |
+| H-05 | La retención municipal no se invierte en la NC | **Resuelto** | El asiento de una nota de crédito va al revés; el reporte lleva base y retenido en negativo |
+| H-23 | Retención municipal manual sin base, publicable en cero, irreversible | **Resuelto** | Al elegir la factura se traen las líneas; no se publica en 0,00; se cancela sin anular la factura; «Amount» → «Total retenido» |
+| H-22 | Listado de IVA mezcla Bs y divisa | **Resuelto** | «Monto sujeto a retención» sale del comprobante, ya en bolívares, con signo en notas de crédito |
+| H-08 | Nadie puede abrir el Libro Diario | **Resuelto** | Permiso del asistente para el grupo de contabilidad |
+| H-12 | Confirmar un libro fiscal bloquea facturas de otros períodos | **Resuelto** | Solo marca las del período y no pisa marcas de otros libros confirmados |
+| H-24 | Excedente de crédito fiscal con el total de compras | **Resuelto** | La casilla 19 lleva base 0,00 (es un crédito arrastrado) |
+| H-13 | Asientos de diferencia de cambio en cero | **Resuelto** | No se crea el diferencial en divisa cuando el delta es el redondeo de las líneas |
+| H-14 | Prorrateo impreso como «0,99» | **Resuelto** | Se imprime como porcentaje: «98,79 %» |
+| H-15 | «Importe adeudado en divisa» falla fuera de USD y Bs | **Resuelto** | La tasa del documento solo se usa si está en Bs o en la referencial; en otra moneda o sin tasa, se convierte a la tasa del día |
+| H-16 | «Hecho» de ISLR no comprueba el estado | **Resuelto** | `nx_action_done` rechaza un comprobante hecho o cancelado; `nx_action_cancel`, uno cancelado; el botón Cancelar se oculta |
+| H-17 | Etiquetas en el libro de ventas y en el ARC | **Resuelto** | «Tipo cliente» en el libro de ventas; «CÓDIGO DE RETENCIÓN» en el ARC |
+| H-19 | No se puede exportar el detalle de ISLR | **Resuelto** | `nx_retention_rate` se calcula y asigna siempre |
+| H-20 | El detalle de ISLR no guarda el importe en divisa | **Resuelto** | Base y retenido en la moneda de la factura, a la tasa del documento |
+
+Todo con prueba (`tests/test_defectos_revision.py` y las pruebas de cada
+modelo actualizadas) y aplicado en `odoo20` y `auromin`.
+

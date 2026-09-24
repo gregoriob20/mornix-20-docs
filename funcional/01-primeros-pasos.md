@@ -11,6 +11,18 @@ funciona.
 Se carga una sola vez, en **Contabilidad → Configuración → Ajustes**, en el
 apartado del paquete de localización fiscal.
 
+**Los tipos de cuenta los pone la localización.** La plantilla venezolana que
+trae Odoo 20 deja casi todas las cuentas (236 de 278) como «Activo corriente»,
+sean pasivos, patrimonio, ingresos o gastos, y con eso ni el Balance General ni
+el Estado de Resultados ni el cierre de ejercicio salen bien. Al cargar el plan,
+la localización tipifica cada cuenta por su código —1 activo, 2 pasivo, 3
+patrimonio, 4 cuentas de orden, 5 ingresos, 6 costos, 7 gastos, 9 otros
+ingresos y egresos— y carga los nombres en español. Las cuentas por cobrar, por
+pagar, caja y bancos no se tocan.
+
+Si el plan ya estaba cargado antes de esta versión, el equipo técnico corre el
+retipado una vez (ficha técnica, §6.36); ya se hizo en `odoo20` y en `auromin`.
+
 ## Datos de la compañía
 
 En **Ajustes → Compañías**:

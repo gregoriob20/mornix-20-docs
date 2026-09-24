@@ -37,10 +37,41 @@ alícuota a lo que le corresponde.
 En facturas en divisa, la base se toma en bolívares **a la tasa de la factura**,
 la misma con la que se asentó, no la del día en que se genera la retención.
 
+## El comprobante manual
+
+Cuando la retención no se generó sola —una factura anterior a la configuración,
+o un concepto que no estaba en la línea—, se crea a mano desde **Retenciones
+municipales → Nuevo**: al elegir la **Factura**, las líneas se llenan solas,
+una por concepto municipal, con la **base imponible ya convertida a
+bolívares** y su alícuota; solo hay que revisar y **Publicar**.
+
+**Por qué no deja publicar en cero**: un comprobante con importe 0,00 se
+numeraba, generaba su asiento con las dos líneas vacías y quedaba enlazado a la
+factura sin retener nada. Ahora avisa: *«La retención municipal está en 0,00:
+revise la base imponible y la alícuota»*.
+
 ## Deshacer
 
-Devolver la factura a borrador deshace el comprobante y su asiento. Al volver a
-publicarla se genera uno nuevo, con número nuevo.
+**Cancelar** en el comprobante deshace su asiento y lo deja cancelado. La
+factura **no se toca**: está cobrada y quizá declarada, y un comprobante mal
+hecho no es motivo para anularla (antes el sistema exigía cancelar la factura
+primero).
+
+Devolver la factura a borrador también deshace el comprobante y su asiento. Al
+volver a publicarla se genera uno nuevo, con número nuevo.
+
+## La nota de crédito
+
+La retención de una nota de crédito **invierte** la de su factura: si la
+factura abonó la cuenta del cliente y cargó la de retención, la nota de crédito
+hace lo contrario, y el saldo del cliente queda en cero. En el **Reporte de
+Retenciones Municipales** la fila de la nota de crédito sale con total, base y
+retenido en negativo.
+
+**Ejemplo.** Factura de 200.000 Bs con retención municipal del 2 % = 4.000 Bs:
+el asiento abona 4.000 a la cuenta por cobrar del cliente. Nota de crédito por
+la misma factura: el asiento **carga** 4.000 a la cuenta por cobrar; los dos
+apuntes se compensan y el cliente no debe ni se le debe nada por ese concepto.
 
 ## El reporte del período
 
