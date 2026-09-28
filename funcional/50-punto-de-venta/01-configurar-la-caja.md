@@ -370,7 +370,7 @@ venta; conviene combinarlo con la búsqueda por cédula o RIF (apartado 7).
 ![Las tres categorías de pago de la demo](../img/tpv-categorias-pago.png)
 
 **Punto de venta → Configuración → Categoria de pagos** (también en
-Contabilidad → Configuración). Son etiquetas libres que agrupan métodos en los
+Contabilidad → Configuración → Facturación). Son etiquetas libres que agrupan métodos en los
 reportes de cierre y en el Reporte Z: «Efectivo», «Punto de venta»,
 «Divisas». Cree una por cada grupo que el cierre deba totalizar por separado y
 asígnela en **Categoría de pago** de cada método. Sin categoría, el método

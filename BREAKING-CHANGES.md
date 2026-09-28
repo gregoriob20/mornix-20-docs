@@ -13,17 +13,39 @@ version_info = (19, 5, 0, ALPHA, 1, '')   # odoo/release.py
 ```
 
 Es decir, **la serie que reporta el runtime es `19.5`, no `20.0`**. Trabajamos
-sobre master tratandolo como v20 por decision del proyecto, porque la rama `20.0`
-todavia no existe en `odoo/odoo` (solo hay `16.0`, `17.0`, `18.0`, `19.0` y
-`master`).
+sobre master tratandolo como v20 por decision del proyecto, porque cuando
+empezo la migracion la rama `20.0` no existia.
 
-Consecuencias a re-verificar cuando Odoo publique la rama `20.0`:
+**Desde el 26 de septiembre de 2026 la rama `20.0` existe en `odoo/odoo`**
+(`version_info = (20, 0, 0, FINAL, 0, '')`, commit `17ff827a1`). Se bifurco de
+master el 10 de septiembre (`b7326692b`) y va 3.239 commits por delante del
+master que tenemos fijado (`febd67b1c`, 3 de agosto). El 28 de septiembre se
+comparo rama contra modulos: lo que rompe esta en este archivo, cada entrada
+con su commit de Odoo; el estado general, en
+[MIGRATION.md](MIGRATION.md#la-rama-200-comparacion-y-estado).
 
-- [ ] Codigo del cliente que compare contra `odoo.release.version_info` vera `19.5`.
-- [x] El campo `version` de los manifests: resuelto usando la forma corta, que
-      Odoo prefija con la serie vigente. Ver mas abajo.
-- [ ] APIs de master pueden cambiar antes del release: revisar todo lo marcado
-      como `RIESGO-MASTER` en este archivo.
+Como se prueba contra la rama sin tocar el entorno de trabajo:
+
+```bash
+git -C /opt/odoo-src/master worktree add /opt/odoo-src/20.0 origin/20.0
+cd docker && docker compose --profile v20rel run --rm odoo20rel \
+    odoo -d rel_test --db-filter '^rel_test$' ...
+```
+
+El servicio `odoo20rel` (perfil `v20rel` de `compose.yaml`) es el mismo
+contenedor que `odoo20` con `/opt/odoo-src/20.0` montado en lugar de master y
+su propio `filestore`. **Una base creada en master no se actualiza a 20.0**
+(`-u base` aborta en `mail/views/ir_cron_views.xml`: `mail_post_method` no
+existe en `ir.cron`): la comparacion se hizo instalando de cero en `rel_test`.
+
+Consecuencias, revisadas contra la rama:
+
+- [x] Codigo que compare contra `odoo.release.version_info` ve `19.5` en
+      master y `20.0` en la rama. Se usa a proposito en dos sitios (tarifas y
+      sus pruebas) para servir a las dos ramas a la vez; ver mas abajo.
+- [x] El campo `version` de los manifests: la forma corta sirve en las dos.
+- [x] APIs de master que cambiaron antes del release: ocho entradas nuevas,
+      marcadas «(rama 20.0)», todas resueltas salvo `xlwt`.
 
 ## Requisitos de plataforma
 
@@ -483,14 +505,183 @@ existe en el arbol de master, pero dentro solo queda la carpeta `i18n`: no hay
 deja el conteo igual (674 antes, 674 despues) y `base_vat` no aparece. O sea:
 comprobar que la carpeta existe **no basta** para dar la dependencia por buena.
 
-La validacion de RIF/VAT que aportaba hay que buscarla en `base`, o asumirla en
-la propia localizacion.
+La validacion de RIF/VAT que aportaba vive ahora en `base`: `vat_div` en
+`base.view_partner_form` y `_check_vat` en `res.partner`, en master y en la
+rama `20.0` (commit `2be8edf4f`). En master `account` todavia instala
+`base_vat` como dependencia, por eso el `-u` no fallaba alli; en la rama ya no
+hay nada que instalar.
 
-- [ ] Quitar `base_vat` de `depends` y verificar que la validacion del
-      identificador venezolano sigue en pie sin el. Hay un apaño local en el
-      arbol de trabajo (`__manifest__.py` y `views/res_partner.xml`, rotulado
-      «DESACTIVADO SOLO EN LOCAL PARA LA PRUEBA») que **no esta confirmado**:
-      sirve para levantar el entorno, no como solucion.
+- [x] Resuelto el 28 de septiembre de 2026 (`l10n_ve_mornix` 1.41.1,
+      `mornix_currency_rate` 0.8.1): `base_vat` fuera de `depends` y la vista
+      del contacto hereda de `base.view_partner_form` con los mismos `xpath`
+      (`//label[@for='vat']`, `//div[@id='vat_div']`). Verificado en las dos
+      ramas.
+
+## `_table_query` pasa a `_table_sql` en los modelos SQL (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al instalar: la vista SQL se crea sin consulta |
+
+Commit `7809101d2`. En master un modelo `_auto = False` define la propiedad
+`_table_query` (un `str` o un `SQL`) y el ORM la envuelve el mismo, sumando el
+`flush` de `_depends`. En la rama `20.0` ese nombre desaparece: el modelo
+define `_table_sql` y devuelve **ya envuelto** un `SQL("(%s)", …)`.
+
+Sobreescribir `_table_sql` en master para devolver el `str` **rompe master**:
+el ORM lo toma como parametro y PostgreSQL recibe la consulta entre comillas
+(`syntax error at or near "'"`). La forma que sirve a las dos ramas:
+
+```python
+@property
+def _table_query(self):            # master
+    return self._query()
+
+@property
+def _table_sql(self):              # rama 20.0
+    if hasattr(models.BaseModel, '_table_query'):
+        return super()._table_sql  # master: que envuelva el ORM
+    for model_name, fnames in self._depends.items():
+        self.env[model_name].flush_model(fnames)
+    return SQL("(%s)", SQL(self._query()))
+```
+
+Aplicado en `mornix_l10n_ve_payroll_dashboard` 1.0.1 y
+`l10n_ve_payroll_salary_rules_report` 1.0.4.
+
+## Las tarifas pierden «Porcentaje» y `percent_price` (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al instalar: `Wrong @depends on '_compute_price_label' … 'percent_price' not found` |
+
+Commit `a24fc1d44`. `product.pricelist.item.compute_price` pasa de
+`percentage / formula / fixed` a **`discount / markup / fixed`**; el campo
+`percent_price` desaparece (una regla «porcentaje» era una formula sin
+redondeo ni recargo, y al migrar se convierte en `discount` con el mismo valor
+en `price_discount`). Ademas aparecen `is_plain_discount`, `_is_discount_rule()`
+y `_is_plain_discount_rule()`.
+
+`l10n_ve_mornix` y `mornix_dual_currency` sobreescriben `_compute_price`,
+`_compute_price_label` y `_compute_rule_tip` (bases «Costo $», «Precio $»,
+`nx_last_cost_ref`). Como `@api.depends` se resuelve al cargar la clase, no se
+puede preguntar al registro: se decide por version.
+
+```python
+_V20 = release.version_info[:2] >= (20, 0)
+_FORMULA = ('discount', 'markup') if _V20 else ('formula',)
+_LABEL_DEPENDS = (…) + (() if _V20 else ('percent_price',))
+```
+
+Aplicado en `l10n_ve_mornix` 1.41.1 y `mornix_dual_currency` 1.8.3; las
+pruebas que creaban reglas «porcentaje» crean un descuento plano en la rama.
+**Consecuencia practica:** en la rama `20.0` la interfaz ya no ofrece
+«Porcentaje»; una tarifa de cliente con reglas de ese tipo llega convertida a
+«Descuento» por el script de actualizacion de Odoo.
+
+## La ficha del empleado pierde el boton «Crear usuario» (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al instalar: `Element '<button name="action_create_user">' cannot be located` |
+
+`hr.view_employee_form` ya no trae `action_create_user` en la cabecera. El
+boton «Acceso al portal» de `mornix_l10n_ve_payroll_portal` se anclaba «despues
+de» ese boton; desde 1.0.1 se inserta `inside` de `//form/header`, que existe
+en las dos ramas.
+
+## `account.root_payment_menu` («Pagos en linea») desaparece (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al instalar: `External ID not found in the system: account.root_payment_menu` |
+
+Commit `8d8bae149`: los metodos de pago en linea son por proveedor y el menu
+combinado sobra. `nx_pos_dual_currency` colgaba de ahi «Categoria de pagos» en
+Contabilidad; desde 1.0.2 cuelga de **Contabilidad → Configuracion →
+Facturacion** (`account.account_invoicing_menu`), que existe en las dos ramas.
+El menu del Punto de venta no cambia.
+
+## Las lineas del pedido de venta se agrupan en `<column>` (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Al instalar: `//field[@name='order_line']/list/field[@name='price_total'] cannot be located` |
+
+Commit `92d07aad4` («stacked fields in SO»): en la lista de lineas de
+`sale.view_order_form`, producto y descripcion, cantidades, precio y los
+importes van ahora dentro de elementos `<column>` apilados; `price_subtotal` y
+`price_total` ya no son hijos directos de `<list>`. `technical_price_unit` si
+sigue suelto.
+
+Un `xpath` que sirve a las dos ramas toma el hijo directo de la lista sea el
+campo o su columna:
+
+```xml
+<xpath expr="//field[@name='order_line']/list/*[self::field[@name='price_total']
+             or self::column[field[@name='price_total']]]" position="after">
+```
+
+Aplicado en `mornix_dual_currency` 1.8.3 (los subtotales en divisa quedan como
+columnas propias, igual que en master). Las listas de lineas de factura y de
+costos en destino **no** cambiaron.
+
+## `stock.move._set_value` cambia de firma y de momento (rama 20.0)
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | Ejecucion: `TypeError: _set_value() got an unexpected keyword argument 'recompute_date'` |
+
+Master: `_set_value(correction_quantity=None)`; las salidas se valoran
+**antes** de `super()._action_done()` (necesitan la pila FIFO vigente). Rama
+`20.0` (commits `05afda894`, `e6b61e638`, `ed906a325`): `_set_value(
+recompute_date=None, skip_check=False)`, las entradas y salidas se valoran
+**despues** de `_action_done`, la valoracion se «reproduce» desde la fecha
+mas antigua afectada cuando un movimiento cambia de sitio en la linea de
+tiempo, y el COGS se recalcula con `cogs_aml_ids._set_cogs()`.
+
+El gancho del costo en divisa (`nx_cost_stock_move.py`, 1.41.1) pasa los
+argumentos tal cual (`*args, **kwargs`) y se cuelga del final de `_set_value`,
+que en las dos ramas es el momento en que `value` queda fijado. La suite de
+costo en divisa se corrio en la rama; el resultado esta en MIGRATION.md.
+
+## `xlwt` sale de `requirements.txt` (rama 20.0)
+
+| | |
+|---|---|
+| Estado | RIESGO-MASTER |
+| Como falla | Ejecucion, solo si la imagen deja de instalarlo |
+
+La rama `20.0` quita `xlwt==1.3.0` de `requirements.txt` (master lo trae).
+`l10n_ve_mornix` lo usa en dos exportaciones a Excel del libro de IVA
+(`nimetrix_wh_iva_libro_resumen.py`, `nimetrix_wh_iva_list_wizard.py`).
+Nuestra imagen (`docker/requirements-v20.txt`) sigue instalandolo, asi que
+hoy no falla; pero un servidor que instale los requisitos de Odoo 20 sin los
+nuestros se queda sin el.
+
+- [ ] Decidir: mantener `xlwt` como requisito propio del proyecto (documentado
+      en el despliegue) o reescribir las dos exportaciones con `openpyxl`, que
+      Odoo 20 si trae.
+
+## Una base de master no se actualiza a la rama 20.0
+
+| | |
+|---|---|
+| Estado | VERIFICADO |
+| Como falla | `-u base`: `Field "mail_post_method" does not exist in model "ir.cron"` |
+
+Odoo no da soporte a actualizar entre master y la rama que sale de el: los
+scripts de migracion de `odoo/upgrade` van de `19.0` a `20.0`. Una copia de
+`odoo20` levantada con la rama abortaba antes de llegar a nuestros modulos.
+**Consecuencia practica:** cuando se pase la imagen a la rama `20.0`, las
+bases de trabajo se reinstalan (o se restauran de v18 y se migran con
+`upgrade`), no se actualizan en el sitio.
 
 ## Motor de reportes PDF
 

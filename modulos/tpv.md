@@ -148,3 +148,18 @@ que es lo que el importador necesita— y se cargan con `odoo i18n import -w`.
 Lo que sigue en inglés no es nuestro: «Load a Template» en la ficha del
 empleado y «Connect printers to your PoS» en la caja son huecos de la
 traducción es_VE del propio Odoo.
+
+## 8. La rama 20.0 de Odoo: el menú de «Categoria de pagos»
+
+Al instalar el proyecto sobre la rama `20.0` (ver
+[MIGRATION.md](../MIGRATION.md#la-rama-200-comparacion-y-estado)) el TPV
+abortaba con `External ID not found in the system:
+account.root_payment_menu`. Odoo quitó el menú «Pagos en línea» de Contabilidad
+(commit `8d8bae149`): desde que los métodos de pago son de cada proveedor, el
+listado combinado sobra.
+
+`nx_pos_dual_currency` colgaba de ahí el acceso a «Categoria de pagos» en
+Contabilidad. Desde 1.0.2 cuelga de **Contabilidad → Configuración →
+Facturación**, que existe en las dos ramas. El acceso del Punto de venta
+(**Punto de venta → Configuración → Categoria de pagos**), que es por el que
+entra el usuario, no cambia.

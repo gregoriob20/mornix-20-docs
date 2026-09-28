@@ -2083,6 +2083,77 @@ cero, el `onchange` trae las líneas, se cancela sin tocar la factura, la nota
 de crédito invierte el asiento). Suite completa de la localización en verde en
 `odoo20`; la de doble moneda, 64 en verde.
 
+### 6.37 La rama 20.0 de Odoo: lo que cambió y qué hubo que tocar (1.41.1)
+
+Odoo abrió la rama `20.0` el 26 de septiembre de 2026, tres mil commits por
+delante del `master` sobre el que veníamos trabajando. El 28 se instaló el
+proyecto entero sobre la rama, en una base nueva (`rel_test`), y se comparó con
+la misma instalación sobre master (`rel_master`). El resultado y el cómo están
+en [MIGRATION.md](../MIGRATION.md#la-rama-200-comparacion-y-estado); aquí, lo
+que toca a la localización.
+
+**Cuatro cosas rompían.** Las cuatro correcciones sirven a las dos ramas: el
+mismo código instala en master y en 20.0, para no bifurcar mientras la
+migración no haya cortado.
+
+**`base_vat` desapareció del todo.** En master la carpeta existe vacía y
+`account` todavía lo arrastra como dependencia, así que el `-u` no fallaba; en
+la rama no hay nada. La validación del RIF vive en `base` desde el commit
+`2be8edf4f` (`vat_div` en la vista del contacto, `_check_vat` en
+`res.partner`), que es justo lo que la localización extiende. Fuera de
+`depends`, y la vista `nimetrix_view_partner_base_vat_form` hereda ahora de
+`base.view_partner_form` con los mismos `xpath`.
+
+**Las tarifas perdieron el método «Porcentaje»** (commit `a24fc1d44`).
+`compute_price` pasa de `percentage / formula / fixed` a `discount / markup /
+fixed` y el campo `percent_price` ya no existe. La localización sobreescribe
+`_compute_price`, `_compute_price_label` y `_compute_rule_tip` para las bases
+en divisa («Costo $», «Precio $», `nx_last_cost_ref`), y el `@api.depends` de
+la etiqueta nombraba `percent_price`: al instalar, la rama aborta con
+`Wrong @depends on '_compute_price_label'`. Como `@api.depends` se resuelve al
+cargar la clase —antes de que exista registro al que preguntar—, la decisión se
+toma por versión:
+
+```python
+_V20 = release.version_info[:2] >= (20, 0)
+_FORMULA = ('discount', 'markup') if _V20 else ('formula',)
+```
+
+**Consecuencia práctica:** en 20.0 el usuario ya no ve «Porcentaje» al crear
+una regla de tarifa; una regla de ese tipo que venga de v18 llega convertida a
+«Descuento» con el mismo porcentaje por el script de actualización de Odoo.
+
+**El costo en divisa de las salidas se valoraba con la existencia equivocada.**
+En master, `stock_account` valora las salidas **antes** de `_action_done`
+(necesita la pila FIFO vigente); en la rama, **después** (commits `05afda894`,
+`e6b61e638`). El gancho `_set_value` de `nx_cost_stock_move.py` no cambia de
+sitio —sigue colgado del final, que en las dos ramas es cuando `value` queda
+fijado—, pero el promedio en divisa lo calculaba `product._nx_costo_ref_promedio`
+sobre `qty_available`, y en la rama esa existencia **ya no incluye lo que
+acaba de salir**: una entrega de 20 unidades de un lote de 100 valorado en
+5.200 $ se valoraba a 5.200/80 = 65 $ la unidad (1.300 $) en vez de 52 (1.040 $).
+`_nx_cantidad_valorada` devuelve ahora la cantidad de la salida que se está
+excluyendo cuando ya está hecha, que es el estado en el que la rama la
+presenta. En master la salida no está hecha en ese momento, así que no
+compensa nada y el resultado no cambia.
+
+La firma también cambió (`correction_quantity` → `recompute_date`,
+`skip_check`): la sobreescritura pasa `*args, **kwargs` tal cual.
+
+**`Char(size=…)` dejó de truncar en silencio** (commit `022578d4d`). No es una
+rotura: es una mejora que cierra una duda abierta. El número de retención de
+IVA lleva `size=14`; en master, escribir 20 caracteres los cortaba a 14 y la
+validación ni se enteraba —un número equivocado entraba sin aviso—. En la rama,
+el valor llega entero a la `constraint` y **se rechaza**. La prueba que fijaba
+el truncado (`test_un_numero_largo_se_trunca_en_silencio`) distingue rama y
+documenta las dos conductas.
+
+**Pruebas**: las 298 de la localización siguen en verde en `odoo20` (master) y
+las 514 del proyecto entero dan en la rama exactamente los mismos 32 fallos que
+en master sobre una base recién creada —ninguno propio de la rama—. Los 32 son
+de la base de prueba, que no tiene datos de demostración: tasas, documentos
+fiscales y categorías de pago que las suites esperan configuradas.
+
 ## 7. Cómo levantarlo
 
 ```bash

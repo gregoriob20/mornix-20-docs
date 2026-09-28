@@ -174,6 +174,88 @@ Lo que eso obliga a resolver:
   existen en v18.
   - [ ] Definir cuales de esos 13 siguen en uso.
 
+## La rama 20.0: comparacion y estado
+
+**Odoo abrio `20.0` el 26 de septiembre de 2026** (`version_info =
+(20, 0, 0, FINAL, 0, '')`, commit `17ff827a1`). Se bifurco de master el 10 de
+septiembre (`b7326692b`) y va **3.239 commits** por delante del master que
+tenemos fijado (`febd67b1c`, 3 de agosto de 2026). El 28 de septiembre se
+comparo la rama contra los 53 modulos del proyecto.
+
+### Como se prueba sin mover el entorno
+
+La rama vive en un *worktree* del mismo clon y se monta en un servicio aparte:
+
+```bash
+git -C /opt/odoo-src/master worktree add /opt/odoo-src/20.0 origin/20.0
+cd docker
+docker compose --profile v20rel run --rm odoo20rel \
+    odoo -d rel_test --db-filter '^rel_test$' ...
+```
+
+`odoo20rel` (perfil `v20rel`) es el contenedor de siempre con
+`/opt/odoo-src/20.0` en lugar de master y su propio `filestore`
+(`filestore-v20rel`). El entorno de trabajo —`odoo20`, y las bases de los
+clientes— **no se toca**.
+
+**Una base de master no se actualiza a la rama.** `-u base` sobre una copia de
+`odoo20` aborta en el propio nucleo (`mail/views/ir_cron_views.xml`:
+`mail_post_method` no existe en `ir.cron`); los scripts de `odoo/upgrade` van
+de 19.0 a 20.0, no de master a 20.0. La comparacion se hizo instalando de cero
+en `rel_test` (compañia «Prueba 20.0, C.A.», VE/VES/es_VE, plan `ve` cargado),
+y para tener con que comparar se creo `rel_master`, identica pero sobre master.
+
+### Resultado
+
+| | master (`rel_master`) | rama 20.0 (`rel_test`) |
+|---|---|---|
+| Modulos instalados | 53 de 53 | **53 de 53** |
+| Pruebas | 514 | 514 |
+| Fallos | 32 | **32** (los mismos) |
+
+Los 32 fallos **no son de la rama**: fallan igual en master y son de la base
+de prueba, que es una compañia recien creada sin datos de demostracion (tasas,
+documentos fiscales, categorias de pago). En las bases reales (`odoo20`,
+`nomina_demo`, `tpv_test`, `import_test`, `auromin`) las suites siguen en
+verde: 298 de la localizacion, 64 de la doble moneda, 10 de los informes de
+nomina.
+
+Hubo **siete roturas reales** y todas quedaron corregidas, cada una
+compatible con las dos ramas (nada se bifurco: el mismo codigo sirve para
+master y para 20.0). El detalle tecnico de cada una, con su commit de Odoo,
+esta en [BREAKING-CHANGES.md](BREAKING-CHANGES.md):
+
+| Que cambio en 20.0 | Donde dolia | Resuelto en |
+|---|---|---|
+| `base_vat` ya no existe ni como dependencia | `depends` y vista del contacto | `l10n_ve_mornix` 1.41.1, `mornix_currency_rate` 0.8.1 |
+| `_table_query` → `_table_sql` | los dos informes SQL de nomina | `mornix_l10n_ve_payroll_dashboard` 1.0.1, `l10n_ve_payroll_salary_rules_report` 1.0.4 |
+| Tarifas sin «Porcentaje» ni `percent_price` | `_compute_price`, etiqueta y tooltip | `l10n_ve_mornix` 1.41.1, `mornix_dual_currency` 1.8.3 |
+| La ficha del empleado pierde «Crear usuario» | boton «Acceso al portal» | `mornix_l10n_ve_payroll_portal` 1.0.1 |
+| `account.root_payment_menu` desaparece | menu «Categoria de pagos» | `nx_pos_dual_currency` 1.0.2 |
+| Lineas del pedido de venta en `<column>` | subtotales en divisa | `mornix_dual_currency` 1.8.3 |
+| `stock.move._set_value`: otra firma y **despues** de `_action_done` | costo en divisa de las salidas | `l10n_ve_mornix` 1.41.1 |
+
+Dos cosas mas que la rama cambia y conviene tener presentes:
+
+- **`Char(size=…)` deja de truncar en silencio** (commit `022578d4d`): un
+  numero de retencion de mas de 14 caracteres ahora se **rechaza** en lugar de
+  guardarse cortado. Es mejor comportamiento y cierra una duda que teniamos
+  abierta con el cliente; la prueba que fijaba el truncado distingue rama.
+- **`xlwt` sale de `requirements.txt`**. Nuestra imagen lo sigue instalando y
+  el resumen de IVA en Excel funciona, pero es un requisito que ya no es de
+  Odoo. Unico punto abierto de la comparacion.
+
+### Que falta para adoptar la rama
+
+- [ ] Fijar la imagen a `20.0` (`ODOO_SRC`/`Dockerfile.v20`) cuando se decida
+      el corte, y **reinstalar** las bases de trabajo: no se actualizan desde
+      master.
+- [ ] Decidir `xlwt`: requisito propio documentado, o reescribir las dos
+      exportaciones del libro de IVA con `openpyxl`.
+- [ ] Repetir la comparacion cuando se migre la nomina Enterprise: los seis
+      modulos bloqueados por dependencias que no tenemos no entraron en esta
+      prueba.
+
 ## Dependencias externas: el riesgo mayor del proyecto
 
 85.205 lineas (30% del total) son modulos de terceros. **No dependen de nosotros**

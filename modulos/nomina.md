@@ -464,3 +464,44 @@ empleados y crea el usuario de portal de Argenis Rondón
 (`argenis.rondon@demo.mornix`); es lo que usan las capturas
 `nomina-portal-*.png`. **No se ejecuta en la base de un cliente**: allí el
 acceso se da desde la ficha del empleado.
+
+## 13. La rama 20.0 de Odoo: los dos informes SQL y el portal
+
+El 28 de septiembre de 2026 se instaló el proyecto sobre la rama `20.0` de
+Odoo, recién abierta, y se comparó con master (ver
+[MIGRATION.md](../MIGRATION.md#la-rama-200-comparacion-y-estado)). De nómina
+rompían dos cosas.
+
+**Los modelos SQL cambiaron de nombre de propiedad.** El tablero
+(`mnx.payroll.dashboard`) y el informe de reglas salariales
+(`hr.payroll.report`) son modelos `_auto = False`: su «tabla» es una consulta.
+En master esa consulta se declara en `_table_query` y el ORM la envuelve él
+mismo, sumando el `flush` de `_depends`; la rama renombró la propiedad a
+`_table_sql` (commit `7809101d2`) y ahora espera el `SQL` **ya envuelto**.
+
+Definir solo `_table_sql` rompe master de una forma que despista: el ORM toma
+el `str` como parámetro y PostgreSQL contesta `syntax error at or near "'"`.
+Las dos propiedades conviven sobre la misma consulta, y la de 20.0 comprueba
+si el ORM todavía trae la vieja:
+
+```python
+@property
+def _table_sql(self):
+    if hasattr(models.BaseModel, '_table_query'):
+        return super()._table_sql          # master: que envuelva el ORM
+    for model_name, fnames in self._depends.items():
+        self.env[model_name].flush_model(fnames)
+    return SQL("(%s)", SQL(self._query()))
+```
+
+`mornix_l10n_ve_payroll_dashboard` 1.0.1 y
+`l10n_ve_payroll_salary_rules_report` 1.0.4.
+
+**La ficha del empleado perdió el botón «Crear usuario».** El botón «Acceso al
+portal» del módulo del portal se anclaba «después de» `action_create_user`, que
+en la rama ya no está en `hr.view_employee_form`. Desde
+`mornix_l10n_ve_payroll_portal` 1.0.1 se inserta dentro de `//form/header`, que
+existe en las dos ramas y deja el botón en el mismo sitio.
+
+Las diez pruebas de los dos informes y las siete del portal siguen en verde en
+`nomina_demo` (master) y en la base de la rama.
