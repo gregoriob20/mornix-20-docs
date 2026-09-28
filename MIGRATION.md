@@ -294,6 +294,63 @@ Dos cosas mas que la rama cambia y conviene tener presentes:
       modulos bloqueados por dependencias que no tenemos no entraron en esta
       prueba.
 
+## Enterprise: clonado, montado, y por que la nomina no lo usa
+
+`odoo/enterprise` se clono el 28 de septiembre de 2026 con la cuenta de GitHub
+del proyecto. Dos copias, cada una emparejada con su nucleo:
+
+| Ruta | Rama | Punto | La monta |
+|---|---|---|---|
+| `/opt/odoo-src/enterprise` | master (worktree separado) | `dbdf5759a4d`, 29/07/2026 | `odoo20` |
+| `/opt/odoo-src/enterprise-20.0` | `20.0` | `e5186134106`, 13/09/2026 | `odoo20rel` |
+
+El checkout de master va fijado al commit mas cercano al del nucleo
+(`febd67b1c`, 03/08): Enterprise avanza con el core y un desfase de semanas
+rompe. Ocupa 5,2 GB y **no se versiona**: es codigo propietario de Odoo, se
+clona con las credenciales del partner. `/mnt/enterprise` ya estaba en el
+`addons_path`; hasta ahora se saltaba por vacio.
+
+Con eso, de los seis modulos de nomina bloqueados por dependencias externas,
+**tres dejan de estarlo**: los dos que piden `hr_payroll_account` y el de
+unidades organizativas, que pide `hr_appraisal`. Los otros tres siguen
+bloqueados por modulos de terceros que no son de Odoo
+(`bi_odoo_multi_branch_hr`, `l10n_ve_payroll_export_payroll_payments`) y uno
+ademas por `hr_work_entry_contract_enterprise`, que **ya no existe** en
+Enterprise 20.0.
+
+### La nomina se queda en OCA
+
+Instalar `l10n_ve_payroll_hr_payroll_account` arrastra el `hr_payroll` de
+Enterprise, y ese choca de frente con el modulo `payroll` de **OCA**
+(`github.com/OCA/payroll`) sobre el que esta construida toda la nomina
+venezolana: los dos definen `hr.payslip` y `hr.payslip.line`, y el arranque
+muere con
+
+```
+ValueError: 'register_id' declared in 'hr.contribution.register.register_line_ids'
+does not exist on 'hr.payslip.line'
+```
+
+**Decision del proyecto (28/09/2026): en nomina se trabaja con OCA**, no con
+la nomina de Enterprise. Enterprise queda montado para lo que si aporta
+(planificacion, evaluaciones, y lo que haga falta mirar de referencia), pero
+`hr_payroll` no se instala.
+
+Lo que falta para cerrar la parte contable de la nomina con OCA:
+
+- [ ] Portar **`payroll_account` de OCA** a la serie que usamos. Existe en las
+      ramas 16.0, 17.0 y 18.0 del repositorio de OCA, pero **no en la 19.0**,
+      que solo trae `payroll`. Son 666 lineas de Python y depende unicamente de
+      `payroll` y `account`: el mismo trabajo que ya se hizo con `payroll`, en
+      pequeño.
+- [ ] Cambiar entonces `l10n_ve_payroll_hr_payroll_account` (83 lineas) y
+      `l10n_ve_payroll_pre_nomina` para que dependan de `payroll_account` en
+      vez de `hr_payroll_account`.
+
+> `hr_appraisal` quedo **instalado** en `nomina_demo`: entro como dependencia
+> antes de que el intento fallara. No estorba —no es nomina— pero conviene
+> saberlo. Las 17 pruebas de nomina siguen en verde con el puesto.
+
 ## Dependencias externas: el riesgo mayor del proyecto
 
 85.205 lineas (30% del total) son modulos de terceros. **No dependen de nosotros**
