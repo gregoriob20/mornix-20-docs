@@ -505,3 +505,45 @@ existe en las dos ramas y deja el botón en el mismo sitio.
 
 Las diez pruebas de los dos informes y las siete del portal siguen en verde en
 `nomina_demo` (master) y en la base de la rama.
+
+## 14. La contabilidad de la nómina, con OCA
+
+El enlace contable —cuentas de debe y haber en cada regla, diario en el
+contrato y en el lote, y el asiento que se genera al confirmar un recibo— lo
+aporta **`payroll_account` de OCA**, portado el 28 de septiembre de 2026 desde
+la rama 18.0 de [OCA/payroll](https://github.com/OCA/payroll). La rama 19.0 de
+OCA todavía no lo trae.
+
+**Por qué no el de Odoo.** `hr_payroll_account` es de Enterprise y arrastra su
+`hr_payroll`, que choca de frente con el `payroll` de OCA sobre el que está
+construida toda la nómina venezolana: los dos definen `hr.payslip` y
+`hr.payslip.line`, y el arranque muere con `'register_id' ... does not exist on
+'hr.payslip.line'`. Enterprise está clonado y montado en el entorno, pero su
+nómina no se instala.
+
+**Qué cambió al portarlo.** El contrato dejó de ser un modelo aparte:
+`hr.contract` se fundió en `hr.version` y la vista del contrato ahora cuelga de
+`hr`, no del módulo `hr_contract`, que desapareció. Las cuentas de la regla
+salarial perdieron el filtro por `deprecated`, campo que v20 eliminó. El
+detalle está en `addons/payroll_account/MIGRACION-V20.md`.
+
+**Un añadido nuestro.** `hr.version.journal_id` lleva valor por defecto, el
+primer diario de tipo «general» de la compañía. OCA se lo puso al lote de
+recibos pero no al contrato, y el recibo toma de ahí su diario: en la vista es
+obligatorio y de solo lectura, así que un contrato sin diario dejaba el recibo
+sin poder guardarse y sin manera de arreglarlo desde el propio recibo.
+
+> **Consecuencia práctica:** si un recibo se niega a guardarse quejándose del
+> diario, el sitio donde se arregla es el **contrato** del empleado, no el
+> recibo.
+
+**Cancelar un recibo con asiento publicado sigue prohibido.** OCA borra el
+asiento al cancelar; `l10n_ve_payroll_bonus` lo impide cuando está publicado,
+que es deseo del cliente y no cambia.
+
+**Pruebas**: cuatro en `payroll_account` (el recibo con cuentas genera su
+asiento y cuadra, sin cuentas se confirma sin asiento, y el tercero de cada
+apunte sale del tipo de cuenta), en verde en `nomina_demo` y en la base de la
+rama 20.0. Las 65 de nómina siguen en verde. Comprobado además de punta a
+punta: un recibo de 13 líneas genera un asiento publicado y cuadrado de
+12.075 Bs en 6 apuntes.

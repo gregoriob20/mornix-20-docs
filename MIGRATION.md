@@ -336,16 +336,26 @@ la nomina de Enterprise. Enterprise queda montado para lo que si aporta
 (planificacion, evaluaciones, y lo que haga falta mirar de referencia), pero
 `hr_payroll` no se instala.
 
-Lo que falta para cerrar la parte contable de la nomina con OCA:
+La parte contable de la nomina, cerrada con OCA el mismo dia:
 
-- [ ] Portar **`payroll_account` de OCA** a la serie que usamos. Existe en las
-      ramas 16.0, 17.0 y 18.0 del repositorio de OCA, pero **no en la 19.0**,
-      que solo trae `payroll`. Son 666 lineas de Python y depende unicamente de
-      `payroll` y `account`: el mismo trabajo que ya se hizo con `payroll`, en
-      pequeño.
-- [ ] Cambiar entonces `l10n_ve_payroll_hr_payroll_account` (83 lineas) y
-      `l10n_ve_payroll_pre_nomina` para que dependan de `payroll_account` en
-      vez de `hr_payroll_account`.
+- [x] **`payroll_account` de OCA portado** desde la rama 18.0 (la 19.0 solo
+      trae `payroll`). Vive en `addons/payroll_account` del repositorio de
+      nomina, con su `MIGRACION-V20.md`. Lo que cambio: `hr.contract` pasa a
+      `hr.version`, la vista del contrato hereda de `hr` en vez del modulo
+      `hr_contract` —que desaparecio—, y las cuentas de la regla pierden el
+      dominio sobre `deprecated`, campo que v20 elimino.
+- [x] `l10n_ve_payroll_hr_payroll_account` 1.0.1 y `l10n_ve_payroll_pre_nomina`
+      1.0.2 dependen ya de `payroll_account`. Con ellos se actualizaron los
+      comentarios de `l10n_ve_payroll_hr_payroll` 1.0.4 y
+      `l10n_ve_payroll_bonus` 1.0.4, que daban el asiento por no migrado.
+- [x] Añadido nuestro: `hr.version.journal_id` lleva valor por defecto. El
+      recibo toma de ahi su diario y en la vista es obligatorio y de solo
+      lectura, asi que un contrato sin diario dejaba el recibo sin poder
+      guardarse y sin forma de arreglarlo desde el recibo.
+
+**Comprobado de punta a punta** en `nomina_demo`: un recibo de 13 lineas genera
+su asiento publicado y cuadrado (12.075 Bs en 6 apuntes). 65 pruebas de nomina
+en verde en master y las 4 del modulo nuevo tambien en la rama 20.0.
 
 > `hr_appraisal` quedo **instalado** en `nomina_demo`: entro como dependencia
 > antes de que el intento fallara. No estorba —no es nomina— pero conviene
