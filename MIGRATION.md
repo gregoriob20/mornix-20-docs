@@ -182,6 +182,36 @@ septiembre (`b7326692b`) y va **3.239 commits** por delante del master que
 tenemos fijado (`febd67b1c`, 3 de agosto de 2026). El 28 de septiembre se
 comparo la rama contra los 53 modulos del proyecto.
 
+### Donde se ve Odoo 20 funcionando
+
+**https://odoo20rel.migracion.mornix.tech** — base `odoo20rel`, usuario
+`admin`, clave `admin`. Es el unico sitio del entorno que corre la rama
+`20.0`; `odoo20.migracion.mornix.tech` sigue sobre master, que se identifica
+como 19.5, y no cambia.
+
+Lleva los 53 modulos del proyecto, la compañia «Mornix Tech 20.0» (Venezuela,
+VEF, es_VE), el plan de cuentas venezolano ya tipificado por codigo, tasas de
+referencia y el flujo de demostracion puesto: facturas de proveedor y de
+cliente de los cuatro tipos de persona, con sus comprobantes de retencion de
+IVA e ISLR numerados.
+
+Se sirve con el servicio `odoo20rel` del `compose.yaml` (perfil `v20rel`,
+`restart: unless-stopped`, sin puertos: Caddy lo alcanza por la red interna).
+Para levantarlo despues de pararlo:
+
+```bash
+cd docker && docker compose --profile v20rel up -d odoo20rel
+```
+
+> **Una base recien creada necesita dos cosas que no se ven.** `nx_rate` de
+> `account.move` toma por defecto la tasa de la moneda de referencia **del dia
+> de hoy**: sin ella se queda en cero y toda factura en divisa se contabiliza
+> 1:1 (una compra de 100 USD entra como 100 Bs). Y el administrador de una base
+> creada con `base` no queda en los grupos de cada aplicacion, asi que las
+> pantallas salen vacias. Las dos cosas las resuelve
+> `scripts/configurar_auromin_post.py`, que conviene mirar antes de montar
+> cualquier base nueva.
+
 ### Como se prueba sin mover el entorno
 
 La rama vive en un *worktree* del mismo clon y se monta en un servicio aparte:
@@ -220,7 +250,7 @@ documentos fiscales, categorias de pago). En las bases reales (`odoo20`,
 verde: 298 de la localizacion, 64 de la doble moneda, 10 de los informes de
 nomina.
 
-Hubo **siete roturas reales** y todas quedaron corregidas, cada una
+Hubo **ocho roturas reales** y todas quedaron corregidas, cada una
 compatible con las dos ramas (nada se bifurco: el mismo codigo sirve para
 master y para 20.0). El detalle tecnico de cada una, con su commit de Odoo,
 esta en [BREAKING-CHANGES.md](BREAKING-CHANGES.md):
@@ -234,6 +264,7 @@ esta en [BREAKING-CHANGES.md](BREAKING-CHANGES.md):
 | `account.root_payment_menu` desaparece | menu «Categoria de pagos» | `nx_pos_dual_currency` 1.0.2 |
 | Lineas del pedido de venta en `<column>` | subtotales en divisa | `mornix_dual_currency` 1.8.3 |
 | `stock.move._set_value`: otra firma y **despues** de `_action_done` | costo en divisa de las salidas | `l10n_ve_mornix` 1.41.1 |
+| Owl 3 lanza Error ante `static props` | la tasa del BCV en la barra superior, que dejaba **toda** la interfaz en blanco | `mornix_currency_rate` 0.8.2 |
 
 Dos cosas mas que la rama cambia y conviene tener presentes:
 
@@ -250,7 +281,12 @@ Dos cosas mas que la rama cambia y conviene tener presentes:
 
 - [ ] Fijar la imagen a `20.0` (`ODOO_SRC`/`Dockerfile.v20`) cuando se decida
       el corte, y **reinstalar** las bases de trabajo: no se actualizan desde
-      master.
+      master. El sitio `odoo20rel` ya enseña como queda.
+- [ ] Decidir que hace `nx_rate` cuando no hay tasa del dia: hoy se queda en
+      cero y la factura en divisa se contabiliza 1:1, sin aviso. Y una factura
+      en una tercera moneda (EUR) toma la tasa de la moneda de **referencia**
+      (USD), no la suya. Los dos casos son de siempre, no de la rama, pero
+      saltan en cuanto se monta una base nueva.
 - [x] `xlwt`: resuelto. El libro de IVA se escribe con `openpyxl` y `xlwt`
       salio de `docker/requirements-v20.txt`. La imagen todavia lo trae
       instalado de antes; desaparece en la proxima reconstruccion.

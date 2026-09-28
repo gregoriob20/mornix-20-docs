@@ -44,7 +44,7 @@ Consecuencias, revisadas contra la rama:
       master y `20.0` en la rama. Se usa a proposito en dos sitios (tarifas y
       sus pruebas) para servir a las dos ramas a la vez; ver mas abajo.
 - [x] El campo `version` de los manifests: la forma corta sirve en las dos.
-- [x] APIs de master que cambiaron antes del release: ocho entradas nuevas,
+- [x] APIs de master que cambiaron antes del release: nueve entradas nuevas,
       marcadas «(rama 20.0)», **todas resueltas**.
 
 ## Requisitos de plataforma
@@ -666,6 +666,10 @@ asistente del listado de retenciones lo importaba sin usarlo.
       se escribe con **`openpyxl`**, que es la libreria de Excel que el propio
       Odoo trae en las dos ramas. `xlwt` fuera de
       `docker/requirements-v20.txt`; ningun modulo del proyecto lo importa ya.
+      La imagen `odoo-migration/odoo20` se reconstruyo el mismo dia, asi que
+      `xlwt` tampoco esta instalado: `import xlwt` da `ModuleNotFoundError`.
+      La imagen anterior quedo etiquetada `odoo20:pre-openpyxl-20260928` por si
+      hay que volver atras.
 
 **De paso, el archivo cambia de formato.** `xlwt` solo escribia `.xls` (Excel
 97, firma OLE2); `openpyxl` escribe `.xlsx` (un zip, firma `PK`). El asistente
@@ -686,6 +690,40 @@ maquetacion del libro. Dos detalles que costaron:
 - Al **releer** con openpyxl, las celdas combinadas devuelven el estilo por
   defecto aunque el archivo lo traiga. Una prueba que compruebe bordes tiene
   que mirar el XML del archivo, no la relectura.
+
+## Owl 3 rechaza `static props` y deja la interfaz en blanco (rama 20.0)
+
+| | |
+|---|---|
+| Estado | RESUELTO |
+| Como falla | En el navegador: la aplicacion entera sale en blanco, sin error de servidor |
+
+Las dos ramas llevan Owl 3, pero solo la `20.0` **lanza un Error** cuando un
+componente declara el esquema de props a la vieja usanza:
+
+```
+Error: Component "CurrencyRateNimetrix" defines a static "props" or
+"defaultProps", which Owl 3 ignores. Declare the props schema through
+"useProps" instead.
+```
+
+`mornix_currency_rate` pinta la tasa del BCV en la barra superior, y un
+componente de la barra superior que revienta **se lleva por delante todo el
+cliente web**: el usuario ve una pagina en blanco, sin un solo error en el log
+del servidor. El unico rastro esta en la consola del navegador.
+
+Se corrige usando la forma nueva, que el nucleo ya emplea en master:
+
+```javascript
+import { Component, useProps } from "@odoo/owl";
+...
+props = useProps({});        // en vez de  static props = {};
+```
+
+`mornix_currency_rate` 0.8.2. **Consecuencia practica:** al mirar la rama, un
+modulo puede instalar y actualizar en verde y aun asi dejar la aplicacion
+inservible. La unica forma de verlo es abrir cada pantalla en un navegador con
+la consola escuchando; instalar sin errores no prueba nada.
 
 ## Una base de master no se actualiza a la rama 20.0
 
