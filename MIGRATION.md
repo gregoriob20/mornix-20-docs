@@ -241,17 +241,19 @@ Dos cosas mas que la rama cambia y conviene tener presentes:
   numero de retencion de mas de 14 caracteres ahora se **rechaza** en lugar de
   guardarse cortado. Es mejor comportamiento y cierra una duda que teniamos
   abierta con el cliente; la prueba que fijaba el truncado distingue rama.
-- **`xlwt` sale de `requirements.txt`**. Nuestra imagen lo sigue instalando y
-  el resumen de IVA en Excel funciona, pero es un requisito que ya no es de
-  Odoo. Unico punto abierto de la comparacion.
+- **`xlwt` salio de `requirements.txt`**, y con el el Excel del Resumen de
+  Ventas y Compras, que era lo unico que lo usaba. Reescrito con `openpyxl`
+  —la libreria de Excel que Odoo trae en las dos ramas— el 28 de septiembre
+  (`l10n_ve_mornix` 1.42.0). El archivo pasa de `.xls` a `.xlsx`.
 
 ### Que falta para adoptar la rama
 
 - [ ] Fijar la imagen a `20.0` (`ODOO_SRC`/`Dockerfile.v20`) cuando se decida
       el corte, y **reinstalar** las bases de trabajo: no se actualizan desde
       master.
-- [ ] Decidir `xlwt`: requisito propio documentado, o reescribir las dos
-      exportaciones del libro de IVA con `openpyxl`.
+- [x] `xlwt`: resuelto. El libro de IVA se escribe con `openpyxl` y `xlwt`
+      salio de `docker/requirements-v20.txt`. La imagen todavia lo trae
+      instalado de antes; desaparece en la proxima reconstruccion.
 - [ ] Repetir la comparacion cuando se migre la nomina Enterprise: los seis
       modulos bloqueados por dependencias que no tenemos no entraron en esta
       prueba.

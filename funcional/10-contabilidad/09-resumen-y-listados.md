@@ -14,11 +14,16 @@ compara con el mes anterior.
 > Compruébalo la primera vez: si el rango pedido no es exactamente una quincena
 > o un mes, la comparación puede no ser la que esperas.
 
+El botón deja el archivo listo para descargar: **`Resume_ventas_compras.xlsx`**.
+Hasta septiembre de 2026 era un `.xls` del formato viejo, que Excel abría con
+un aviso; si tienes un proceso que lo recoja por su nombre, cámbialo.
+
 ## Listado de retenciones de IVA
 
 **Informes de Venezuela → Listado Retención IVA**. Se elige el rango de fechas
 y si se quieren las de clientes, las de proveedores o las de un contacto
-concreto. Sale en Excel.
+concreto. **Se imprime en PDF**: es un informe de presentación, para firmar o
+archivar, no una hoja para seguir trabajando.
 
 Sirve para revisar lo emitido en un período sin abrir comprobante por
 comprobante.
@@ -28,7 +33,9 @@ comprobante.
 ## Listado de retenciones de ISLR
 
 **Informes de Venezuela → Listado Retención ISLR**. Igual que el anterior, con
-el rango de fechas y el filtro de clientes o proveedores.
+el rango de fechas y el filtro de clientes o proveedores. Este sí trae los dos
+botones: **Imprimir PDF** e **Imprimir XLSX**, por si hay que cruzar las cifras
+en una hoja de cálculo.
 
 ![El detalle de ISLR retenido, con concepto, tarifa y sustraendo](../img/formato-listado-islr.png)
 
@@ -46,6 +53,6 @@ las dos: si no, el asistente avisa en vez de sacar las dos mezcladas.
 |---|---|
 | Cuadrar el IVA antes de declarar | Resumen de ventas y compras |
 | Entregar al SENIAT | Libros fiscales y TXT/XML |
-| Revisar lo retenido en un período | Los listados en Excel |
+| Revisar lo retenido en un período | Los listados de IVA (PDF) o de ISLR (PDF o XLSX) |
 | Dar a un proveedor su comprobante | El PDF del comprobante, o su portal |
 | Dar a un proveedor el resumen del año | El ARC |

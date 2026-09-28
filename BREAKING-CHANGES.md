@@ -45,7 +45,7 @@ Consecuencias, revisadas contra la rama:
       sus pruebas) para servir a las dos ramas a la vez; ver mas abajo.
 - [x] El campo `version` de los manifests: la forma corta sirve en las dos.
 - [x] APIs de master que cambiaron antes del release: ocho entradas nuevas,
-      marcadas «(rama 20.0)», todas resueltas salvo `xlwt`.
+      marcadas «(rama 20.0)», **todas resueltas**.
 
 ## Requisitos de plataforma
 
@@ -655,19 +655,37 @@ costo en divisa se corrio en la rama; el resultado esta en MIGRATION.md.
 
 | | |
 |---|---|
-| Estado | RIESGO-MASTER |
-| Como falla | Ejecucion, solo si la imagen deja de instalarlo |
+| Estado | RESUELTO |
+| Como falla | Ejecucion, en un servidor que instale solo los requisitos de Odoo |
 
 La rama `20.0` quita `xlwt==1.3.0` de `requirements.txt` (master lo trae).
-`l10n_ve_mornix` lo usa en dos exportaciones a Excel del libro de IVA
-(`nimetrix_wh_iva_libro_resumen.py`, `nimetrix_wh_iva_list_wizard.py`).
-Nuestra imagen (`docker/requirements-v20.txt`) sigue instalandolo, asi que
-hoy no falla; pero un servidor que instale los requisitos de Odoo 20 sin los
-nuestros se queda sin el.
+`l10n_ve_mornix` lo usaba para el Excel del Resumen de Ventas y Compras, y el
+asistente del listado de retenciones lo importaba sin usarlo.
 
-- [ ] Decidir: mantener `xlwt` como requisito propio del proyecto (documentado
-      en el despliegue) o reescribir las dos exportaciones con `openpyxl`, que
-      Odoo 20 si trae.
+- [x] Resuelto el 28 de septiembre de 2026 (`l10n_ve_mornix` 1.42.0): el libro
+      se escribe con **`openpyxl`**, que es la libreria de Excel que el propio
+      Odoo trae en las dos ramas. `xlwt` fuera de
+      `docker/requirements-v20.txt`; ningun modulo del proyecto lo importa ya.
+
+**De paso, el archivo cambia de formato.** `xlwt` solo escribia `.xls` (Excel
+97, firma OLE2); `openpyxl` escribe `.xlsx` (un zip, firma `PK`). El asistente
+descarga ahora `Resume_ventas_compras.xlsx`. **Consecuencia practica:** quien
+tuviera una macro o un proceso que recogiera el `.xls` por su nombre hay que
+avisarle.
+
+Al portar el cuerpo del reporte —unas 150 llamadas a `write_merge`— se
+conservo la firma de `xlwt` con un adaptador (`_Hoja`, `_Estilo`) en lugar de
+reescribir la maquetacion: el cambio de libreria no toca ni una linea de la
+maquetacion del libro. Dos detalles que costaron:
+
+- Las coordenadas de `xlwt` empiezan en **0** y las de openpyxl en **1**.
+- En un `.xlsx` una celda combinada **sigue teniendo todas sus celdas**: si el
+  estilo se aplica solo a la de arriba a la izquierda, el borde se dibuja nada
+  mas en el lado izquierdo y la tabla sale sin rejilla. El estilo se aplica a
+  todo el rango.
+- Al **releer** con openpyxl, las celdas combinadas devuelven el estilo por
+  defecto aunque el archivo lo traiga. Una prueba que compruebe bordes tiene
+  que mirar el XML del archivo, no la relectura.
 
 ## Una base de master no se actualiza a la rama 20.0
 

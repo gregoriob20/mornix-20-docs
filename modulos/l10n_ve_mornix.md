@@ -1,7 +1,7 @@
 # l10n_ve_mornix — Localización venezolana
 
 > Módulo piloto de la migración a v20. Estado: **instala, actualiza y pasa sus
-> 298 pruebas sin errores ni advertencias**.
+> 300 pruebas sin errores ni advertencias**.
 > Origen: `nx-desarrollo/nx_localizacion`, rama `main`, versión `18.0.0.11.0`.
 > Destino: `addons/localizacion/l10n_ve_mornix`, versión `1.35.0` (Odoo la
 > prefija con la serie vigente → `19.5.1.35.0`).
@@ -2153,6 +2153,53 @@ las 514 del proyecto entero dan en la rama exactamente los mismos 32 fallos que
 en master sobre una base recién creada —ninguno propio de la rama—. Los 32 son
 de la base de prueba, que no tiene datos de demostración: tasas, documentos
 fiscales y categorías de pago que las suites esperan configuradas.
+
+### 6.38 El Excel del Resumen de IVA, con openpyxl (1.42.0)
+
+El Resumen de Ventas y Compras se escribía con `xlwt`, la librería del formato
+`.xls` de Excel 97. La rama 20.0 de Odoo la sacó de sus requisitos y era lo
+único del proyecto que la usaba, así que el libro pasa a **`openpyxl`**, que es
+la librería de Excel que Odoo trae en las dos ramas.
+
+**Qué cambia para el usuario.** El botón descarga ahora
+`Resume_ventas_compras.xlsx` en vez de `.xls`. El contenido es el mismo: las 32
+líneas numeradas, las cuatro secciones (débitos, créditos, prorrateo,
+autoliquidación y retenciones), los mismos importes con el formato venezolano
+—punto de miles y coma decimal— y la misma rejilla. **Consecuencia práctica:**
+si alguien tenía una macro o un proceso que recogiera el `.xls` por su nombre,
+hay que avisarle; Excel y LibreOffice abren el `.xlsx` sin el aviso de formato
+antiguo que daba el anterior.
+
+**Cómo se portó.** El cuerpo del reporte son unas 150 llamadas a
+`write_merge(fila1, fila2, col1, col2, valor, estilo)`. En vez de reescribir la
+maquetación —que es donde estaría el riesgo de equivocar una celda— se conservó
+esa firma con un adaptador de tres clases cortas al principio del archivo:
+`_Estilo` (lo que devolvía `xlwt.easyxf`), `_Fila` (la altura, que en `xlwt` iba
+en veinteavos de punto) y `_Hoja` (`write_merge` y `row`). El cuerpo del libro
+no cambió ni una línea.
+
+Tres detalles que hay que saber si se toca esto:
+
+- Las coordenadas de `xlwt` empiezan en **0** y las de openpyxl en **1**. La
+  conversión vive en el adaptador, en un solo sitio.
+- En un `.xlsx` una celda combinada **sigue teniendo todas sus celdas**. Si el
+  estilo se aplica solo a la de arriba a la izquierda —la única que lleva el
+  valor— el borde se dibuja nada más en el lado izquierdo y la tabla sale sin
+  rejilla. `_Hoja.write_merge` estila todo el rango.
+- Al **releer** el archivo con openpyxl, las celdas combinadas devuelven el
+  estilo por defecto aunque el archivo lo traiga. Una prueba que compruebe
+  bordes tiene que mirar el XML de la hoja, no la relectura: si no, da un falso
+  negativo.
+
+De paso, las columnas llevan ancho (los conceptos son largos y antes salían
+cortados) y el asistente del listado de retenciones perdió un `import xlwt` que
+no usaba desde que el Excel se movió al resumen del libro.
+
+**Pruebas**: las de `tests/test_libro_resumen_iva.py` pasan de comprobar la
+firma OLE2 a la de un zip (`PK`), leen con openpyxl en vez de `xlrd`, y hay dos
+nuevas: que el borde llega a todas las celdas del rango combinado y que los
+importes van alineados a la derecha. 300 en verde en `odoo20`, y en la rama
+20.0 ningún fallo propio del libro.
 
 ## 7. Cómo levantarlo
 
