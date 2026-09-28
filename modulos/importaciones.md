@@ -2,8 +2,11 @@
 
 > Estado: **instala, las 18 pantallas abren, las 14 pruebas pasan y el camino
 > completo —compra, recepción y reparto del costo— está recorrido y cuadrado**.
-> Lo que falta es la columna en divisa del reparto: depende de un módulo que no
-> está migrado (punto 7).
+> La columna en divisa del reparto, que estuvo pendiente de un módulo sin
+> migrar, quedó cerrada al reescribirse el costo en divisa dentro de
+> `l10n_ve_mornix` 1.40.0: las líneas de ajuste traen `nx_former_cost_usd`,
+> `nx_additional_landed_cost_usd` y `nx_final_cost_usd`, comprobado en
+> `import_test`.
 > Origen: `mornix-tech/nx-import`, rama `main`, commit `3857102`.
 > Destino: `gregoriob20/mornix_importaciones`, versión `1.1.0` (Odoo la prefija
 > con la serie vigente → `19.5.1.1.0`).
